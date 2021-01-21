@@ -131,6 +131,7 @@ def handler_shutdown(event):
 	return wrapper
 
 # Capture image subroutine.
+# DAVE NO LIKE HASHING NAME STRUCTURE
 def capture_image(camera, destination):
 	try:
 		# Setup and trigger the camera
@@ -149,6 +150,7 @@ def capture_image(camera, destination):
 		# TODO: {KL} Update status
 		logging.exception(ex)
 
+# Use GPhoto to get camera list, and create a camera index
 def get_cameras():
 	cameras = []
 
@@ -166,6 +168,7 @@ def get_cameras():
 
 	return cameras
 
+# ID if the scale is attached and functional
 def get_scale():
 	device = usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID)
 	if device is None:
@@ -178,6 +181,7 @@ def get_scale():
 
 	return device
 
+# TARE the scale
 async def tare_scale(device):
 	logging.info('Taring scale')
 
@@ -188,6 +192,8 @@ async def tare_scale(device):
 
 	GPIO.setup(TARE_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
+# Get mass from scale. Not sure where this is gleaned from, but wouldn't you know it that
+# shortly after we did this project, Adafruit did something similar (and better, sigh!)
 async def capture_weight(device):
 	DATA_MODE_GRAMS = 2
 	DATA_MODE_OUNCES = 11
@@ -226,6 +232,7 @@ async def capture_weight(device):
 
 	await BroadcastHandler.weight(weight)
 
+# Create data record...?
 async def record(sku, metadata, path, cameras, pool):
 	destination = os.path.join(path, sku)
 	os.makedirs(destination, exist_ok=True)
@@ -254,6 +261,7 @@ async def record(sku, metadata, path, cameras, pool):
 
 	ioloop.IOLoop.current().add_callback(lookup_sku, sku, path=path)
 
+# No idea. Looks to be web-interface. Have to learn about classes
 class BroadcastHandler(websocket.WebSocketHandler):
 	connections = set()
 
@@ -302,9 +310,9 @@ class RecordHandler(web.RequestHandler):
 
 	def put(self, sku):
 		if gp is None or usb is None:
-			self.set_status(501)
+			self.set_status(501) # http code "Not Implemented"
 		else:
-			self.set_status(202)
+			self.set_status(202) # (HTTP) 202 Accepted response status code indicates that the request has been accepted for processing
 			metadata = escape.json_decode(self.request.body)
 			ioloop.IOLoop.current().add_callback(record, sku, metadata, self.path, self.cameras, self.pool)
 
