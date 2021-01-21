@@ -1,3 +1,5 @@
+#__main__py - for Cam-station project, by Kevin Loney for Solarbotics 2018-ish.
+# Dave (me) looking through it to learn how the old one was prepared - Jan 20 2021
 import os
 import sys
 import json
@@ -9,12 +11,15 @@ import logging
 import argparse
 import mimetypes
 
+# No idea. Gonna have to research
 from concurrent.futures import ThreadPoolExecutor
 
+# Set up logging...? No idea why the below modules are logged for failed load, and the ones at the top aren't
 logging.basicConfig(stream=sys.stderr, level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s - %(message)s")
 logging.getLogger('py.warnings').setLevel(logging.ERROR)
 logging.captureWarnings(True)
 
+# Module load logging and error reporting
 try:
 	import gphoto2 as gp
 except ImportError:
@@ -33,30 +38,35 @@ try:
 except ImportError:
 	GPIO = None
 
+# This allows applying a default to a function call
+# https://stackoverflow.com/questions/15331726/how-does-functools-partial-do-what-it-does
 from functools import partial
 
+# Web tools
 from tornado import escape, gen, httpclient, httpserver, httputil, ioloop, iostream, locks, web, websocket
 
+# These are for the scale
 VENDOR_ID = 0x0922
 PRODUCT_ID = 0x8003
+TARE_PIN = 17	#pin to force reset. Good to note that the old scale had a ATtiny in it to put it into the right mode and keep it alive
 
-TARE_PIN = 17
-
+# Application unknown presently
 def resources_dir(*args):
 	path = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
 	if args:
 		path = os.path.join(path, *args)
 	return path
 
+# Command line arguments
 def get_cli_arguments():
 	parser = argparse.ArgumentParser()
-
 	parser.add_argument('-I', dest='interface', default='0.0.0.0')
 	parser.add_argument('-p', dest='port', type=int, default=8080)
 	parser.add_argument('-d', '--dest', required=True)
 
 	return parser.parse_args()
 
+# No idea presently
 def enumerate_images(path, sku):
 	if path is None:
 		return
@@ -76,6 +86,7 @@ def enumerate_images(path, sku):
 			if type.startswith('image/'):
 				yield os.path.relpath(filename, start=path)
 
+# Poll database for lookup of scanned SKU
 async def lookup_sku(sku, path=None):
 	sku = sku.strip()
 	if not sku:
@@ -102,11 +113,13 @@ async def lookup_sku(sku, path=None):
 
 	await BroadcastHandler.event('lookup', result)
 
+# No idea presently
 def handler_hid(fd, events, path=None):
 	content = fd.readline().strip()
 
 	ioloop.IOLoop.current().add_callback(lookup_sku, content, path=path)
 
+# No idea presently if implemented
 def handler_shutdown(event):
 	def shutdown_callback():
 		logging.info('Shutdown signal received')
@@ -117,6 +130,7 @@ def handler_shutdown(event):
 
 	return wrapper
 
+# Capture image subroutine.
 def capture_image(camera, destination):
 	try:
 		# Setup and trigger the camera

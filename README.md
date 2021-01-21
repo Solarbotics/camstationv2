@@ -7,7 +7,7 @@ This is the next iteration of the mobile Camstation that we worked with [Kevin L
  2. Take a product and
 	 1. Scan it (barcode / etc)
 	 2. Confirm its database details (polling RMS / QB Databases)
-	 3. Photograph it (using 2 or 3 cameras)
+	 3. Photograph it (using 2 or 3 cameras using gphoto library)
 	 4. Weigh it (using Sparkfun Scale Module)
 	 5. Dimension it by
 		1. Using underside camera picture of shadow-cast to get X by Y
