@@ -1,6 +1,8 @@
 # Let's try to talk to the SparkFun Openscale module
 import serial
 import time
+import re
+
 comport = 'com4'
 combaud = 9600
 weight = 0
@@ -27,19 +29,24 @@ def initscale():
     scaledefaults = []
     time.sleep(2)
     scale.write(b'x')  # Open Menu
-    time.sleep(1)
+    # time.sleep(1)
     stopflag = True
     while stopflag:
-        # raw = scale.readline().decode('ascii')
         raw = scale.readline().decode().splitlines()
-        print("val:", raw)
+        # print("val:", raw)
         scaledefaults.append(raw[0])
         if 'x)' in raw[0]:
             stopflag = False
     print(scaledefaults)
-    # print str(scaledefaults)[1:-1]
-    print(*scaledefaults, sep = "\n")
-    #data = raw.decode()
+
+    print(*scaledefaults, sep = "\n")   # '*' means there could be more than one object
+
+    #Let's try to pull out a setting, i.e. make sure '6' is in kg, not lbs.
+    defaulttype = [i for i in scaledefaults if i.startswith('6)')]
+    print("defaulttype: ", defaulttype)
+    result = re.search('\[(.*)\]', defaulttype[0]).group(1)
+    print("result: ", result)
+
 
 
 
