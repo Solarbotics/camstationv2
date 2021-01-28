@@ -1,3 +1,5 @@
+# This is the first module to contribute to the CamStation v2.
+# Let's get the SparkFun Openscale talk python
 # Let's try to talk to the SparkFun Openscale module
 import serial
 import time
@@ -7,27 +9,19 @@ comport = 'com4'
 combaud = 9600
 weight = 0
 
-scale = serial.Serial(port=comport, baudrate=combaud, timeout=3)
-def initscale2():
-    print("Initializing Scale2")
-    scale.flush()
-    scaledefaults = []
-    scale.write("x".encode())  # Open Menu
-    time.sleep(1)
-    while 1:
-        raw = scale.readline()
-        print(raw)
-        data = raw.decode('ascii')
-        # if ",lbs" in data or ",kg" in data:
-        # scale.write("x".encode())  # Open Menu
-        # time.sleep(1)
-        print(data)
+scale = serial.Serial(port=comport, baudrate=combaud, timeout=12)
 
+# Upon retrospect, "initscale" isn't that necessary up front. It just lets us bring up and manipulate the startup
+# Until otherwise configured, we need to ensure:
+# 3. Timestamp: off
+# 6. Units: KG
+# t. Serial trigger: ON
+# c. Trigger character: 'r' (r = readval)
 def initscale():
     print("Initializing Scale")
     scale.flush()
     scaledefaults = []
-    time.sleep(2)
+    time.sleep(3)
     scale.write(b'x')  # Open Menu
     # time.sleep(1)
     stopflag = True
@@ -52,10 +46,21 @@ def initscale():
 
 def tare():
     print("Taring Scale")
-    scale.write("x".encode()) # Open Menu
+    #scale.flush()
+    time.sleep(0.4)
+    print("Performing Auto Tare")
     time.sleep(1)
-    scale.write("1".encode()) # Trigger Tare
-    time.sleep(3)
-    scale.write("x".encode()) # Exit Menu
+    scale.write("x".encode())
+    time.sleep(1)
+    scale.write("x".encode())
+    time.sleep(1)
+    scale.write("x".encode())
+    time.sleep(1)
+    scale.write("s".encode())
+    time.sleep(1)
 
-initscale()
+#initscale()
+if scale.isOpen():
+    tare()
+else:
+    print("Port unavailable")
