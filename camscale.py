@@ -4,12 +4,12 @@
 import serial
 import time
 import re
-
+import sys
 comport = 'com4'
 combaud = 9600
 weight = 0
 
-scale = serial.Serial(port=comport, baudrate=combaud, timeout=12)
+
 
 # Upon retrospect, "initscale" isn't that necessary up front. It just lets us bring up and manipulate the startup
 # Until otherwise configured, we need to ensure:
@@ -47,20 +47,19 @@ def initscale():
 def tare():
     print("Taring Scale")
     #scale.flush()
-    time.sleep(0.4)
     print("Performing Auto Tare")
-    time.sleep(1)
-    scale.write("x".encode())
-    time.sleep(1)
-    scale.write("x".encode())
-    time.sleep(1)
-    scale.write("x".encode())
-    time.sleep(1)
-    scale.write("s".encode())
-    time.sleep(1)
+    time.sleep(2)
+    scale.write(b'x1x') # Open menu; tare, close menu
+    time.sleep(1.7)
+    print("Tare complete")
 
-#initscale()
-if scale.isOpen():
+try:
+    scale = serial.Serial(port=comport, baudrate=combaud, timeout=3)
+    scale.isOpen()
+    print("Scale Port",comport,"opened")
     tare()
-else:
-    print("Port unavailable")
+
+except serial.SerialException: # If port open, close and reopen
+    print("Serial Exception:")
+    print("Cannot connect to",comport)
+
