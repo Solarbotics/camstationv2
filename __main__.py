@@ -45,7 +45,7 @@ from functools import partial
 # Web tools
 from tornado import escape, gen, httpclient, httpserver, httputil, ioloop, iostream, locks, web, websocket
 
-# These are for the scale
+# These are for the scale, according to the VendID
 VENDOR_ID = 0x0922
 PRODUCT_ID = 0x8003
 TARE_PIN = 17	#pin to force reset. Good to note that the old scale had a ATtiny in it to put it into the right mode and keep it alive

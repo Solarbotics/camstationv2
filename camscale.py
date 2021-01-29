@@ -1,6 +1,10 @@
 # This is the first module to contribute to the CamStation v2.
 # Let's get the SparkFun Openscale talk python
 # Let's try to talk to the SparkFun Openscale module
+# DONE: Implement TARE function
+# DONE: Implment READ WEIGHT function
+# 28-Jan-2021
+
 import serial
 import time
 import re
@@ -8,7 +12,6 @@ import sys
 comport = 'com4'
 combaud = 9600
 weight = 0
-
 
 
 # Upon retrospect, "initscale" isn't that necessary up front. It just lets us bring up and manipulate the startup
