@@ -23,7 +23,6 @@ def initscale():
     scaledefaults = []
     time.sleep(3)
     scale.write(b'x')  # Open Menu
-    # time.sleep(1)
     stopflag = True
     while stopflag:
         raw = scale.readline().decode().splitlines()
@@ -31,8 +30,6 @@ def initscale():
         scaledefaults.append(raw[0])
         if 'x)' in raw[0]:
             stopflag = False
-    print(scaledefaults)
-
     print(*scaledefaults, sep = "\n")   # '*' means there could be more than one object
 
     #Let's try to pull out a setting, i.e. make sure '6' is in kg, not lbs.
@@ -42,22 +39,45 @@ def initscale():
     print("result: ", result)
 
 
-
-
 def tare():
     print("Taring Scale")
     #scale.flush()
-    print("Performing Auto Tare")
     time.sleep(2)
     scale.write(b'x1x') # Open menu; tare, close menu
-    time.sleep(1.7)
+    time.sleep(4)
     print("Tare complete")
 
+def readweight():
+    scale.write(b'r')
+    scale.flushInput()
+    scaleData = scale.readline().decode('ascii').split(',')
+    #print("Scaledata:",scaleData)
+    return scaleData[0]
+    time.sleep(0.1)
+
 try:
-    scale = serial.Serial(port=comport, baudrate=combaud, timeout=3)
+    scale = serial.Serial(port=comport, baudrate=combaud, timeout=4)
     scale.isOpen()
     print("Scale Port",comport,"opened")
     tare()
+    mass = readweight()
+
+    time.sleep(2)
+    mass = readweight()
+    print(mass)
+    time.sleep(2)
+    mass = readweight()
+    print(mass)
+    time.sleep(2)
+    mass = readweight()
+    print(mass)
+    time.sleep(2)
+    mass = readweight()
+    print(mass)
+    time.sleep(2)
+    mass = readweight()
+    print(mass)
+
 
 except serial.SerialException: # If port open, close and reopen
     print("Serial Exception:")
