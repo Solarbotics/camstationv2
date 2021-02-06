@@ -45,6 +45,7 @@ def capture_image(camera, destination):
         print(summary.text)
 
         filename = os.path.join(destination, digest+'.jpg')
+        print(filename)
         capture_path = camera.capture(gp.GP_CAPTURE_IMAGE)
         camera_file = camera.file_get(capture_path.folder, capture_path.name, gp.GP_FILE_TYPE_NORMAL)
         camera_file.save(filename)
@@ -74,7 +75,7 @@ def get_cameras():
     return cameras
 cameras = get_cameras()
 for camera in cameras:
-    capture_image(camera,'~/')
+    capture_image(camera,'/home/dave/Pictures')
 
 #clean up
 # for camera in cameras:
