@@ -11,7 +11,7 @@ import hashlib
 import logging
 import argparse
 import mimetypes
-import gphoto2
+import gphoto2 as gp
 
 # Stolen from Kevin's code. Sets up logging...?
 logging.basicConfig(stream=sys.stderr, level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s - %(message)s")
@@ -39,7 +39,8 @@ def capture_image(camera, destination):
     try:
         # Setup and trigger the camera
         summary = camera.get_summary()
-        digest = hashlib.md5(str(summary).encode('utf-8')).hexdigest()
+        #digest = hashlib.md5(str(summary).encode('utf-8')).hexdigest()
+        digest = 'cam1'
 
         filename = os.path.join(destination, '%s.jpg' % digest)
 
