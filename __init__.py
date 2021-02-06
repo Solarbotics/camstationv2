@@ -1,3 +1,5 @@
+#This is from a python module for controlling the Sparkfun Openscale. A VERY POORLY documented module
+# It's barely been useful enough to help figure out how to talk to it.
 import serial, time, threading
 
 class Scale:

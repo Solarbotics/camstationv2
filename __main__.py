@@ -63,7 +63,6 @@ def get_cli_arguments():
 	parser.add_argument('-I', dest='interface', default='0.0.0.0')
 	parser.add_argument('-p', dest='port', type=int, default=8080)
 	parser.add_argument('-d', '--dest', required=True)
-
 	return parser.parse_args()
 
 # No idea presently
