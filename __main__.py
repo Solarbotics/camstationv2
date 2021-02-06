@@ -134,7 +134,7 @@ def handler_shutdown(event):
 def capture_image(camera, destination):
 	try:
 		# Setup and trigger the camera
-		summary = camera.get_summary()
+		summary = camera.get_summary() # why this necessary? Cams are enumerated already
 		digest = hashlib.md5(str(summary).encode('utf-8')).hexdigest()
 
 		filename = os.path.join(destination, '%s.jpg' % digest)

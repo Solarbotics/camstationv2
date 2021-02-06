@@ -31,6 +31,7 @@ try:
 except ImportError:
     logging.warn('Failed to import usb')
     usb = None
+    print('USB Set up')
 
 
 # Capture image subroutine.
@@ -41,9 +42,9 @@ def capture_image(camera, destination):
         summary = camera.get_summary()
         #digest = hashlib.md5(str(summary).encode('utf-8')).hexdigest()
         digest = 'cam1'
+        print(summary.text)
 
-        filename = os.path.join(destination, '%s.jpg' % digest)
-
+        filename = os.path.join(destination, digest+'.jpg')
         capture_path = camera.capture(gp.GP_CAPTURE_IMAGE)
         camera_file = camera.file_get(capture_path.folder, capture_path.name, gp.GP_FILE_TYPE_NORMAL)
         camera_file.save(filename)
@@ -51,20 +52,19 @@ def capture_image(camera, destination):
         logging.info(filename)
 
     except Exception as ex:
-        # TODO: {KL} Update status
+        # TODO: {KL} Update sta
         logging.exception(ex)
 
 
 # Use GPhoto to get camera list, and create a camera index
 def get_cameras():
     cameras = []
-
     port_info_list = gp.PortInfoList()
     port_info_list.load()
 
     for name, addr in gp.check_result(gp.gp_camera_autodetect()):
         idx = port_info_list.lookup_path(addr)
-
+        print(name,addr,idx)
         camera = gp.Camera()
         camera.set_port_info(port_info_list[idx])
         camera.init()
@@ -72,3 +72,10 @@ def get_cameras():
         cameras.append(camera)
 
     return cameras
+cameras = get_cameras()
+for camera in cameras:
+    capture_image(camera,'~/')
+
+#clean up
+# for camera in cameras:
+#     camera.exit()
