@@ -4,12 +4,19 @@
 # DONE: Implement TARE function
 # DONE: Implment READ WEIGHT function
 # 28-Jan-2021
+# Usage:
+#  Start the scale once with:
+#       initscale()
+#       tare()
+#       mass = readweight()
+#
 
 import serial
 import time
 import re
 import sys
-comport = 'com4'
+#comport = 'com4'
+comport = '/dev/ttyUSB0'
 combaud = 9600
 weight = 0
 
@@ -20,7 +27,7 @@ weight = 0
 # 6. Units: KG
 # t. Serial trigger: ON
 # c. Trigger character: 'r' (r = readval)
-def initscale():
+def initscaleOld():
     print("Initializing Scale")
     scale.flush()
     scaledefaults = []
@@ -41,6 +48,11 @@ def initscale():
     result = re.search('\[(.*)\]', defaulttype[0]).group(1)
     print("result: ", result)
 
+def initscale():
+    global scale
+    scale = serial.Serial(port=comport, baudrate=combaud, timeout=4)
+    scale.isOpen()
+    print("Scale Port",comport,"opened")
 
 def tare():
     print("Taring Scale")
@@ -58,31 +70,7 @@ def readweight():
     return scaleData[0]
     time.sleep(0.1)
 
-try:
-    scale = serial.Serial(port=comport, baudrate=combaud, timeout=4)
-    scale.isOpen()
-    print("Scale Port",comport,"opened")
-    tare()
-    mass = readweight()
-
-    time.sleep(2)
-    mass = readweight()
-    print(mass)
-    time.sleep(2)
-    mass = readweight()
-    print(mass)
-    time.sleep(2)
-    mass = readweight()
-    print(mass)
-    time.sleep(2)
-    mass = readweight()
-    print(mass)
-    time.sleep(2)
-    mass = readweight()
-    print(mass)
-
-
-except serial.SerialException: # If port open, close and reopen
-    print("Serial Exception:")
-    print("Cannot connect to",comport)
+initscale()
+tare()
+print(readweight())
 
