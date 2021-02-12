@@ -105,7 +105,7 @@ async def lookup_sku(sku, path=None):
 
 	client = httpclient.AsyncHTTPClient()
 	try:
-		url = httputil.url_concat(camdatabaseURL, {'sku': sku})
+		url = httputil.url_concat(dburl, {'sku': sku})
 		response = await client.fetch(url)
 	except Exception as ex:
 		# TODO: {KL} Log the exception

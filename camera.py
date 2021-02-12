@@ -1,7 +1,8 @@
 # Let's try to get this thing to talk to some DSLRs
-# Dave Hrynkiw, Alpah Feb 05 2021
+# Dave Hrynkiw, Alpha Feb 05 2021
 
 import os
+import re
 import sys
 import json
 import array
@@ -12,11 +13,6 @@ import logging
 import argparse
 import mimetypes
 import gphoto2 as gp
-
-# Stolen from Kevin's code. Sets up logging...?
-logging.basicConfig(stream=sys.stderr, level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s - %(message)s")
-logging.getLogger('py.warnings').setLevel(logging.ERROR)
-logging.captureWarnings(True)
 
 # Module load logging and error reporting
 try:
@@ -40,8 +36,13 @@ def capture_image(camera, destination):
     try:
         # Setup and trigger the camera
         summary = camera.get_summary()
+        #context=gp.Context()
+
+        camserial = camera.get_config()
+        print("serial:",camserial)
+        camnum = re.search(r"(?<=Current: ).*?(?=\s)", camserial)
         #digest = hashlib.md5(str(summary).encode('utf-8')).hexdigest()
-        digest = 'cam1'
+        digest = '60D'
         print(summary.text)
 
         filename = os.path.join(destination, digest+'.jpg')
@@ -71,8 +72,9 @@ def get_cameras():
         camera.init()
 
         cameras.append(camera)
-
     return cameras
+
+
 cameras = get_cameras()
 for camera in cameras:
     capture_image(camera,'/home/dave/Pictures')
