@@ -3,7 +3,9 @@
 # rework what Kevin started to something to suit the new purposes.
 # Feb 11 2021
 #invoke usage with: $/home/dave/PycharmProjects/camstationv2/venv/bin/python /home/dave/PycharmProjects/camstationv2/__main__.py -d /tmp/camstation
-import ipaddress
+# - OK, NEXT TIME you're in, figure out why CAMSCALE isn't reporting.
+
+
 import os
 import sys
 import json
@@ -229,7 +231,7 @@ async def capture_weight():
 	camscale.flushInput()
 	weight = camscale.readline().decode('ascii').split(',')
 	# print("Scaledata:",scaleData)
-	weight =  weight[0]
+	weight = weight[0]
 	asyncio.sleep(0.1)
 	# endpoint = device[0][(0,0)][0]
 	ioloop.IOLoop.current().add_callback(capture_weight)
@@ -379,9 +381,9 @@ async def main():
 	# TODO {DMH} - Replace scale routine
 	if serial:
 		# global scale
-		scale = camscale.initscale()
-		if scale:
-			ioloop.IOLoop.current().add_callback(capture_weight, scale)
+		# scale = camscale.initscale()
+		# if scale:
+		ioloop.IOLoop.current().add_callback(capture_weight)
 
 	with ThreadPoolExecutor(1) as pool:
 		# Setup the web application
