@@ -372,14 +372,14 @@ async def main():
 	scale = None
 	cameras = []
 
-	# TODO {DMH} - Replace this GPIO section with scale setup and add LED control
+	# TODO {DMH} - Change GPIO section to add LED control
 	if GPIO:
 		GPIO.setmode(GPIO.BCM)
 		GPIO.setup(TARE_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 	if gp:
 		cameras = get_cameras()
-
+	# TODO {DMH} - Replace scale routine
 	if usb:
 		scale = get_scale()
 		if scale:
