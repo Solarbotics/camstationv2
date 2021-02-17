@@ -58,6 +58,7 @@ def resources_dir(*args):
 	return path
 
 # Command line arguments
+#--dest points to the physical file location to store the imagery
 def get_cli_arguments():
 	parser = argparse.ArgumentParser()
 	parser.add_argument('-I', dest='interface', default='0.0.0.0')

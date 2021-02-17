@@ -2,6 +2,8 @@
 # Now that I've sorta played with rebuilding the same modules for a bit, I figured it made sense to
 # rework what Kevin started to something to suit the new purposes.
 # Feb 11 2021
+#invoke usage with: $/home/dave/PycharmProjects/camstationv2/venv/bin/python /home/dave/PycharmProjects/camstationv2/__main__.py -d /tmp/camstation
+
 import os
 import sys
 import json
@@ -61,6 +63,8 @@ def resources_dir(*args):
 	return path
 
 # Command line arguments
+#--dest points to the physical file location to store the imagery
+
 # def get_cli_arguments():
 # 	parser = argparse.ArgumentParser()
 # 	parser.add_argument('-I', dest='interface', default='0.0.0.0')
@@ -172,18 +176,19 @@ def get_cameras():
 
 	return cameras
 
+
 # ID if the scale is attached and functional
-def get_scale():
-	device = usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID)
-	if device is None:
-		return None
-
-	if device.is_kernel_driver_active(0):
-		device.detach_kernel_driver(0)
-
-	device.set_configuration()
-
-	return device
+# def get_scale():
+# 	device = usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID)
+# 	if device is None:
+# 		return None
+#
+# 	if device.is_kernel_driver_active(0):
+# 		device.detach_kernel_driver(0)
+#
+# 	device.set_configuration()
+#
+# 	return device
 
 # TARE the scale
 async def tare_scale(device):
@@ -367,6 +372,7 @@ async def main():
 	scale = None
 	cameras = []
 
+	# TODO {DMH} - Replace this GPIO section with scale setup and add LED control
 	if GPIO:
 		GPIO.setmode(GPIO.BCM)
 		GPIO.setup(TARE_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
