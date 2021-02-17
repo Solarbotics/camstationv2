@@ -16,8 +16,18 @@ import argparse
 import mimetypes
 import configparser
 
+import serial
+import time
+import re
+
+import camscale
+
 config = configparser.ConfigParser()
 config.read('camstation.cfg')
+comport = config.get('CAMSCALE', 'comport')
+combaud = config.get('CAMSCALE', 'combaud')
+imagepath = config.get('CAMFILEPATHS', 'imagepath')
+
 
 # No idea. Gonna have to research
 from concurrent.futures import ThreadPoolExecutor
@@ -191,50 +201,34 @@ def get_cameras():
 # 	return device
 
 # TARE the scale
-async def tare_scale(device):
-	logging.info('Taring scale')
-
-	GPIO.setup(TARE_PIN, GPIO.OUT)
-
-	GPIO.output(TARE_PIN, GPIO.LOW)
-	await asyncio.sleep(0.1)
-
-	GPIO.setup(TARE_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+async def tare_scale():
+	scale = serial.Serial(port=comport, baudrate=combaud, timeout=4)
+	scale.isOpen()
+	print("Scale Port", comport, "opened")
+	await asyncio.sleep(2)
+	scale.write(b'x1x')  # Open menu; tare, close menu
+	await asyncio.sleep(4)
+	print("Tare complete")
+	# logging.info('Taring scale')
+	#
+	# GPIO.setup(TARE_PIN, GPIO.OUT)
+	#
+	# GPIO.output(TARE_PIN, GPIO.LOW)
+	# await asyncio.sleep(0.1)
+	# GPIO.setup(TARE_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 # Get mass from scale. Not sure where this is gleaned from, but wouldn't you know it that
 # shortly after we did this project, Adafruit did something similar (and better, sigh!)
-async def capture_weight(device):
-	DATA_MODE_GRAMS = 2
-	DATA_MODE_OUNCES = 11
-
+async def capture_weight():
 	weight = None
+	scale.write(b'r')
+	scale.flushInput()
+	scaleData = scale.readline().decode('ascii').split(',')
+	# print("Scaledata:",scaleData)
+	return scaleData[0]
+	asyncio.sleep(0.1)
 	endpoint = device[0][(0,0)][0]
-
-	scaling_factors = {
-		255: 0.1,
-		254: 0.01,
-	}
-
-	try:
-		data = device.read(endpoint.bEndpointAddress, endpoint.wMaxPacketSize)
-
-		raw_weight = data[4] + data[5] * 256
-		if data[2] == DATA_MODE_OUNCES:
-			scaling_factor = scaling_factors.get(data[3], None)
-			if scaling_factor is None:
-				raise Exception('Unexpected weight scaling factor [%d]', data[3])
-
-			weight = 28.3495 * scaling_factor * raw_weight
-		elif data[2] == DATA_MODE_GRAMS:
-			weight = raw_weight
-
-		if not weight is None and data[1] == 5:
-			weight *= -1
-
-	except Exception as ex:
-		logging.exception(ex)
-
-	ioloop.IOLoop.current().add_callback(capture_weight, device)
+	ioloop.IOLoop.current().add_callback(capture_weight)
 
 	if weight is None:
 		return
@@ -380,8 +374,8 @@ async def main():
 	if gp:
 		cameras = get_cameras()
 	# TODO {DMH} - Replace scale routine
-	if usb:
-		scale = get_scale()
+	if serial:
+		scale = camscale.initscale()
 		if scale:
 			ioloop.IOLoop.current().add_callback(capture_weight, scale)
 
