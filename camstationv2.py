@@ -3,7 +3,7 @@
 # rework what Kevin started to something to suit the new purposes.
 # Feb 11 2021
 #invoke usage with: $/home/dave/PycharmProjects/camstationv2/venv/bin/python /home/dave/PycharmProjects/camstationv2/__main__.py -d /tmp/camstation
-
+import ipaddress
 import os
 import sys
 import json
@@ -26,8 +26,11 @@ config = configparser.ConfigParser()
 config.read('camstation.cfg')
 comport = config.get('CAMSCALE', 'comport')
 combaud = config.get('CAMSCALE', 'combaud')
+webinterface = config.get('CAMWEBSERVER', 'interface')
+webport = config.get('CAMWEBSERVER', 'port')
 imagepath = config.get('CAMFILEPATHS', 'imagepath')
 
+global camscale
 
 # No idea. Gonna have to research
 from concurrent.futures import ThreadPoolExecutor
@@ -202,11 +205,12 @@ def get_cameras():
 
 # TARE the scale
 async def tare_scale():
-	scale = serial.Serial(port=comport, baudrate=combaud, timeout=4)
-	scale.isOpen()
+
+	camscale = serial.Serial(port=comport, baudrate=combaud, timeout=4)
+	# scale.isOpen()
 	print("Scale Port", comport, "opened")
 	await asyncio.sleep(2)
-	scale.write(b'x1x')  # Open menu; tare, close menu
+	camscale.write(b'x1x')  # Open menu; tare, close menu
 	await asyncio.sleep(4)
 	print("Tare complete")
 	# logging.info('Taring scale')
@@ -221,18 +225,17 @@ async def tare_scale():
 # shortly after we did this project, Adafruit did something similar (and better, sigh!)
 async def capture_weight():
 	weight = None
-	scale.write(b'r')
-	scale.flushInput()
-	scaleData = scale.readline().decode('ascii').split(',')
+	camscale.write(b'r')
+	camscale.flushInput()
+	weight = camscale.readline().decode('ascii').split(',')
 	# print("Scaledata:",scaleData)
-	return scaleData[0]
+	weight =  weight[0]
 	asyncio.sleep(0.1)
-	endpoint = device[0][(0,0)][0]
+	# endpoint = device[0][(0,0)][0]
 	ioloop.IOLoop.current().add_callback(capture_weight)
 
 	if weight is None:
 		return
-
 	await BroadcastHandler.weight(weight)
 
 # Create data record...?
@@ -338,11 +341,11 @@ class ScaleHandler(web.RequestHandler):
 		self.device = device
 
 	def post(self):
-		if GPIO is None:
-			self.set_status(501)
-		else:
-			self.set_status(202)
-			ioloop.IOLoop.current().add_callback(tare_scale, self.device)
+		# if GPIO is None:
+		# 	self.set_status(501)
+		# else:
+		self.set_status(202)
+		ioloop.IOLoop.current().add_callback(tare_scale, self.device)
 
 		self.finish()
 
@@ -354,27 +357,28 @@ class RestartHandler(web.RequestHandler):
 		self.event.set()
 
 async def main():
-	args = get_cli_arguments()
+	# args = get_cli_arguments()
 
 	# Setup shutdown handler
 	shutdown = locks.Event()
 	signal.signal(signal.SIGINT, handler_shutdown(shutdown))
 
 	# Setup keyboard IO
-	ioloop.IOLoop.current().add_handler(sys.stdin, partial(handler_hid, path=args.dest), ioloop.IOLoop.READ)
+	ioloop.IOLoop.current().add_handler(sys.stdin, partial(handler_hid, path=imagepath), ioloop.IOLoop.READ)
 
 	scale = None
 	cameras = []
 
 	# TODO {DMH} - Change GPIO section to add LED control
-	if GPIO:
-		GPIO.setmode(GPIO.BCM)
-		GPIO.setup(TARE_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+	# if GPIO:
+	# 	GPIO.setmode(GPIO.BCM)
+	# 	GPIO.setup(TARE_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 	if gp:
 		cameras = get_cameras()
 	# TODO {DMH} - Replace scale routine
 	if serial:
+		# global scale
 		scale = camscale.initscale()
 		if scale:
 			ioloop.IOLoop.current().add_callback(capture_weight, scale)
@@ -384,18 +388,18 @@ async def main():
 		application = web.Application([
 			('/', web.RedirectHandler, {'url': '/index.html'}),
 			('/ws', BroadcastHandler),
-			('/api/search', SearchHandler, {'path': args.dest}),
+			('/api/search', SearchHandler, {'path': imagepath}),
 			('/api/scale', ScaleHandler, {'device': scale}),
 			('/api/restart', RestartHandler, {'event': shutdown}),
-			('/api/record/(.+)', RecordHandler, {'path': args.dest, 'cameras': cameras, 'pool': pool}),
-			('/captures/(.+)', web.StaticFileHandler, {'path': args.dest}),
+			('/api/record/(.+)', RecordHandler, {'path': imagepath, 'cameras': cameras, 'pool': pool}),
+			('/captures/(.+)', web.StaticFileHandler, {'path': imagepath}),
 			('/(.*)', web.StaticFileHandler, {'path': resources_dir('static')}),
 		])
 
 		http_server = httpserver.HTTPServer(application)
-		http_server.listen(args.port, address=args.interface)
+		http_server.listen(webport, address=webinterface)
 
-		logging.info('Server started on %s:%d', args.interface, args.port)
+		logging.info('Server started on %s:%s', webinterface, webport)
 
 		await shutdown.wait()
 

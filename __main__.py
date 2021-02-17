@@ -63,7 +63,7 @@ def get_cli_arguments():
 	parser = argparse.ArgumentParser()
 	parser.add_argument('-I', dest='interface', default='0.0.0.0')
 	parser.add_argument('-p', dest='port', type=int, default=8080)
-	parser.add_argument('-d', '--dest', required=True)
+	parser.add_argument('-d', '--dest',  default='/tmp/camstation')
 	return parser.parse_args()
 
 # No idea presently
@@ -390,6 +390,7 @@ async def main():
 
 		http_server = httpserver.HTTPServer(application)
 		http_server.listen(args.port, address=args.interface)
+		print(args.interface, args.port)
 
 		logging.info('Server started on %s:%d', args.interface, args.port)
 
