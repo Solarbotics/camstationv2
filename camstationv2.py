@@ -345,7 +345,7 @@ class ScaleHandler(web.RequestHandler):
 		# 	self.set_status(501)
 		# else:
 		self.set_status(202)
-		ioloop.IOLoop.current().add_callback(tare_scale, self.device)
+		ioloop.IOLoop.current().add_callback(tare_scale)
 
 		self.finish()
 
