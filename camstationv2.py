@@ -226,13 +226,15 @@ async def tare_scale():
 # Get mass from scale. Not sure where this is gleaned from, but wouldn't you know it that
 # shortly after we did this project, Adafruit did something similar (and better, sigh!)
 async def capture_weight():
+	camscale = serial.Serial(port=comport, baudrate=combaud, timeout=4)
+	# camscale.flushInput()
 	weight = None
 	camscale.write(b'r')
-	camscale.flushInput()
+	asyncio.sleep(0.5)
 	weight = camscale.readline().decode('ascii').split(',')
-	# print("Scaledata:",scaleData)
+	print("Scaledata:",weight,"Scaleval:",weight[0])
 	weight = weight[0]
-	asyncio.sleep(0.1)
+	asyncio.sleep(0.5)
 	# endpoint = device[0][(0,0)][0]
 	ioloop.IOLoop.current().add_callback(capture_weight)
 
