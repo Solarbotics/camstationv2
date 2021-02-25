@@ -2,8 +2,8 @@
 # Now that I've sorta played with rebuilding the same modules for a bit, I figured it made sense to
 # rework what Kevin started to something to suit the new purposes.
 # Feb 11 2021
-#invoke usage with: $/home/dave/PycharmProjects/camstationv2/venv/bin/python /home/dave/PycharmProjects/camstationv2/__main__.py -d /tmp/camstation
-# - OK, NEXT TIME you're in, figure out why CAMSCALE isn't reporting.
+#invoke usage with: $/home/dave/PycharmProjects/camstationv2/venv/bin/python /home/dave/PycharmProjects/camstationv2/camstationv2.py -d /tmp/camstation
+# - OK, NEXT TIME you're in, figure out why CAMSCALE isn't reporting to webserver.
 
 
 import os
@@ -25,12 +25,12 @@ import re
 import camscale
 
 config = configparser.ConfigParser()
-config.read('camstation.cfg')
-comport = config.get('CAMSCALE', 'comport')
-combaud = config.get('CAMSCALE', 'combaud')
-webinterface = config.get('CAMWEBSERVER', 'interface')
-webport = config.get('CAMWEBSERVER', 'port')
-imagepath = config.get('CAMFILEPATHS', 'imagepath')
+config.read('/home/dave/PycharmProjects/camstationv2/camstation.cfg')
+comport = config.get("CAMSCALE", 'comport')
+combaud = config.get("CAMSCALE", 'combaud')
+webinterface = config.get("CAMWEBSERVER", 'interface')
+webport = config.get("CAMWEBSERVER", 'port')
+imagepath = config.get("CAMFILEPATHS", 'imagepath')
 
 global camscale
 
@@ -225,7 +225,7 @@ async def tare_scale():
 
 # Get mass from scale. Not sure where this is gleaned from, but wouldn't you know it that
 # shortly after we did this project, Adafruit did something similar (and better, sigh!)
-async def capture_weight():
+async def capture_weight_orig():
 	camscale = serial.Serial(port=comport, baudrate=combaud, timeout=4)
 	# camscale.flushInput()
 	weight = None
@@ -236,6 +236,39 @@ async def capture_weight():
 	weight = weight[0]
 	asyncio.sleep(0.5)
 	# endpoint = device[0][(0,0)][0]
+	ioloop.IOLoop.current().add_callback(capture_weight)
+
+	if weight is None:
+		return
+	await BroadcastHandler.weight(weight)
+
+# Trying to rewrite the weight capture routine from above
+async def capture_weight():
+	camscale = serial.Serial(port=comport, baudrate=combaud, timeout=4)
+	# camscale.flushInput()
+	weight = None
+	try:
+		# data = camscale.read
+		buf = bytes()
+		msgs_recvd = 0
+
+		# asyncio.sleep(0.5)
+		data = camscale.read(1) # Read single byle
+		print("Data",data)
+		buf += data
+		# print(buf)
+		if b'kg,\r' in buf:
+			# print(self.buf)
+			if b'Readings:' in buf:  # Reset the buffer to zero for the post-boot message filtering
+				buf = b'0.000,kg\r\n'
+			lines = buf.split(b'\n')
+			buf = lines[-1]  # whatever was left over
+			print(lines[0].decode('ascii').split(',')[0])
+		# print("Scaledata:",weight,"Scaleval:",weight[0])
+			weight = weight[0]
+	except Exception as ex:
+		logging.exception(ex)
+
 	ioloop.IOLoop.current().add_callback(capture_weight)
 
 	if weight is None:

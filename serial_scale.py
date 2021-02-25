@@ -21,7 +21,7 @@ class Reader(asyncio.Protocol):
             # print(self.buf)
             if b'Readings:' in self.buf: # Reset the buffer to zero for the post-boot message filtering
                 self.buf = b'0.000,kg\r\n'
-                print('gotcha')
+                # print('gotcha')
 
             lines = self.buf.split(b'\n')
             #lines = self.buf.split(b',')
@@ -31,7 +31,7 @@ class Reader(asyncio.Protocol):
             # for line in lines[:-1]:
             #     print(f'Reader received: {line.decode()}')
             #     self.msgs_recvd += 1
-            print('Lines:',lines)
+            #print('Lines:',lines)
             print("Reader:",lines[0].decode('ascii').split(',')[0])
         if self.msgs_recvd == 8:
             self.transport.close()
