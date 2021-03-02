@@ -19,10 +19,11 @@ class SerialProcess(multiprocessing.Process):
         self.sp.close()
 
     def writeSerial(self, data):
-        self.sp.write(data.encode())
+        self.sp.write(data)
         # time.sleep(1)
 
     def readSerial(self):
+        # return self.sp.readline().replace("\n", "")
         return self.sp.readline()
 
     def run(self):
@@ -36,11 +37,11 @@ class SerialProcess(multiprocessing.Process):
 
                 # send it to the serial device
                 self.writeSerial(data)
-                print("writing to serial: " + data)
+                print("writing to serial: ", data)
 
             # look for incoming serial data
-            if (self.sp.inWaiting() > 0):
+            if self.sp.inWaiting() > 0:
                 data = self.readSerial()
-                print("reading from serial:", data)
+                # print("reading from serial: ", data)
                 # send it back to tornado
                 self.output_queue.put(data)

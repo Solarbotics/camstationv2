@@ -1,3 +1,5 @@
+#from http://fabacademy.org/archives/2015/doc/WebSocketConsole.html
+
 import tornado.httpserver
 import tornado.ioloop
 import tornado.web
@@ -17,10 +19,15 @@ clients = []
 input_queue = multiprocessing.Queue()
 output_queue = multiprocessing.Queue()
 
-
 class IndexHandler(tornado.web.RequestHandler):
     def get(self):
+        #self.write("OK")
         self.render('index.html')
+
+class IndexHandler1(tornado.web.RequestHandler):
+    def get(self):
+        self.write("OK")
+        #self.render('./indexx.html')
 
 
 class StaticFileHandler(tornado.web.RequestHandler):
@@ -36,7 +43,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
     def on_message(self, message):
         print('tornado received from client: %s' % json.dumps(message))
-		# self.write_message('ack')
+        # self.write_message('ack')
         input_queue.put(message)
 
     def on_close(self):
@@ -53,20 +60,25 @@ def checkQueue():
 
 
 if __name__ == '__main__':
-    ## start the serial worker in background (as a deamon)
+    ## start the serial worker in background (as a daemon)
     sp = serialworker.SerialProcess(input_queue, output_queue)
+    print("Going Daemon")
     sp.daemon = True
     sp.start()
     tornado.options.parse_command_line()
     app = tornado.web.Application(
         handlers=[
+            # (r"/index.html", IndexHandler, {'url': './index.html'}),
             (r"/", IndexHandler),
+            (r"/index.html", IndexHandler),
+            (r"/1", IndexHandler1),
             (r"/static/(.*)", tornado.web.StaticFileHandler, {'path': './'}),
             (r"/ws", WebSocketHandler)
         ]
+
     )
     httpServer = tornado.httpserver.HTTPServer(app)
-    httpServer.listen(options.port)
+    httpServer.listen(options.port, "localhost")
     print("Listening on port:", options.port)
 
     mainLoop = tornado.ioloop.IOLoop.instance()
