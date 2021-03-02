@@ -1,6 +1,6 @@
+import configparser
 import serial
 import multiprocessing
-import configparser
 
 ## Change this to match your local settings
 # SERIAL_PORT = '/dev/ttyUSB0'

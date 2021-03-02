@@ -11,9 +11,9 @@ class ConfigManager(object):
 
     def get_config(self):
         parser = configparser.ConfigParser()
-        print(os.path.join(self.path, 'camstation.cfg'))
+        print(os.path.join(self.path, '../camstation.cfg'))
         parser.read(
-            os.path.join(self.path, 'camstation.cfg')
+            os.path.join(self.path, '../camstation.cfg')
         )
         for section_name in parser.sections():
             print('Section:', section_name)

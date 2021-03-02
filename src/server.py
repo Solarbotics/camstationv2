@@ -21,19 +21,11 @@ output_queue = multiprocessing.Queue()
 
 class IndexHandler(tornado.web.RequestHandler):
     def get(self):
-        #self.write("OK")
         self.render('index.html')
-
-class IndexHandler1(tornado.web.RequestHandler):
-    def get(self):
-        self.write("OK")
-        #self.render('./indexx.html')
-
 
 class StaticFileHandler(tornado.web.RequestHandler):
     def get(self):
         self.render('main.js')
-
 
 class WebSocketHandler(tornado.websocket.WebSocketHandler):
     def open(self):
@@ -71,14 +63,13 @@ if __name__ == '__main__':
             # (r"/index.html", IndexHandler, {'url': './index.html'}),
             (r"/", IndexHandler),
             (r"/index.html", IndexHandler),
-            (r"/1", IndexHandler1),
             (r"/static/(.*)", tornado.web.StaticFileHandler, {'path': './'}),
             (r"/ws", WebSocketHandler)
         ]
 
     )
     httpServer = tornado.httpserver.HTTPServer(app)
-    httpServer.listen(options.port, "localhost")
+    httpServer.listen(options.port)
     print("Listening on port:", options.port)
 
     mainLoop = tornado.ioloop.IOLoop.instance()

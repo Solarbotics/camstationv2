@@ -3,9 +3,8 @@ $(document).ready(function(){
 var received = $('#received');
 
 
-var socket = new WebSocket("ws://192.168.1.118:8080/ws"); //This broadcasts to a remote host, but not local
-//var socket = new WebSocket("ws://localhost:8080/ws");
-
+var socket = new WebSocket("wss://localhost:8080/ws");
+ 
 socket.onopen = function(){  
   console.log("connected"); 
 }; 

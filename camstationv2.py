@@ -17,7 +17,8 @@ import logging
 import argparse
 import mimetypes
 import configparser
-
+import serialworker
+import multiprocessing
 import serial
 import time
 import re
@@ -31,6 +32,9 @@ combaud = config.get("CAMSCALE", 'combaud')
 webinterface = config.get("CAMWEBSERVER", 'interface')
 webport = config.get("CAMWEBSERVER", 'port')
 imagepath = config.get("CAMFILEPATHS", 'imagepath')
+clients = []
+input_queue = multiprocessing.Queue()
+output_queue = multiprocessing.Queue()
 
 global camscale
 
@@ -68,6 +72,8 @@ from functools import partial
 
 # Web tools
 from tornado import escape, gen, httpclient, httpserver, httputil, ioloop, iostream, locks, web, websocket
+import tornado
+
 
 
 # Application unknown presently
@@ -392,6 +398,31 @@ class RestartHandler(web.RequestHandler):
 
 	def post(self):
 		self.event.set()
+class WebSocketHandler(tornado.websocket.WebSocketHandler):
+    def open(self):
+        print('new connection')
+        clients.append(self)
+        self.write_message("connected")
+
+    def on_message(self, message):
+        print('tornado received from client: %s' % json.dumps(message))
+        # self.write_message('ack')
+        input_queue.put(message)
+
+    def on_close(self):
+        print('connection closed')
+        clients.remove(self)
+
+class IndexHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.render('testindex.html')
+
+## check the queue for pending messages, and rely that to all connected clients
+def checkQueue():
+    if not output_queue.empty():
+        message = output_queue.get()
+        for c in clients:
+            c.write_message(message)
 
 async def main():
 	# args = get_cli_arguments()
@@ -423,8 +454,9 @@ async def main():
 	with ThreadPoolExecutor(1) as pool:
 		# Setup the web application
 		application = web.Application([
-			('/', web.RedirectHandler, {'url': '/index.html'}),
-			('/ws', BroadcastHandler),
+			(r"/testindex.html", IndexHandler),
+			#('/ws', BroadcastHandler),
+			(r"/ws", WebSocketHandler),
 			('/api/search', SearchHandler, {'path': imagepath}),
 			('/api/scale', ScaleHandler, {'device': scale}),
 			('/api/restart', RestartHandler, {'event': shutdown}),

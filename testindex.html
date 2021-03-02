@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<title>DAVE'S Camera Station</title>
+
+		<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+		<style>
+			#weight {
+				color: red;
+			}
+			#weight.stable {
+				color: black;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<div class="row">
+				<div class="col-xs-12">
+					<h4>Process</h4>
+				</div>
+			</div>
+
+		</div>
+		<div class="container">
+			<div class="row">
+				<div class="col-xs-12">
+					<h4>Scale</h4>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-xs-12">
+					<label for="weight" class="col-xs-4 col-sm-2 control-label">Weight: </label><p><span id="weight" class="form-control-static"></span> grams</p>
+					<form id="scale">
+						<button type="submit" class="btn btn-default">Tare</button>
+					</form>
+				</div>
+			</div>
+		</div>
+
+		<div class="container">
+			<div class="row">
+				<div class="col-xs-12">
+					<h4>Images</h4>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-xs-12">
+					<form id="record">
+						<button type="submit" class="btn btn-default">Capture</button>
+					</form>
+				</div>
+			</div>
+			<div id="images" class="row">
+			</div>
+		</div>
+
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+		<script>
+			(function ($, undefined) {
+				let last_weight = 0.0;
+
+				function reconnecting_websocket(path, callback) {
+					let socket = null;
+
+					function connect(path) {
+						let url = new URL(window.location);
+						if(url.protocol == 'https') {
+							url.protocol = 'wss:'
+						} else {
+							url.protocol = 'ws:'
+						}
+						url.pathname = path;
+
+						let connection = new WebSocket(url);
+
+						connection.addEventListener('open', ws_open);
+						connection.addEventListener('message', ws_message);
+						connection.addEventListener('close', ws_close);
+					}
+
+					function ws_open(event) {
+						socket = this;
+						console.log(socket);
+					}
+					function ws_close(event) {
+						socket = null;
+						connect(path);
+					}
+					function ws_message(event) {
+						let packet = JSON.parse(event.data);
+						callback(event, packet);
+					}
+
+					connect(path);
+				}
+
+				function handle_lookup(data) {
+					if(data.item === null)  {
+						$('#not-found').removeClass('hidden');
+						$('#result').addClass('hidden');
+
+						$('#query').text(data.sku);
+						$('#sku').val(data.sku);
+					} else {
+						data = data.item;
+
+						$('#not-found').addClass('hidden');
+						$('#result').removeClass('hidden');
+
+						$('#active_bag_id').text(data.active_bag);
+						$('#description').text(data.description);
+						$('#bin_location').text(data.bin);
+						$('#extended_description').text(data.extended);
+
+						$('#sku').val(data.active_bag);
+
+						// TODO: {KL} Display images if present
+					}
+
+					$("#images").empty();
+					data.images.forEach(function(path) {
+						let now = new Date();
+						path = "/captures/" + path + '?' + $.param({cache: now.getTime()});
+
+						let image = $("<img>")
+							.attr("src", path)
+						;
+						let link = $("<a>")
+							.addClass("thumbnail")
+							.attr("href", path)
+							.attr("target", "_blank")
+							.append(image)
+						;
+						let thumbnail = $("<div>")
+							.addClass("col-xs-6")
+							.addClass("col-md-3")
+							.append(link)
+						;
+						$("#images").append(thumbnail);
+					});
+				};
+
+				function handle_weight(data) {
+					last_weight = data.weight;
+
+					$('#weight').text(last_weight.toFixed(2));
+
+					if(data.weight < 0) {
+						$('#weight').removeClass('stable');
+					} else {
+						$('#weight').addClass('stable');
+					}
+				}
+
+				function handle_status(data) {
+
+				}
+
+				let callbacks = {
+					'lookup': handle_lookup,
+					'weight': handle_weight,
+					'status': handle_status
+				}
+				function handle_callback(message) {
+					let packet = JSON.parse(message.data);
+					callbacks[packet.type](packet.data);
+				}
+
+				function lookup(sku) {
+					return $.ajax(
+						{
+							'method': 'POST',
+							'url': '/api/search?' + $.param({'sku': sku}),
+						}
+					);
+				};
+				function tare() {
+					return $.ajax(
+						{
+							'method': 'POST',
+							'url': '/api/scale',
+						}
+					);
+				}
+				function record(sku) {
+					return $.ajax(
+						{
+							method: 'PUT',
+							url: '/api/record/' + sku,
+							contentType: "application/json; charset=utf-8",
+        					dataType: "json",
+							data: JSON.stringify({
+								weight: last_weight
+							})
+						}
+					);
+				}
+				function restart() {
+					return $.ajax(
+						{
+							'method': 'POST',
+							'url': '/api/restart',
+						}
+					);
+				}
+
+				$(function () {
+					reconnecting_websocket('/ws', handle_callback);
+
+					$("#lookup").submit(function() {
+						lookup($('#sku').val());
+						return false;
+					});
+
+					$("#scale").submit(function () {
+						tare();
+						return false;
+					});
+
+					$("#record").submit(function () {
+						record($('#sku').val());
+						return false;
+					});
+
+					$("#restart").submit(function () {
+						restart();
+						return false;
+					});
+				});
+			})(jQuery);
+		</script>
+	</body>
+</html>
