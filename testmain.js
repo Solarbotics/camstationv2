@@ -11,6 +11,7 @@ socket.onopen = function(){
 
 socket.onmessage = function (message) {
     weight = message.data;
+    //weight = weight.replace(/(\r\n|\n|\r)/gm, "");
     //console.log("LW:", weight)
         document.getElementById('weight').innerHTML = weight;
 //    document.getElementById('weight').innerHTML = $('#weight');

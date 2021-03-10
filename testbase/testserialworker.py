@@ -26,10 +26,19 @@ class SerialProcess(multiprocessing.Process):
         # time.sleep(1)
 
     def readSerial(self):
-        # return self.sp.readline().replace("\n", "")
-        # val = self.sp.readline().decode().split(',')[0]
-        # print("Val",val)
-        return self.sp.readline().decode().split(',')[0]
+        scaledata = self.sp.readline().decode().split(',')
+
+        if len(scaledata) == 3:
+            weight = scaledata[0]
+            unit = scaledata[1]
+            try:
+                weight = (float(weight))
+            except:
+                weight = False
+
+            if isinstance(weight, float) and unit == 'kg':
+                # print("Out:", weight)
+                return scaledata[0]  # Because tornado wants it as a BYTE for some reason.
 
     def weight(cls, weight):
         cls.event('weight', {'weight': weight})
