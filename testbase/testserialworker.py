@@ -31,6 +31,9 @@ class SerialProcess(multiprocessing.Process):
         # print("Val",val)
         return self.sp.readline().decode().split(',')[0]
 
+    def weight(cls, weight):
+        cls.event('weight', {'weight': weight})
+
     def run(self):
 
         self.sp.flushInput()

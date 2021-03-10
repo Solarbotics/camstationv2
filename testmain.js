@@ -1,7 +1,7 @@
 $(document).ready(function(){
 
 var received = $('#received');
-var last_weight = 0.0;
+
 
 var socket = new WebSocket("ws://192.168.1.118:8080/ws");
  
@@ -10,12 +10,14 @@ socket.onopen = function(){
 }; 
 
 socket.onmessage = function (message) {
-    last_weight = message.weight;
-    document.getElementById('weight').innerHTML = $('#weight').text(last_weight.toFixed(2));
+    weight = message.data;
+    //console.log("LW:", weight)
+        document.getElementById('weight').innerHTML = weight;
+//    document.getElementById('weight').innerHTML = $('#weight');
 //    $('#weight').addClass('stable');
   console.log("receiving: " + message.data);
-  received.append(message.data);
-  received.append($('<br/>'));
+  //received.append(message.data);
+  //received.append($('<br/>'));
 };
 
 socket.onclose = function(){
