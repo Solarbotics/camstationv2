@@ -1,3 +1,7 @@
+# Latest Status
+Because it can be days between updates, let's keep track of what I'm doing here.
+
+Code: The subdirectory "testbase" contains the latest functional codeset.
 # camstationv2
 Mobile product documentation Camera station
 
