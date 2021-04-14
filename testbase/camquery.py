@@ -32,6 +32,9 @@ async def lookup_sku(sku, path=None):
 	else:
 		# TODO: {KL} Include any images already attached to the sku
 		result['item'] = escape.json_decode(response.body)
+		print(result['item'])
 		# result['item']['images'] = list(enumerate_images(path, result['item']['active_bag']))
 
 	await BroadcastHandler.event('lookup', result)
+
+print("Here's da thing:", lookup_sku('404040'))
