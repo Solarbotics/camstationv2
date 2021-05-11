@@ -1,5 +1,6 @@
 """Handles video collection and processing"""
 
+import time
 import typing as t
 
 import cv2
@@ -67,7 +68,27 @@ class Camera:
     """Class to generically provide camera frames."""
 
     def __init__(self) -> None:
-        self.frames = [cv2.imread("test.jpg")]
+        base = cv2.imread("test.jpg")
+        self.frames = [
+            cv2.rotate(base, code)
+            for code in (
+                cv2.ROTATE_90_CLOCKWISE,
+                cv2.ROTATE_90_COUNTERCLOCKWISE,
+                cv2.ROTATE_180,
+            )
+        ] + [base]
+
+    def get_frame(self) -> Image:
+        """Returns the raw image currently provided by the camera"""
+        return self.frames[int(time.time()) % 4]
+
+    def get_processed_frame(self) -> Image:
+        """Returns the current frame of the processed video"""
+        return process_frame(self.get_frame())[0]
+
+    def get_jpg(self) -> bytes:
+        """Returns the current frame, encoded as jpg"""
+        return cv2.imencode(".jpg", self.get_processed_frame())[1].tobytes()
 
 
 # https://www.pyimagesearch.com/2019/09/02/opencv-stream-video-to-web-browser-html-page/
