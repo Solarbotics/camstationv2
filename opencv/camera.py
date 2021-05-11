@@ -24,28 +24,61 @@ def scale(image: Image, factor: float = 1) -> Image:
 
 
 def process_frame(source: Image) -> t.Tuple[Image, t.Sequence[t.Tuple[int, int]]]:
-    """Parses the given source image for bounding boxes.
+    """Process the given source image,
+    resizing and modifying it, searching for bounding boxes.
 
     Returns the highlighted image and the width and height of the bounding box.
     """
-    # Copy original image for output
-    output = source.copy()
+
     # list of sizes of contour boxes
     sizes = []
 
-    # Apply a blur effect to reduce noise
-    blurred = cv2.blur(source, (6 * 50 + 1, 6 * 50 + 1), 50)
-    # Convert to HSV
-    hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
-    # Filter based on value
-    hue_range = (0.0, 180.0)
-    sat_range = (0.0, 255.0)
-    value_range = (0.0, 80.0)
-    threshed = cv2.inRange(hsv, *zip(hue_range, sat_range, value_range))
-    # Find contours
-    contours, _ = cv2.findContours(
-        threshed, mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_SIMPLE
-    )
+    # pipeline:
+    # crop (?)
+    # copy for output
+    # blur
+    # filter (hsv)
+    # find contours
+
+    def cropped(image: Image) -> Image:
+        """Crop step"""
+        yMargin = 50
+        leftMargin = 450
+        rightMargin = 500
+        return image[yMargin:-yMargin, leftMargin:-rightMargin].copy()
+
+    def blurred(image: Image) -> Image:
+        """Applies blur step"""
+        return cv2.blur(image, (6 * 50 + 1, 6 * 50 + 1), 50)
+
+    def hsv_filtered(image: Image) -> Image:
+        """Applies HSV filtering step.
+
+        Expets BGR Image.
+        """
+        # Convert to HSV
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        # Filter based on value
+        hue_range = (0.0, 180.0)
+        sat_range = (0.0, 255.0)
+        value_range = (0.0, 80.0)
+        return cv2.inRange(hsv, *zip(hue_range, sat_range, value_range))
+
+    def contours_of(image: Image) -> numpy.ndarray:
+        """Contour finding step.
+
+        Expects single channel Image.
+        """
+        contours, _ = cv2.findContours(
+            image, mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_SIMPLE
+        )
+        # print(contours)
+        return contours
+
+    cropped_image = cropped(source)
+    output = cropped_image.copy()
+    contours = contours_of(hsv_filtered(blurred(cropped_image)))
+
     # Parse contours
     for contour in contours:
         # flatrect =cv2.boundingRect(contour)
@@ -80,7 +113,10 @@ class Camera:
 
     def get_frame(self) -> Image:
         """Returns the raw image currently provided by the camera"""
-        return self.frames[int(time.time()) % 4]
+        # return self.frames[int(time.time()) % 4]
+        frame = self.frames[3]
+        # print(frame.shape, frame.dtype)
+        return frame
 
     def get_processed_frame(self) -> Image:
         """Returns the current frame of the processed video"""

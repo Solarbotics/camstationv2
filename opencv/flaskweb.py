@@ -17,16 +17,18 @@ def index() -> str:
 
 
 # https://blog.miguelgrinberg.com/post/video-streaming-with-flask
-def gen(cam: camera.Camera) -> t.Generator[bytes, None, None]:
-    """Yields byte content of responses to reply with."""
-    while True:
-        frame = cam.get_jpg()
-        yield b"--frame\r\n" + b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n"
-
-
 @app.route("/camera")
 def video_feed() -> flask.Response:
     """Returns the modified camera stream."""
+
+    # inner generator
+    def gen(cam: camera.Camera) -> t.Generator[bytes, None, None]:
+        """Yields byte content of responses to reply with."""
+        while True:
+            frame = cam.get_jpg()
+            yield b"--frame\r\n" + b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n"
+
+    # return a response streaming from the camera
     return flask.Response(
         gen(camera.Camera()), mimetype="multipart/x-mixed-replace; boundary=frame"
     )
