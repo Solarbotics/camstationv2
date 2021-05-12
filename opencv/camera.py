@@ -5,6 +5,8 @@ import typing as t
 
 import cv2
 import numpy
+import picamera
+from picamera.array import PiRGBArray
 
 # import imutils
 
@@ -101,22 +103,33 @@ class Camera:
     """Class to generically provide camera frames."""
 
     def __init__(self) -> None:
-        base = cv2.imread("test.jpg")
-        self.frames = [
-            cv2.rotate(base, code)
-            for code in (
-                cv2.ROTATE_90_CLOCKWISE,
-                cv2.ROTATE_90_COUNTERCLOCKWISE,
-                cv2.ROTATE_180,
-            )
-        ] + [base]
+
+        # Initialize camera
+        self.camera = picamera.PiCamera()
+        self.camera.framerate = 32
+        self.capture = PiRGBArray(self.camera)
+
+        self.generator = self.camera.capture_continuous(
+            self.capture, format="bgr", use_video_port=True
+        )
+
+        # Wait for camera to warm up
+        WARMUP_TIME = 0.1  # seconds
+        time.sleep(WARMUP_TIME)
 
     def get_frame(self) -> Image:
         """Returns the raw image currently provided by the camera"""
-        # return self.frames[int(time.time()) % 4]
-        frame = self.frames[3]
-        # print(frame.shape, frame.dtype)
-        return frame
+        # Capture from camera
+        # self.camera.capture(self.capture, format="bgr")
+        # camera.capture_continuous(self.capture, format="bgr")
+        # https://picamera.readthedocs.io/en/release-1.13/api_camera.html#picamera.PiCamera.capture_continuous
+
+        # Truncate existing capture
+        self.capture.truncate(0)
+        # Step continuous capture
+        next(self.generator)
+        # Return array component
+        return self.capture
 
     def get_processed_frame(self) -> Image:
         """Returns the current frame of the processed video"""
