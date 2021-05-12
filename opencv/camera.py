@@ -44,9 +44,9 @@ def process_frame(source: Image) -> t.Tuple[Image, t.Sequence[t.Tuple[int, int]]
 
     def cropped(image: Image) -> Image:
         """Crop step"""
-        yMargin = 50
-        leftMargin = 450
-        rightMargin = 500
+        yMargin = 1  # 50
+        leftMargin = 1  # 450
+        rightMargin = 1  # 500
         return image[yMargin:-yMargin, leftMargin:-rightMargin].copy()
 
     def blurred(image: Image) -> Image:
