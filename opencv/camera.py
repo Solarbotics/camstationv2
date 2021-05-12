@@ -129,7 +129,7 @@ class Camera:
         # Step continuous capture
         next(self.generator)
         # Return array component
-        return self.capture
+        return self.capture.array
 
     def get_processed_frame(self) -> Image:
         """Returns the current frame of the processed video"""
