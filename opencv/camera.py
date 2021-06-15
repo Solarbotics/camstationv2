@@ -1,5 +1,7 @@
 """Handles video collection and processing"""
 
+import dataclasses
+import itertools
 import time
 import typing as t
 
@@ -9,6 +11,19 @@ import picamera
 from picamera.array import PiRGBArray
 
 # import imutils
+
+T = t.TypeVar("T")
+
+def pipeline(source: T, transformations: t.Sequence[t.Callable[[T], T]]) -> t.Iterable[T]:
+    """Apply a sequence of transformations to a starting value.
+
+    Returns each intermediate result in a sequence,
+    in the same order as the transformations were applied.
+
+    Returns source as the first element of the iterable.
+    """
+    return itertools.accumulate(transformations, func=lambda a, f: f(a), initial=source)
+
 
 # Minor typing restriction, far from sound but better than nothing
 Image = numpy.ndarray
@@ -24,89 +39,160 @@ def scale(image: Image, factor: float = 1) -> Image:
 
 # https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_gui/py_image_display/py_image_display.html
 
-
-def process_frame(source: Image) -> t.Tuple[Image, t.Sequence[t.Tuple[int, int]]]:
-    """Process the given source image,
-    resizing and modifying it, searching for bounding boxes.
-
-    Returns the highlighted image and the width and height of the bounding box.
+@dataclasses.dataclass()
+class ImageProcessor:
+    """Handles processing a raw image.
+    
+    Constructed with various configuration numbers.
     """
 
-    # list of sizes of contour boxes
-    sizes = []
+    cam_matrix: numpy.ndarray
+    dist_coeffs: numpy.ndarray
 
-    # pipeline:
-    # crop (?)
-    # copy for output
-    # blur
-    # filter (hsv)
-    # find contours
+    def process_frame(self, source: Image) -> t.Tuple[Image, t.Sequence[t.Tuple[int, int]]]:
+        """Process the given source image,
+        resizing and modifying it, searching for bounding boxes.
 
-    def cropped(image: Image) -> Image:
-        """Crop step"""
-        yMargin = 1  # 50
-        leftMargin = 1  # 450
-        rightMargin = 1  # 500
-        return image[yMargin:-yMargin, leftMargin:-rightMargin].copy()
-
-    def blurred(image: Image) -> Image:
-        """Applies blur step"""
-        return cv2.blur(image, (6 * 50 + 1, 6 * 50 + 1), 50)
-
-    def hsv_filtered(image: Image) -> Image:
-        """Applies HSV filtering step.
-
-        Expets BGR Image.
+        Returns the highlighted image and the width and height of the bounding box.
         """
-        # Convert to HSV
-        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        # Filter based on value
-        hue_range = (0.0, 180.0)
-        sat_range = (0.0, 255.0)
-        value_range = (0.0, 80.0)
-        return cv2.inRange(hsv, *zip(hue_range, sat_range, value_range))
 
-    def contours_of(image: Image) -> numpy.ndarray:
-        """Contour finding step.
+        # list of sizes of contour boxes
+        sizes = []
 
-        Expects single channel Image.
-        """
-        contours, _ = cv2.findContours(
-            image, mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_SIMPLE
-        )
-        # print(contours)
-        return contours
+        # pipeline:
+        # crop (?)
+        # copy for output
+        # monoscale
+        # deskew (or after blur?)
+        # blur
+        # filter (hsv)
+        # find contours
 
-    cropped_image = cropped(source)
-    output = cropped_image.copy()
-    contours = contours_of(hsv_filtered(blurred(cropped_image)))
+        # Pixel (corrected) to inches:
+        # Sticky pad size:
+        # 1 & 15/16 Inches = 1.9375 in
+        # by 1 & 15/32 Inches = 1.46875 in
+        # 233 by 168 pixels (approximate)
+        # Ratio: 120.258 and 114.382 (not bad, not good)
+        pixels_per_inch = 120 # TODO very approximate, should also look at arcuro?
 
-    # Parse contours
-    for contour in contours:
-        # flatrect =cv2.boundingRect(contour)
-        # https://docs.opencv.org/3.1.0/dd/d49/tutorial_py_contour_features.html
-        rect = cv2.minAreaRect(contour)
-        # print(rect)
-        box = numpy.int0(cv2.boxPoints(rect))
 
-        red = (0, 0, 255)
-        highlight_color = red
-        highlight_thickness = 8
-        cv2.drawContours(output, [box], 0, highlight_color, highlight_thickness)
+        def corrected(image: Image) -> Image:
+            """Correct distortion of the image."""
+            newCamMatrix, valid = cv2.getOptimalNewCameraMatrix(
+                self.cam_matrix, self.dist_coeffs,
+                imageSize=(image.shape[0], image.shape[1]), alpha=1
+            )
+            return cv2.undistort(image, self.cam_matrix, self.dist_coeffs)
 
-        sizes.append(rect)
+        # def cropped(image: Image) -> Image:
+        #     """Crop step"""
+        #     yMargin = 1  # 50
+        #     leftMargin = 1  # 450
+        #     rightMargin = 1  # 500
+        #     return image[yMargin:-yMargin, leftMargin:-rightMargin].copy()
 
-    return (output, sizes)
+        def monoconvert(image: Image) -> Image:
+            """Applies monoscale step"""
+            return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        def blurred(image: Image) -> Image:
+            """Applies blur step"""
+            return cv2.blur(image, (5, 5))
+
+        def hsv_filtered(image: Image) -> Image:
+            """Applies HSV filtering step.
+
+            Expets BGR Image.
+            """
+            # Convert to HSV
+            hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+            # Filter based on value
+            hue_range = (0.0, 180.0)
+            sat_range = (0.0, 255.0)
+            value_range = (0.0, 80.0)
+            return cv2.inRange(hsv, *zip(hue_range, sat_range, value_range))
+
+        def thresholded(image: Image) -> Image:
+            """Apply grayscale thresholding step.
+
+            Expects single channel grayscale image.
+            """
+            _, thresh_output = cv2.threshold(image, 80, 255, cv2.THRESH_BINARY_INV)
+            return thresh_output
+
+        def contours_of(image: Image) -> numpy.ndarray:
+            """Contour finding step.
+
+            Expects single channel Image.
+            """
+            contours, _ = cv2.findContours(
+                image, mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_SIMPLE
+            )
+            # print(contours)
+            return contours
+
+        # corrected_image = corrected(source)
+        corrected_image = source # TODO, need to recalibrate
+        # can also probably scale cam properties by resolution scale
+        # find what default resolution was and scale to the max
+        # cropped_image = cropped(corrected_image)
+        mono = monoconvert(corrected_image)
+        blur = blurred(mono)
+        # blur = cv2.cvtColor(blur, cv2.COLOR_GRAY2BGR)
+        # filtered = hsv_filtered(blur)
+        filtered = thresholded(blur)
+        contours = contours_of(filtered)
+
+        #output = cv2.cvtColor(filtered, cv2.COLOR_GRAY2BGR)
+        # output = cv2.cvtColor(blur, cv2.COLOR_GRAY2BGR)
+        output = corrected_image
+        # Parse contours
+        MIN_SIZE = 10
+        for contour in contours:
+            # flatrect =cv2.boundingRect(contour)
+            # https://docs.opencv.org/3.1.0/dd/d49/tutorial_py_contour_features.html
+            rect = cv2.minAreaRect(contour)
+
+            if rect[1][0] >= MIN_SIZE and rect[1][1] >= MIN_SIZE:
+                # print(rect)
+                box = numpy.int0(cv2.boxPoints(rect))
+
+                blue = (255, 0, 0)
+                green = (0, 255, 0)
+                red = (0, 0, 255)
+                highlight_color = blue
+                highlight_thickness = 8
+                text_color = green
+                cv2.drawContours(output, [box], 0, highlight_color, highlight_thickness)
+                cv2.putText(output, "({:.2f}, {:.2f})".format(*[s/pixels_per_inch for s in rect[1]]), tuple(map(int, rect[0])), cv2.FONT_HERSHEY_PLAIN, 1.0, text_color)
+
+                sizes.append(rect)
+        
+        # print(sizes)
+
+        return (output, sizes)
 
 
 class Camera:
     """Class to generically provide camera frames."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        processor: ImageProcessor
+    ) -> None:
+
+        # Save processor ref for use in getting frames
+        self.processor = processor
 
         # Initialize camera
         self.camera = picamera.PiCamera()
         self.camera.framerate = 32
+        # self.camera.resolution = (64, 64)
+        # self.camera.resolution = (2592, 1944)
+        # self.camera.resolution = (2000, 1500)
+        self.camera.resolution = (2000, 1504)
+        # self.camera.resolution = (1920, 1080)
         self.capture = PiRGBArray(self.camera)
 
         self.generator = self.camera.capture_continuous(
@@ -116,6 +202,10 @@ class Camera:
         # Wait for camera to warm up
         WARMUP_TIME = 0.1  # seconds
         time.sleep(WARMUP_TIME)
+
+    def close(self) -> None:
+        """Closes the internal PiCamera and other resources."""
+        self.camera.close()
 
     def get_frame(self) -> Image:
         """Returns the raw image currently provided by the camera"""
@@ -133,7 +223,7 @@ class Camera:
 
     def get_processed_frame(self) -> Image:
         """Returns the current frame of the processed video"""
-        return process_frame(self.get_frame())[0]
+        return self.processor.process_frame(self.get_frame())[0]
 
     def get_jpg(self) -> bytes:
         """Returns the current frame, encoded as jpg"""

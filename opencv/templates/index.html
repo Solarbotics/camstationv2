@@ -5,5 +5,32 @@
   <body>
     <h1>Video Streaming Demonstration</h1>
     <img src="/camera">
+    <button id="getBounds" disabled>Get Bounds</button>
+    <div id="boundsDisp"></div>
+    <div id="configOptions">
+      <input type="text" name="threshold" id="thresholdConfig">
+    </div>
+    <script>
+      (function () {
+        "use strict";
+
+        let thresholdConfigElement = document.getElementById("thresholdConfig")
+        // console.log(thresholdConfigElement);
+        thresholdConfigElement.addEventListener("submit", function (event) {
+          console.log("hi");
+          console.log(new FormData(thresholdConfigElement));
+          // event.preventDefault();
+          fetch(
+            "/config", {
+              method: "POST",
+              data: {threshold: thresholdConfigElement.value},
+            }
+          ).finally(function () {
+            thresholdConfigElement.value = "";
+          })
+        });
+
+      })();
+    </script>
   </body>
 </html>
