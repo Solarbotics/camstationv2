@@ -18,7 +18,10 @@ logger.addHandler(logging.NullHandler())
 
 T = t.TypeVar("T")
 
-def pipeline(source: T, transformations: t.Sequence[t.Callable[[T], T]]) -> t.Iterable[T]:
+
+def pipeline(
+    source: T, transformations: t.Sequence[t.Callable[[T], T]]
+) -> t.Iterable[T]:
     """Apply a sequence of transformations to a starting value.
 
     Returns each intermediate result in a sequence,
@@ -30,7 +33,7 @@ def pipeline(source: T, transformations: t.Sequence[t.Callable[[T], T]]) -> t.It
 
 
 # Minor typing restriction, far from sound but better than nothing
-Image = numpy.ndarray
+Image = t.Union[numpy.ndarray]
 
 
 def scale(image: Image, factor: float = 1) -> Image:
@@ -43,12 +46,14 @@ def scale(image: Image, factor: float = 1) -> Image:
 
 # https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_gui/py_image_display/py_image_display.html
 
+
 class ImageProcessor:
     """Abstract class for objects capable of transforming an image."""
 
     def process_frame(self, source: Image) -> t.Tuple[Image, t.Any]:
         """Performs no processing, base method."""
         return (source, None)
+
 
 @dataclasses.dataclass()
 class ChessboardFinder(ImageProcessor):
@@ -57,31 +62,45 @@ class ChessboardFinder(ImageProcessor):
     points_width: int
     points_height: int
 
-    def process_frame(self, source: Image) -> t.Tuple[Image, numpy.ndarray]:
+    def process_frame(
+        self, source: Image
+    ) -> t.Tuple[Image, t.Tuple[numpy.ndarray, bytes]]:
         """Searchs for chessboard."""
 
-        ret, corners = cv2.findChessboardCorners(source, (self.points_height, self.points_width))
+        ret, corners = cv2.findChessboardCorners(
+            source, (self.points_height, self.points_width)
+        )
         # ret, corners = True, []
 
         output = source
+
         if not ret:
             logger.debug("Failed")
+        else:
+            output = cv2.drawChessboardCorners(
+                output, (self.points_height, self.points_width), corners
+            )
 
         output = scale(output, factor=0.25)
 
-        return (output, corners)
+        encoding = cv2.imencode(".jpg", output)
+
+        return (output, (corners, encoding))
+
 
 @dataclasses.dataclass()
 class ImageSizer(ImageProcessor):
     """Handles processing a raw image.
-    
+
     Constructed with various configuration numbers.
     """
 
     cam_matrix: numpy.ndarray
     dist_coeffs: numpy.ndarray
 
-    def process_frame(self, source: Image) -> t.Tuple[Image, t.Sequence[t.Tuple[int, int]]]:
+    def process_frame(
+        self, source: Image
+    ) -> t.Tuple[Image, t.Sequence[t.Tuple[int, int]]]:
         """Process the given source image,
         resizing and modifying it, searching for bounding boxes.
 
@@ -106,14 +125,15 @@ class ImageSizer(ImageProcessor):
         # by 1 & 15/32 Inches = 1.46875 in
         # 233 by 168 pixels (approximate)
         # Ratio: 120.258 and 114.382 (not bad, not good)
-        pixels_per_inch = 120 # TODO very approximate, should also look at arcuro?
-
+        pixels_per_inch = 120  # TODO very approximate, should also look at arcuro?
 
         def corrected(image: Image) -> Image:
             """Correct distortion of the image."""
             newCamMatrix, valid = cv2.getOptimalNewCameraMatrix(
-                self.cam_matrix, self.dist_coeffs,
-                imageSize=(image.shape[0], image.shape[1]), alpha=1
+                self.cam_matrix,
+                self.dist_coeffs,
+                imageSize=(image.shape[0], image.shape[1]),
+                alpha=1,
             )
             return cv2.undistort(image, self.cam_matrix, self.dist_coeffs)
 
@@ -163,7 +183,7 @@ class ImageSizer(ImageProcessor):
         filtered = thresholded(blur)
         contours = contours_of(filtered)
 
-        #output = cv2.cvtColor(filtered, cv2.COLOR_GRAY2BGR)
+        # output = cv2.cvtColor(filtered, cv2.COLOR_GRAY2BGR)
         # output = cv2.cvtColor(blur, cv2.COLOR_GRAY2BGR)
         output = corrected_image
         # Parse contours
@@ -184,10 +204,17 @@ class ImageSizer(ImageProcessor):
                 highlight_thickness = 8
                 text_color = green
                 cv2.drawContours(output, [box], 0, highlight_color, highlight_thickness)
-                cv2.putText(output, "({:.2f}, {:.2f})".format(*[s/pixels_per_inch for s in rect[1]]), tuple(map(int, rect[0])), cv2.FONT_HERSHEY_PLAIN, 1.0, text_color)
+                cv2.putText(
+                    output,
+                    "({:.2f}, {:.2f})".format(*[s / pixels_per_inch for s in rect[1]]),
+                    tuple(map(int, rect[0])),
+                    cv2.FONT_HERSHEY_PLAIN,
+                    1.0,
+                    text_color,
+                )
 
                 sizes.append(rect)
-        
+
         # print(sizes)
 
         # display = output
@@ -199,10 +226,7 @@ class ImageSizer(ImageProcessor):
 class Camera:
     """Class to generically provide camera frames."""
 
-    def __init__(
-        self,
-        processor: ImageProcessor
-    ) -> None:
+    def __init__(self, processor: ImageProcessor) -> None:
 
         # Save processor ref for use in getting frames
         self.processor = processor
@@ -211,7 +235,7 @@ class Camera:
         self.camera = picamera.PiCamera()
         self.camera.framerate = 32
         # self.camera.resolution = (64, 64)
-        
+
         # Default: 1280 by 720
         # (2.025, 2.7)
         self.camera.resolution = (2592, 1944)
@@ -225,12 +249,6 @@ class Camera:
             self.capture, format="bgr", use_video_port=True
         )
 
-        # TODO get rid of this magic number
-        # self.cvcamera = cv2.VideoCapture(1)
-        # self.cvcamera.set(cv2.CAP_PROP_FRAME_WIDTH, 2000)
-        # self.cvcamera.set(cv2.CAP_PROP_FRAME_HEIGHT, 2000)
-        # self.cvcamera.set(cv2.CAP_PROP_FPS, 30)
-
         # Frame currently available to other workers
         # Last frame obtained by Camera
         self.frame: t.Optional[Image] = None
@@ -242,7 +260,6 @@ class Camera:
     def close(self) -> None:
         """Closes the internal PiCamera and other resources."""
         self.camera.close()
-        self.cvcamera.release()
 
     def get_frame(self) -> Image:
         """Returns the raw image currently provided by the camera"""
@@ -258,14 +275,10 @@ class Camera:
         logger.debug("Got frame")
         # Return array component
         # print(self.capture.array.shape)
-        self.frame = self.capture.array
-        return self.frame
-
-        # grabbed, frame = self.cvcamera.read()
+        frame = self.capture.array
         # TODO handle the possibility of not getting a frame
-        # print(grabbed)
-        # print(frame.shape)
-        # return frame
+        self.frame = frame
+        return frame
 
     def get_processed_frame(self) -> Image:
         """Returns the current frame of the processed video"""
@@ -287,9 +300,10 @@ def main() -> None:
     """Main function"""
     source = cv2.imread("test.jpg")
 
-    out, boxes = process_frame(source)
+    proc = ImageProcessor()
+    out, result = proc.process_frame(source)
 
-    print(boxes)
+    print(result)
 
     cv2.imshow("output", scale(out, 0.125))
     cv2.waitKey(60 * 1000)

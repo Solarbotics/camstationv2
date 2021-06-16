@@ -10,7 +10,9 @@ import camera
 
 root_logger = logging.getLogger()
 handler = logging.StreamHandler()
-handler.setFormatter(logging.Formatter("[%(asctime)s] [%(levelname)s] %(name)s - %(message)s"))
+handler.setFormatter(
+    logging.Formatter("[%(asctime)s] [%(levelname)s] %(name)s - %(message)s")
+)
 root_logger.addHandler(handler)
 root_logger.setLevel(logging.INFO)
 
@@ -29,6 +31,7 @@ pi_camera = camera.Camera(
     # processor=camera.ImageSizer(cam_matrix=camera_matrix, dist_coeffs=distortion_matrix)
     processor=camera.ImageProcessor()
 )
+
 
 @app.route("/")
 def index() -> str:
@@ -56,9 +59,11 @@ def video_feed() -> flask.Response:
         gen(pi_camera), mimetype="multipart/x-mixed-replace; boundary=frame"
     )
 
+
 @app.route("/dims")
 def rect_dimensions() -> str:
     """Returns the current dimensions seen"""
+
 
 @app.route("/snap", methods=["POST"])
 def snap_corners() -> str:
@@ -67,7 +72,11 @@ def snap_corners() -> str:
     if frame is not None:
         # TODO magic numbers
         processor = camera.ChessboardFinder(7, 5)
-        result, data = processor.process_frame(frame)
+        _, (data, encoded) = processor.process_frame(frame)
+        with open("corners.txt", "a+") as file:
+            print(data, file=file)
+        with open("example.jpg", "wb") as imFile:
+            imFile.write(encoded)
         return "Snapped"
     else:
         return "No frame available"
@@ -78,6 +87,7 @@ def set_config() -> str:
     """Updates the config."""
     print(flask.request.form)
     return "Success"
+
 
 # https://www.pyimagesearch.com/2019/09/02/opencv-stream-video-to-web-browser-html-page/
 # https://blog.miguelgrinberg.com/post/video-streaming-with-flask
