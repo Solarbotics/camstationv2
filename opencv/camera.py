@@ -2,6 +2,7 @@
 
 import dataclasses
 import itertools
+import logging
 import time
 import typing as t
 
@@ -9,6 +10,9 @@ import cv2
 import numpy
 import picamera
 from picamera.array import PiRGBArray
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 # import imutils
 
@@ -39,8 +43,36 @@ def scale(image: Image, factor: float = 1) -> Image:
 
 # https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_gui/py_image_display/py_image_display.html
 
-@dataclasses.dataclass()
 class ImageProcessor:
+    """Abstract class for objects capable of transforming an image."""
+
+    def process_frame(self, source: Image) -> t.Tuple[Image, t.Any]:
+        """Performs no processing, base method."""
+        return (source, None)
+
+@dataclasses.dataclass()
+class ChessboardFinder(ImageProcessor):
+    """Looks for an processes a chessboard."""
+
+    points_width: int
+    points_height: int
+
+    def process_frame(self, source: Image) -> t.Tuple[Image, numpy.ndarray]:
+        """Searchs for chessboard."""
+
+        ret, corners = cv2.findChessboardCorners(source, (self.points_height, self.points_width))
+        # ret, corners = True, []
+
+        output = source
+        if not ret:
+            logger.debug("Failed")
+
+        output = scale(output, factor=0.25)
+
+        return (output, corners)
+
+@dataclasses.dataclass()
+class ImageSizer(ImageProcessor):
     """Handles processing a raw image.
     
     Constructed with various configuration numbers.
@@ -100,19 +132,6 @@ class ImageProcessor:
             """Applies blur step"""
             return cv2.blur(image, (5, 5))
 
-        def hsv_filtered(image: Image) -> Image:
-            """Applies HSV filtering step.
-
-            Expets BGR Image.
-            """
-            # Convert to HSV
-            hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-            # Filter based on value
-            hue_range = (0.0, 180.0)
-            sat_range = (0.0, 255.0)
-            value_range = (0.0, 80.0)
-            return cv2.inRange(hsv, *zip(hue_range, sat_range, value_range))
-
         def thresholded(image: Image) -> Image:
             """Apply grayscale thresholding step.
 
@@ -132,8 +151,8 @@ class ImageProcessor:
             # print(contours)
             return contours
 
-        # corrected_image = corrected(source)
-        corrected_image = source # TODO, need to recalibrate
+        corrected_image = corrected(source)
+        # corrected_image = source #, need to recalibrate
         # can also probably scale cam properties by resolution scale
         # find what default resolution was and scale to the max
         # cropped_image = cropped(corrected_image)
@@ -171,7 +190,10 @@ class ImageProcessor:
         
         # print(sizes)
 
-        return (output, sizes)
+        # display = output
+        display = scale(numpy.concatenate((source, output), axis=1), factor=0.125)
+
+        return (display, sizes)
 
 
 class Camera:
@@ -189,15 +211,29 @@ class Camera:
         self.camera = picamera.PiCamera()
         self.camera.framerate = 32
         # self.camera.resolution = (64, 64)
-        # self.camera.resolution = (2592, 1944)
+        
+        # Default: 1280 by 720
+        # (2.025, 2.7)
+        self.camera.resolution = (2592, 1944)
+
         # self.camera.resolution = (2000, 1500)
-        self.camera.resolution = (2000, 1504)
+        # self.camera.resolution = (2000, 1504)
         # self.camera.resolution = (1920, 1080)
         self.capture = PiRGBArray(self.camera)
 
         self.generator = self.camera.capture_continuous(
             self.capture, format="bgr", use_video_port=True
         )
+
+        # TODO get rid of this magic number
+        # self.cvcamera = cv2.VideoCapture(1)
+        # self.cvcamera.set(cv2.CAP_PROP_FRAME_WIDTH, 2000)
+        # self.cvcamera.set(cv2.CAP_PROP_FRAME_HEIGHT, 2000)
+        # self.cvcamera.set(cv2.CAP_PROP_FPS, 30)
+
+        # Frame currently available to other workers
+        # Last frame obtained by Camera
+        self.frame: t.Optional[Image] = None
 
         # Wait for camera to warm up
         WARMUP_TIME = 0.1  # seconds
@@ -206,6 +242,7 @@ class Camera:
     def close(self) -> None:
         """Closes the internal PiCamera and other resources."""
         self.camera.close()
+        self.cvcamera.release()
 
     def get_frame(self) -> Image:
         """Returns the raw image currently provided by the camera"""
@@ -218,12 +255,23 @@ class Camera:
         self.capture.truncate(0)
         # Step continuous capture
         next(self.generator)
+        logger.debug("Got frame")
         # Return array component
-        return self.capture.array
+        # print(self.capture.array.shape)
+        self.frame = self.capture.array
+        return self.frame
+
+        # grabbed, frame = self.cvcamera.read()
+        # TODO handle the possibility of not getting a frame
+        # print(grabbed)
+        # print(frame.shape)
+        # return frame
 
     def get_processed_frame(self) -> Image:
         """Returns the current frame of the processed video"""
-        return self.processor.process_frame(self.get_frame())[0]
+        frame = self.processor.process_frame(self.get_frame())[0]
+        logger.debug("Processed frame")
+        return frame
 
     def get_jpg(self) -> bytes:
         """Returns the current frame, encoded as jpg"""

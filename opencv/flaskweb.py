@@ -1,5 +1,6 @@
 """Testing webapp"""
 
+import logging
 import typing as t
 
 import flask
@@ -7,11 +8,27 @@ import numpy
 
 import camera
 
+root_logger = logging.getLogger()
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter("[%(asctime)s] [%(levelname)s] %(name)s - %(message)s"))
+root_logger.addHandler(handler)
+root_logger.setLevel(logging.INFO)
+
 # flask app
 app = flask.Flask(__name__, static_url_path="/static", static_folder="static")
 
 camera_matrix = numpy.loadtxt("cameraMatrix.txt", dtype="float", delimiter=",")
+scale_matrix = numpy.loadtxt("cameraScaleMatrix.txt", dtype="float", delimiter=",")
+camera_matrix *= scale_matrix
 distortion_matrix = numpy.loadtxt("cameraDistortion.txt", dtype="float", delimiter=",")
+
+# TODO hmmm. would this scale well? production quality?
+# Construct camera object
+# TODO broken?
+pi_camera = camera.Camera(
+    # processor=camera.ImageSizer(cam_matrix=camera_matrix, dist_coeffs=distortion_matrix)
+    processor=camera.ImageProcessor()
+)
 
 @app.route("/")
 def index() -> str:
@@ -23,11 +40,6 @@ def index() -> str:
 @app.route("/camera")
 def video_feed() -> flask.Response:
     """Returns the modified camera stream."""
-
-    # Construct camera object
-    pi_camera = camera.Camera(
-        processor=camera.ImageProcessor(cam_matrix=camera_matrix, dist_coeffs=distortion_matrix)
-    )
 
     # inner generator
     def gen(cam: camera.Camera) -> t.Generator[bytes, None, None]:
@@ -47,6 +59,19 @@ def video_feed() -> flask.Response:
 @app.route("/dims")
 def rect_dimensions() -> str:
     """Returns the current dimensions seen"""
+
+@app.route("/snap", methods=["POST"])
+def snap_corners() -> str:
+    """Takes a snapshot and searches for chessboard corners."""
+    frame = pi_camera.frame
+    if frame is not None:
+        # TODO magic numbers
+        processor = camera.ChessboardFinder(7, 5)
+        result, data = processor.process_frame(frame)
+        return "Snapped"
+    else:
+        return "No frame available"
+
 
 @app.route("/config", methods=["POST"])
 def set_config() -> str:

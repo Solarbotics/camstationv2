@@ -7,6 +7,8 @@
     <img src="/camera">
     <button id="getBounds" disabled>Get Bounds</button>
     <div id="boundsDisp"></div>
+    <button id="snapshot">Snapshot</button>
+    <div id="snapshotResult"></div>
     <div id="configOptions">
       <input type="text" name="threshold" id="thresholdConfig">
     </div>
@@ -27,6 +29,15 @@
             }
           ).finally(function () {
             thresholdConfigElement.value = "";
+          })
+        });
+
+        let snapshotButton = document.getElementById("snapshot");
+        snapshotButton.addEventListener("click", function (event) {
+          fetch("/snap", {
+            method: "POST"
+          }).then(function (response) {
+            document.getELementById("snapshotResult").textContent = response.body;
           })
         });
 
