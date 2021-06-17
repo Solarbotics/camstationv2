@@ -125,7 +125,7 @@ class ImageSizer(ImageProcessor):
         # by 1 & 15/32 Inches = 1.46875 in
         # 233 by 168 pixels (approximate)
         # Ratio: 120.258 and 114.382 (not bad, not good)
-        pixels_per_inch = 120  # TODO very approximate, should also look at arcuro?
+        pixels_per_inch = 1  # TODO approximate measure, should also look at arcuro?
 
         def corrected(image: Image) -> Image:
             """Correct distortion of the image."""
@@ -210,7 +210,7 @@ class ImageSizer(ImageProcessor):
                 green = (0, 255, 0)
                 red = (0, 0, 255)
                 highlight_color = blue
-                highlight_thickness = 8
+                highlight_thickness = 4
                 text_color = green
                 cv2.drawContours(output, [box], 0, highlight_color, highlight_thickness)
                 cv2.putText(
@@ -218,9 +218,9 @@ class ImageSizer(ImageProcessor):
                     text="({:.2f}, {:.2f})".format(*[s / pixels_per_inch for s in rect[1]]),
                     org=tuple(map(int, rect[0])),
                     fontFace=cv2.FONT_HERSHEY_PLAIN,
-                    fontScale=4.0,
+                    fontScale=1.0,
                     color=text_color,
-                    thickness=2,
+                    thickness=1,
                 )
 
                 sizes.append(rect)
@@ -231,10 +231,9 @@ class ImageSizer(ImageProcessor):
         # back = numpy.full(source.shape, 127, dtype=numpy.uint8)
         # back[:output.shape[0], :output.shape[1]] = output
         # print(source.shape, back.shape, source.dtype, back.dtype)
-        display = scale(numpy.concatenate((source, output), axis=1), factor=0.25)
+        display = scale(numpy.concatenate((source, output), axis=1), factor=1)
 
         return (display, sizes)
-
 
 class Camera:
     """Class to generically provide camera frames."""
@@ -245,13 +244,19 @@ class Camera:
         self.processor = processor
 
         # Initialize camera
-        self.camera = picamera.PiCamera()
-        self.camera.framerate = 32
+        # resolution = (2592, 1944)
+        # resolution = (648, 486)
+        resolution = (640, 480)
+        # resolution=None
+        framerate = 32
+        # self.camera = picamera.PiCamera(framerate=framerate, resolution=resolution)
+        self.camera = picamera.PiCamera(resolution=resolution)
+        # self.camera.framerate = 32
         # self.camera.resolution = (64, 64)
 
         # Default: 1280 by 720
         # (2.025, 2.7)
-        self.camera.resolution = (2592, 1944)
+        # self.camera.resolution = (2592, 1944)
 
         # self.camera.resolution = (2000, 1500)
         # self.camera.resolution = (2000, 1504)
@@ -261,6 +266,7 @@ class Camera:
         self.generator = self.camera.capture_continuous(
             self.capture, format="bgr", use_video_port=True
         )
+        self.closed = False
 
         # Frame currently available to other workers
         # Last frame obtained by Camera
@@ -272,7 +278,10 @@ class Camera:
 
     def close(self) -> None:
         """Closes the internal PiCamera and other resources."""
+        self.generator = None
+        self.closed = True
         self.camera.close()
+        
 
     def get_frame(self) -> Image:
         """Returns the raw image currently provided by the camera"""
@@ -284,14 +293,17 @@ class Camera:
         # Truncate existing capture
         self.capture.truncate(0)
         # Step continuous capture
-        next(self.generator)
-        logger.debug("Got frame")
-        # Return array component
-        # print(self.capture.array.shape)
-        frame = self.capture.array
-        # TODO handle the possibility of not getting a frame
-        self.frame = frame
-        return frame
+        if self.generator is not None:
+            next(self.generator)
+            logger.debug("Got frame")
+            # Return array component
+            # print(self.capture.array.shape)
+            frame = self.capture.array
+            # TODO handle the possibility of not getting a frame
+            self.frame = frame
+            return frame
+        else:
+            raise OSError("Camera closed.")
 
     def get_processed_frame(self) -> Image:
         """Returns the current frame of the processed video"""

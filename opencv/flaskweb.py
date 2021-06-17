@@ -20,8 +20,8 @@ root_logger.setLevel(logging.INFO)
 app = flask.Flask(__name__, static_url_path="/static", static_folder="static")
 
 camera_matrix = numpy.loadtxt("newCameraMatrix.txt", dtype="float", delimiter=",")
-# scale_matrix = numpy.loadtxt("cameraScaleMatrix.txt", dtype="float", delimiter=",")
-# camera_matrix *= scale_matrix
+scale_matrix = numpy.loadtxt("cameraScaleMatrix.txt", dtype="float", delimiter=",")
+camera_matrix *= scale_matrix
 distortion_matrix = numpy.loadtxt("newCameraDistortion.txt", dtype="float", delimiter=",")
 
 # TODO hmmm. would this scale well? production quality?
@@ -95,7 +95,7 @@ def snap_corners() -> str:
 @app.route("/config", methods=["POST"])
 def set_config() -> str:
     """Updates the config."""
-    print(flask.request.form)
+    print(flask.request.json)
     return "Success"
 
 

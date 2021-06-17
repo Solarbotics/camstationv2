@@ -9,27 +9,38 @@
     <div id="boundsDisp"></div>
     <button id="snapshot">Snapshot</button>
     <div id="snapshotResult"></div>
-    <div id="configOptions">
-      <input type="text" name="threshold" id="thresholdConfig">
+    <form id="configOptions">
+      <input type="range" min="0" max="255" name="threshold" id="thresholdConfig">
+      <output name="thresholdOutput"></output>
+      <input type="submit" value="Configure">
     </div>
     <script>
       (function () {
         "use strict";
 
-        let thresholdConfigElement = document.getElementById("thresholdConfig")
-        // console.log(thresholdConfigElement);
-        thresholdConfigElement.addEventListener("submit", function (event) {
-          console.log("hi");
-          console.log(new FormData(thresholdConfigElement));
-          // event.preventDefault();
+        let configOptions = document.getElementById("configOptions")
+        configOptions.addEventListener("input", function (event) {
+          let form = document.getElementById("configOptions");
+          form.elements["thresholdOutput"].value = form.elements["threshold"].value;
+        });
+        // console.log(configOptions);
+        configOptions.addEventListener("submit", function (event) {
+          // console.log(event);
+          event.preventDefault();
+          let form = document.getElementById("configOptions")
+          // console.log(form);
           fetch(
             "/config", {
               method: "POST",
-              data: {threshold: thresholdConfigElement.value},
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({threshold: form.elements["threshold"].value}),
             }
           ).finally(function () {
-            thresholdConfigElement.value = "";
+            // form.reset();
           })
+          return false
         });
 
         let snapshotButton = document.getElementById("snapshot");
