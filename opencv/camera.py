@@ -76,14 +76,14 @@ class ChessboardFinder(ImageProcessor):
 
         if not ret:
             logger.debug("Failed")
-        else:
-            output = cv2.drawChessboardCorners(
-                output, (self.points_height, self.points_width), corners
-            )
 
-        output = scale(output, factor=0.25)
+        output = cv2.drawChessboardCorners(
+            output, (self.points_height, self.points_width), corners, ret
+        )
 
-        encoding = cv2.imencode(".jpg", output)
+        # output = scale(output, factor=0.25)
+
+        _, encoding = cv2.imencode(".jpg", output)
 
         return (output, (corners, encoding))
 
@@ -129,13 +129,22 @@ class ImageSizer(ImageProcessor):
 
         def corrected(image: Image) -> Image:
             """Correct distortion of the image."""
-            newCamMatrix, valid = cv2.getOptimalNewCameraMatrix(
+            # roi: region of interest
+            newCamMatrix, roi = cv2.getOptimalNewCameraMatrix(
                 self.cam_matrix,
                 self.dist_coeffs,
                 imageSize=(image.shape[0], image.shape[1]),
                 alpha=1,
+                newImgSize=(image.shape[0], image.shape[1]),
             )
-            return cv2.undistort(image, self.cam_matrix, self.dist_coeffs)
+            # undistorted = cv2.undistort(
+            #     image, self.cam_matrix, self.dist_coeffs, newCameraMatrix=newCamMatrix
+            # )
+            undistorted = cv2.undistort(image, self.cam_matrix, self.dist_coeffs)
+            # x, y, width, height = roi
+            # print(roi)
+            # return undistorted[y:y+height, x:x+width]
+            return undistorted
 
         # def cropped(image: Image) -> Image:
         #     """Crop step"""
@@ -206,11 +215,12 @@ class ImageSizer(ImageProcessor):
                 cv2.drawContours(output, [box], 0, highlight_color, highlight_thickness)
                 cv2.putText(
                     output,
-                    "({:.2f}, {:.2f})".format(*[s / pixels_per_inch for s in rect[1]]),
-                    tuple(map(int, rect[0])),
-                    cv2.FONT_HERSHEY_PLAIN,
-                    1.0,
-                    text_color,
+                    text="({:.2f}, {:.2f})".format(*[s / pixels_per_inch for s in rect[1]]),
+                    org=tuple(map(int, rect[0])),
+                    fontFace=cv2.FONT_HERSHEY_PLAIN,
+                    fontScale=4.0,
+                    color=text_color,
+                    thickness=2,
                 )
 
                 sizes.append(rect)
@@ -218,7 +228,10 @@ class ImageSizer(ImageProcessor):
         # print(sizes)
 
         # display = output
-        display = scale(numpy.concatenate((source, output), axis=1), factor=0.125)
+        # back = numpy.full(source.shape, 127, dtype=numpy.uint8)
+        # back[:output.shape[0], :output.shape[1]] = output
+        # print(source.shape, back.shape, source.dtype, back.dtype)
+        display = scale(numpy.concatenate((source, output), axis=1), factor=0.25)
 
         return (display, sizes)
 

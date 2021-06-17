@@ -19,18 +19,18 @@ root_logger.setLevel(logging.INFO)
 # flask app
 app = flask.Flask(__name__, static_url_path="/static", static_folder="static")
 
-camera_matrix = numpy.loadtxt("cameraMatrix.txt", dtype="float", delimiter=",")
-scale_matrix = numpy.loadtxt("cameraScaleMatrix.txt", dtype="float", delimiter=",")
-camera_matrix *= scale_matrix
-distortion_matrix = numpy.loadtxt("cameraDistortion.txt", dtype="float", delimiter=",")
+camera_matrix = numpy.loadtxt("newCameraMatrix.txt", dtype="float", delimiter=",")
+# scale_matrix = numpy.loadtxt("cameraScaleMatrix.txt", dtype="float", delimiter=",")
+# camera_matrix *= scale_matrix
+distortion_matrix = numpy.loadtxt("newCameraDistortion.txt", dtype="float", delimiter=",")
 
 # TODO hmmm. would this scale well? production quality?
 # Construct camera object
 # TODO broken?
-pi_camera = camera.Camera(
-    # processor=camera.ImageSizer(cam_matrix=camera_matrix, dist_coeffs=distortion_matrix)
-    processor=camera.ImageProcessor()
-)
+# pi_camera = camera.Camera(
+#     processor=camera.ImageSizer(cam_matrix=camera_matrix, dist_coeffs=distortion_matrix)
+#     # processor=camera.ImageProcessor()
+# )
 
 
 @app.route("/")
@@ -43,6 +43,11 @@ def index() -> str:
 @app.route("/camera")
 def video_feed() -> flask.Response:
     """Returns the modified camera stream."""
+
+    pi_camera = camera.Camera(
+        processor=camera.ImageSizer(cam_matrix=camera_matrix, dist_coeffs=distortion_matrix)
+        # processor=camera.ImageProcessor()
+    )
 
     # inner generator
     def gen(cam: camera.Camera) -> t.Generator[bytes, None, None]:
@@ -72,9 +77,14 @@ def snap_corners() -> str:
     if frame is not None:
         # TODO magic numbers
         processor = camera.ChessboardFinder(7, 5)
-        _, (data, encoded) = processor.process_frame(frame)
-        with open("corners.txt", "a+") as file:
-            print(data, file=file)
+        _, result = processor.process_frame(frame)
+        data, encoded = result
+
+        print(data, encoded)
+
+        with open("corners.npy", "wb+") as file:
+            numpy.save(file, data)
+        
         with open("example.jpg", "wb") as imFile:
             imFile.write(encoded)
         return "Snapped"

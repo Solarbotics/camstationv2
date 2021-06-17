@@ -1,2 +1,4 @@
 cvvenv/
 camvenv/
+*.npy
+*.jpg
