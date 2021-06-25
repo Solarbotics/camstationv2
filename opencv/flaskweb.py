@@ -32,21 +32,25 @@ distortion_matrix = numpy.loadtxt("newCameraDistortion.txt", dtype="float", deli
 # )
 def get_camera(app: flask.Flask) -> camera.Camera:
     """Get the camera."""
-    if "camera" in flask.g:
-        return flask.g.camera
-    else:
-        cam = camera.Camera(
-            processor=camera.ImageSizer(cam_matrix=camera_matrix, dist_coeffs=distortion_matrix)
-            # processor=camera.ImageProcessor()
-        )
-        flask.g.camera = cam
-        return cam
+    # if "camera" in flask.g:
+    #     return flask.g.camera
+    # else:
+    #     cam = camera.Camera(
+    #         processor=camera.ImageSizer(cam_matrix=camera_matrix, dist_coeffs=distortion_matrix)
+    #         # processor=camera.ImageProcessor()
+    #     )
+    #     flask.g.camera = cam
+    #     return cam
+    return camera.Camera(
+        processor=camera.ImageSizer(cam_matrix=camera_matrix, dist_coeffs=distortion_matrix)
+        # processor=camera.ImageProcessor()
+    )
 
 def close_camera(error: t.Optional[Exception] = None) -> None:
     """Close the camera."""
-    cam = flask.g.pop("camera", None)
-    if cam is not None:
-        cam.close()
+    # cam = flask.g.pop("camera", None)
+    # if cam is not None:
+    #     cam.close()
     
 
 
@@ -76,7 +80,8 @@ def create_app() -> flask.Flask:
                     frame = cam.get_jpg()
                     yield b"--frame\r\n" + b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n"
             finally:
-                close_camera()
+                pass
+                # close_camera()
 
         # return a response streaming from the camera
         return flask.Response(

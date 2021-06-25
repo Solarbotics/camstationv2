@@ -3,6 +3,7 @@
 import dataclasses
 import itertools
 import logging
+import threading
 import time
 import typing as t
 
@@ -235,79 +236,94 @@ class ImageSizer(ImageProcessor):
 
         return (display, sizes)
 
+def open_camera() -> picamera.PiCamera:
+    """Open a properly configured PiCamera."""
+    resolution = (320, 240)
+    # resolution = (640, 480)
+    # framerate = 32
+    return picamera.PiCamera(resolution=resolution)
+
 class Camera:
     """Class to generically provide camera frames."""
+
+    # Time to wait before killing a thread
+    IDLE_TIME: int = 10
+
+    thread: t.Optional[threading.Thread] = None
+    frame: t.Optional[Image] = None
+    last_request: int = 0
+
+    @classmethod
+    def read_camera(cls) -> None:
+        # Open camera in context manager for proper cleanup
+        with open_camera() as camera:
+            logger.info("Started PiCamera")
+            
+            # Wait for camera to warm up
+            WARMUP_TIME = 2  # seconds
+            # camera.start_preview()
+            time.sleep(WARMUP_TIME)
+
+            # Create PiRGBArray for cam output
+            capture = PiRGBArray(camera)
+
+            # Create a generator that will output into capture
+            # on each iteration
+            generator = camera.capture_continuous(
+                capture, format="bgr", use_video_port=True
+            )
+
+            # We don't actually use the output of the generator
+            for _ in generator:
+                # Extract the numpy frame
+                cls.frame = capture.array.copy()
+                # logger.debug("Inside generator: %s", cls.frame)
+                # Truncate so capture can be reused
+                capture.truncate(0)
+                # Break once there are no clients, stopping the thread
+                if time.time() - cls.last_request > cls.IDLE_TIME:
+                    break
+        
+        logger.info("Closed PiCamera.")
+        # Remove this thread object from the class once it finishes
+        cls.thread = None
+
+    @classmethod
+    def initialize(cls) -> None:
+        """Initialize the camera."""
+        # logger.debug("Inside initialize, thread: %s", cls.thread)
+        # Start thread if it is not running
+        if cls.thread is None:
+            logger.debug("Creating thread")
+            cls.thread = threading.Thread(target=cls.read_camera)
+            cls.thread.start()
+            # Busy wait until a frame is available
+            while cls.frame is None:
+                # Yield control
+                time.sleep(0)
+            # logger.debug("First frame: %s", cls.frame)
+
+    @classmethod
+    def get_frame(cls) -> Image:
+        """Get the latest image frame."""
+        cls.last_request = time.time()
+        logger.debug("Before initialize")
+        cls.initialize()
+        
+        # logger.debug("Inside get_frame: %s", cls.frame)
+        return cls.frame
+
 
     def __init__(self, processor: ImageProcessor) -> None:
 
         # Save processor ref for use in getting frames
         self.processor = processor
 
-        # Initialize camera
-        # resolution = (2592, 1944)
-        # resolution = (648, 486)
-        resolution = (640, 480)
-        # resolution=None
-        framerate = 32
-        # self.camera = picamera.PiCamera(framerate=framerate, resolution=resolution)
-        self.camera = picamera.PiCamera(resolution=resolution)
-        # self.camera.framerate = 32
-        # self.camera.resolution = (64, 64)
-
-        # Default: 1280 by 720
-        # (2.025, 2.7)
-        # self.camera.resolution = (2592, 1944)
-
-        # self.camera.resolution = (2000, 1500)
-        # self.camera.resolution = (2000, 1504)
-        # self.camera.resolution = (1920, 1080)
-        self.capture = PiRGBArray(self.camera)
-
-        self.generator = self.camera.capture_continuous(
-            self.capture, format="bgr", use_video_port=True
-        )
-        self.closed = False
-
-        # Frame currently available to other workers
-        # Last frame obtained by Camera
-        self.frame: t.Optional[Image] = None
-
-        # Wait for camera to warm up
-        WARMUP_TIME = 0.1  # seconds
-        time.sleep(WARMUP_TIME)
-
-    def close(self) -> None:
-        """Closes the internal PiCamera and other resources."""
-        self.generator = None
-        self.closed = True
-        self.camera.close()
-        
-
-    def get_frame(self) -> Image:
-        """Returns the raw image currently provided by the camera"""
-        # Capture from camera
-        # self.camera.capture(self.capture, format="bgr")
-        # camera.capture_continuous(self.capture, format="bgr")
-        # https://picamera.readthedocs.io/en/release-1.13/api_camera.html#picamera.PiCamera.capture_continuous
-
-        # Truncate existing capture
-        self.capture.truncate(0)
-        # Step continuous capture
-        if self.generator is not None:
-            next(self.generator)
-            logger.debug("Got frame")
-            # Return array component
-            # print(self.capture.array.shape)
-            frame = self.capture.array
-            # TODO handle the possibility of not getting a frame
-            self.frame = frame
-            return frame
-        else:
-            raise OSError("Camera closed.")
-
     def get_processed_frame(self) -> Image:
         """Returns the current frame of the processed video"""
-        frame = self.processor.process_frame(self.get_frame())[0]
+        raw = type(self).get_frame()
+        # logger.debug("Inside get_processed_frame: %s", raw)
+        frame = self.processor.process_frame(raw)[0]
         logger.debug("Processed frame")
         return frame
 
