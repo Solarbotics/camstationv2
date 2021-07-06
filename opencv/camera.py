@@ -51,7 +51,7 @@ def scale(image: Image, factor: float = 1) -> Image:
 class ImageProcessor:
     """Abstract class for objects capable of transforming an image."""
 
-    def process_frame(self, source: Image) -> t.Tuple[Image, t.Any]:
+    def process_frame(self, source: Image, **options: t.Any) -> t.Tuple[Image, t.Any]:
         """Performs no processing, base method."""
         return (source, None)
 
@@ -64,7 +64,7 @@ class ChessboardFinder(ImageProcessor):
     points_height: int
 
     def process_frame(
-        self, source: Image
+        self, source: Image, **options: t.Any
     ) -> t.Tuple[Image, t.Tuple[numpy.ndarray, bytes]]:
         """Searchs for chessboard."""
 
@@ -100,13 +100,17 @@ class ImageSizer(ImageProcessor):
     dist_coeffs: numpy.ndarray
 
     def process_frame(
-        self, source: Image
+        self, source: Image, **options: t.Any
     ) -> t.Tuple[Image, t.Sequence[t.Tuple[int, int]]]:
         """Process the given source image,
         resizing and modifying it, searching for bounding boxes.
 
         Returns the highlighted image and the width and height of the bounding box.
         """
+
+        blue = (255, 0, 0)
+        green = (0, 255, 0)
+        red = (0, 0, 255)
 
         # list of sizes of contour boxes
         sizes = []
@@ -126,7 +130,7 @@ class ImageSizer(ImageProcessor):
         # by 1 & 15/32 Inches = 1.46875 in
         # 233 by 168 pixels (approximate)
         # Ratio: 120.258 and 114.382 (not bad, not good)
-        pixels_per_inch = 1  # TODO approximate measure, should also look at arcuro?
+        pixels_per_centimeter = 85/8.255  # TODO approximate measure, should also look at arcuro?
 
         def corrected(image: Image) -> Image:
             """Correct distortion of the image."""
@@ -162,12 +166,12 @@ class ImageSizer(ImageProcessor):
             """Applies blur step"""
             return cv2.blur(image, (5, 5))
 
-        def thresholded(image: Image) -> Image:
+        def thresholded(image: Image, upper: int = 0) -> Image:
             """Apply grayscale thresholding step.
 
             Expects single channel grayscale image.
             """
-            _, thresh_output = cv2.threshold(image, 80, 255, cv2.THRESH_BINARY_INV)
+            _, thresh_output = cv2.threshold(image, upper, 255, cv2.THRESH_BINARY_INV)
             return thresh_output
 
         def contours_of(image: Image) -> numpy.ndarray:
@@ -190,12 +194,17 @@ class ImageSizer(ImageProcessor):
         blur = blurred(mono)
         # blur = cv2.cvtColor(blur, cv2.COLOR_GRAY2BGR)
         # filtered = hsv_filtered(blur)
-        filtered = thresholded(blur)
+        filtered = thresholded(blur, options["threshold"])
         contours = contours_of(filtered)
 
         # output = cv2.cvtColor(filtered, cv2.COLOR_GRAY2BGR)
         # output = cv2.cvtColor(blur, cv2.COLOR_GRAY2BGR)
-        output = corrected_image
+        # output = corrected_image
+        output = corrected_image.copy()
+        overlay = numpy.zeros(output.shape, dtype=numpy.uint8)
+        overlay[filtered > 0] = red
+        # output[filtered > 0] = red
+        output = cv2.addWeighted(output, 0.9, overlay, 0.1, gamma=0)
         # Parse contours
         MIN_SIZE = 10
         for contour in contours:
@@ -207,16 +216,13 @@ class ImageSizer(ImageProcessor):
                 # print(rect)
                 box = numpy.int0(cv2.boxPoints(rect))
 
-                blue = (255, 0, 0)
-                green = (0, 255, 0)
-                red = (0, 0, 255)
                 highlight_color = blue
-                highlight_thickness = 4
+                highlight_thickness = 1
                 text_color = green
                 cv2.drawContours(output, [box], 0, highlight_color, highlight_thickness)
                 cv2.putText(
                     output,
-                    text="({:.2f}, {:.2f})".format(*[s / pixels_per_inch for s in rect[1]]),
+                    text="({0:.{prec}f}, {1:.{prec}f})".format(*[s / pixels_per_centimeter for s in rect[1]], prec=2),
                     org=tuple(map(int, rect[0])),
                     fontFace=cv2.FONT_HERSHEY_PLAIN,
                     fontScale=1.0,
@@ -319,17 +325,17 @@ class Camera:
         # Save processor ref for use in getting frames
         self.processor = processor
 
-    def get_processed_frame(self) -> Image:
+    def get_processed_frame(self, **options: t.Any) -> t.Tuple[Image, t.Any]:
         """Returns the current frame of the processed video"""
         raw = type(self).get_frame()
         # logger.debug("Inside get_processed_frame: %s", raw)
-        frame = self.processor.process_frame(raw)[0]
+        result = self.processor.process_frame(raw, **options)
         logger.debug("Processed frame")
-        return frame
+        return result
 
-    def get_jpg(self) -> bytes:
+    def get_jpg(self, **options: t.Any) -> bytes:
         """Returns the current frame, encoded as jpg"""
-        return cv2.imencode(".jpg", self.get_processed_frame())[1].tobytes()
+        return cv2.imencode(".jpg", self.get_processed_frame(**options)[0])[1].tobytes()
 
 
 # https://www.pyimagesearch.com/2019/09/02/opencv-stream-video-to-web-browser-html-page/

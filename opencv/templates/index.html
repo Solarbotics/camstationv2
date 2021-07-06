@@ -1,6 +1,13 @@
 <html>
   <head>
     <title>Video Streaming Demonstration</title>
+    <style>
+      .outline {
+        border-style: solid;
+        border-color: red;
+        border-width: 4px;
+      }
+    </style>
   </head>
   <body>
     <h1>Video Streaming Demonstration</h1>
@@ -18,15 +25,7 @@
       (function () {
         "use strict";
 
-        let configOptions = document.getElementById("configOptions")
-        configOptions.addEventListener("input", function (event) {
-          let form = document.getElementById("configOptions");
-          form.elements["thresholdOutput"].value = form.elements["threshold"].value;
-        });
-        // console.log(configOptions);
-        configOptions.addEventListener("submit", function (event) {
-          // console.log(event);
-          event.preventDefault();
+        function submit_threshold() {
           let form = document.getElementById("configOptions")
           // console.log(form);
           fetch(
@@ -40,16 +39,40 @@
           ).finally(function () {
             // form.reset();
           })
+        }
+
+        let configOptions = document.getElementById("configOptions")
+        configOptions.addEventListener("input", function (event) {
+          let form = document.getElementById("configOptions");
+          form.elements["thresholdOutput"].value = form.elements["threshold"].value;
+          submit_threshold();
+        });
+        // console.log(configOptions);
+        configOptions.addEventListener("submit", function (event) {
+          // console.log(event);
+          event.preventDefault();
+          submit_threshold();
           return false
         });
 
+        function repeat(func, times, delay) {
+          func(times);
+          if (times > 0) {
+            setTimeout(() => repeat(func, times - 1, delay), delay);
+          }
+        }
+
         let snapshotButton = document.getElementById("snapshot");
         snapshotButton.addEventListener("click", function (event) {
-          fetch("/snap", {
-            method: "POST"
-          }).then(function (response) {
-            document.getELementById("snapshotResult").textContent = response.body;
-          })
+          repeat(function (index) {
+            fetch("/snap", {
+              method: "POST"
+            }).then(function (response) {
+              response.text().then(text => document.getElementById("snapshotResult").textContent = text);
+              snapshotButton.classList.add("outline");
+              setTimeout(() => snapshotButton.classList.remove("outline"), 1000);
+            })
+          }, 10, 15000);
         });
 
       })();

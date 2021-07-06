@@ -1,6 +1,8 @@
 """Testing webapp"""
 
 import logging
+import os
+import pathlib
 import typing as t
 
 import flask
@@ -16,6 +18,8 @@ handler.setFormatter(
 )
 root_logger.addHandler(handler)
 root_logger.setLevel(logging.INFO)
+
+logger = logging.getLogger(__name__)
 
 # Load calibration matrices
 camera_matrix = numpy.loadtxt("newCameraMatrix.txt", dtype="float", delimiter=",")
@@ -51,8 +55,24 @@ def close_camera(error: t.Optional[Exception] = None) -> None:
     # cam = flask.g.pop("camera", None)
     # if cam is not None:
     #     cam.close()
-    
 
+def next_name(path: str) -> str:
+    """Find the next numeric unused path.
+    
+    E.g. if dir is empty, next_name('dir/file') will return 'dir/file0',
+    but if 'dir/file0', 'dir/file1' already exist, then 'dir/file2' will be returned.
+
+    If the provided path has an extension (. character), indexes will be checked/added
+    before the first period.
+    """
+    name, *extensions = path.split(".")
+    extension = ".".join(extensions)
+    index = 0
+    while os.path.exists(f"{name}{index}.{extension}"):
+        index += 1
+    return f"{name}{index}.{extension}"
+    
+DEFAULT_THRESHOLD = 80
 
 def create_app() -> flask.Flask:
     """Create and setup the Flask application."""
@@ -77,7 +97,7 @@ def create_app() -> flask.Flask:
             """Yields byte content of responses to reply with."""
             try:
                 while True:
-                    frame = cam.get_jpg()
+                    frame = cam.get_jpg(threshold=app.config.get("threshold", DEFAULT_THRESHOLD))
                     yield b"--frame\r\n" + b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n"
             finally:
                 pass
@@ -97,30 +117,26 @@ def create_app() -> flask.Flask:
     @app.route("/snap", methods=["POST"])
     def snap_corners() -> str:
         """Takes a snapshot and searches for chessboard corners."""
-        frame = pi_camera.frame
-        if frame is not None:
-            # TODO magic numbers
-            processor = camera.ChessboardFinder(7, 5)
-            _, result = processor.process_frame(frame)
-            data, encoded = result
-
-            print(data, encoded)
-
-            with open("corners.npy", "wb+") as file:
-                numpy.save(file, data)
-            
-            with open("example.jpg", "wb") as imFile:
-                imFile.write(encoded)
-            return "Snapped"
-        else:
-            return "No frame available"
+        # TODO magic numbers
+        _, result = camera.Camera(processor=camera.ChessboardFinder(7, 5)).get_processed_frame()
+        data, encoded = result
+        # print(data, encoded)
+        pathlib.Path("corners").mkdir(parents=True, exist_ok=True)
+        with open(next_name("corners/corners.npy"), "wb") as file:
+            numpy.save(file, data)
+        pathlib.Path("images").mkdir(parents=True, exist_ok=True)
+        with open(next_name("images/example.jpg"), "wb") as imFile:
+            imFile.write(encoded)
+        return "Snapped"
 
 
     @app.route("/config", methods=["POST"])
-    def set_config() -> str:
+    def set_config() -> flask.Response:
         """Updates the config."""
-        print(flask.request.json)
-        return "Success"
+        data = flask.request.json
+        logger.info("Config: %s", data)
+        app.config["threshold"] = int(data["threshold"])
+        return flask.jsonify({"message": "Config updated"})
 
     # Teardown
     # app.teardown_appcontext(close_camera)
