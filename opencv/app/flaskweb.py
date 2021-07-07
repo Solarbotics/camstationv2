@@ -1,14 +1,13 @@
 """Testing webapp"""
 
 import logging
-import os
-import pathlib
 import typing as t
 
 import flask
 import numpy
 
-import camera
+from . import camera
+from . import calibrate
 
 # Enable logging
 root_logger = logging.getLogger()
@@ -22,10 +21,10 @@ root_logger.setLevel(logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Load calibration matrices
-camera_matrix = numpy.loadtxt("newCameraMatrix.txt", dtype="float", delimiter=",")
+camera_matrix = numpy.loadtxt("cameraMatrix.txt", dtype="float", delimiter=",")
 scale_matrix = numpy.loadtxt("cameraScaleMatrix.txt", dtype="float", delimiter=",")
 camera_matrix *= scale_matrix
-distortion_matrix = numpy.loadtxt("newCameraDistortion.txt", dtype="float", delimiter=",")
+distortion_matrix = numpy.loadtxt("cameraDistortion.txt", dtype="float", delimiter=",")
 
 # TODO hmmm. would this scale well? production quality?
 # Construct camera object
@@ -55,22 +54,6 @@ def close_camera(error: t.Optional[Exception] = None) -> None:
     # cam = flask.g.pop("camera", None)
     # if cam is not None:
     #     cam.close()
-
-def next_name(path: str) -> str:
-    """Find the next numeric unused path.
-    
-    E.g. if dir is empty, next_name('dir/file') will return 'dir/file0',
-    but if 'dir/file0', 'dir/file1' already exist, then 'dir/file2' will be returned.
-
-    If the provided path has an extension (. character), indexes will be checked/added
-    before the first period.
-    """
-    name, *extensions = path.split(".")
-    extension = ".".join(extensions)
-    index = 0
-    while os.path.exists(f"{name}{index}.{extension}"):
-        index += 1
-    return f"{name}{index}.{extension}"
     
 DEFAULT_THRESHOLD = 80
 
@@ -118,15 +101,7 @@ def create_app() -> flask.Flask:
     def snap_corners() -> str:
         """Takes a snapshot and searches for chessboard corners."""
         # TODO magic numbers
-        _, result = camera.Camera(processor=camera.ChessboardFinder(7, 5)).get_processed_frame()
-        data, encoded = result
-        # print(data, encoded)
-        pathlib.Path("corners").mkdir(parents=True, exist_ok=True)
-        with open(next_name("corners/corners.npy"), "wb") as file:
-            numpy.save(file, data)
-        pathlib.Path("images").mkdir(parents=True, exist_ok=True)
-        with open(next_name("images/example.jpg"), "wb") as imFile:
-            imFile.write(encoded)
+        calibrate.save_snapshot(7, 5)
         return "Snapped"
 
 

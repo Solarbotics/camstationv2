@@ -130,7 +130,8 @@ class ImageSizer(ImageProcessor):
         # by 1 & 15/32 Inches = 1.46875 in
         # 233 by 168 pixels (approximate)
         # Ratio: 120.258 and 114.382 (not bad, not good)
-        pixels_per_centimeter = 85/8.255  # TODO approximate measure, should also look at arcuro?
+        pixels_per_centimeter = 1
+        # pixels_per_centimeter = 85/8.255  # TODO approximate measure, should also look at arcuro?
 
         def corrected(image: Image) -> Image:
             """Correct distortion of the image."""
@@ -151,12 +152,16 @@ class ImageSizer(ImageProcessor):
             # return undistorted[y:y+height, x:x+width]
             return undistorted
 
-        # def cropped(image: Image) -> Image:
-        #     """Crop step"""
-        #     yMargin = 1  # 50
-        #     leftMargin = 1  # 450
-        #     rightMargin = 1  # 500
-        #     return image[yMargin:-yMargin, leftMargin:-rightMargin].copy()
+        def cropped(image: Image) -> Image:
+            """Crop step"""
+            leftMargin = 0
+            rightMargin = 30
+            topMargin = 0
+            bottomMargin = 0
+            return image[
+                topMargin:(image.shape[0]-bottomMargin),
+                leftMargin:(image.shape[1]-rightMargin)
+            ].copy()
 
         def monoconvert(image: Image) -> Image:
             """Applies monoscale step"""
@@ -189,8 +194,8 @@ class ImageSizer(ImageProcessor):
         # corrected_image = source #, need to recalibrate
         # can also probably scale cam properties by resolution scale
         # find what default resolution was and scale to the max
-        # cropped_image = cropped(corrected_image)
-        mono = monoconvert(corrected_image)
+        cropped_image = cropped(corrected_image)
+        mono = monoconvert(cropped_image)
         blur = blurred(mono)
         # blur = cv2.cvtColor(blur, cv2.COLOR_GRAY2BGR)
         # filtered = hsv_filtered(blur)
@@ -200,7 +205,7 @@ class ImageSizer(ImageProcessor):
         # output = cv2.cvtColor(filtered, cv2.COLOR_GRAY2BGR)
         # output = cv2.cvtColor(blur, cv2.COLOR_GRAY2BGR)
         # output = corrected_image
-        output = corrected_image.copy()
+        output = cropped_image.copy()
         overlay = numpy.zeros(output.shape, dtype=numpy.uint8)
         overlay[filtered > 0] = red
         # output[filtered > 0] = red
@@ -235,10 +240,10 @@ class ImageSizer(ImageProcessor):
         # print(sizes)
 
         # display = output
-        # back = numpy.full(source.shape, 127, dtype=numpy.uint8)
-        # back[:output.shape[0], :output.shape[1]] = output
+        back = numpy.full(source.shape, 0, dtype=numpy.uint8)
+        back[:output.shape[0], :output.shape[1]] = output
         # print(source.shape, back.shape, source.dtype, back.dtype)
-        display = scale(numpy.concatenate((source, output), axis=1), factor=1)
+        display = scale(numpy.concatenate((source, back), axis=1), factor=1)
 
         return (display, sizes)
 
