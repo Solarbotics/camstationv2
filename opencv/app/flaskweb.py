@@ -8,6 +8,7 @@ import numpy
 
 from . import camera
 from . import calibrate
+from . import photo
 
 # Enable logging
 root_logger = logging.getLogger()
@@ -103,6 +104,12 @@ def create_app() -> flask.Flask:
         # TODO magic numbers
         calibrate.save_snapshot(7, 5)
         return "Snapped"
+
+    @app.route("/photos", methods=["POST"])
+    def take_photos() -> str:
+        """Take a photo from each remote camera."""
+        photo.capture_image_set("camImages")
+        return "Photos taken"
 
 
     @app.route("/config", methods=["POST"])
