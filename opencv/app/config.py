@@ -34,3 +34,11 @@ class PhotoConfig:
     names: t.Mapping[str, str]
 
 photo = PhotoConfig(raw["photo"]["timeformat"], dict(raw["photo"]["names"]))
+
+@dataclasses.dataclass()
+class WebConfig:
+    """WebConfig Schema."""
+
+    threshold: int
+
+web = WebConfig(raw["web"]["threshold"])

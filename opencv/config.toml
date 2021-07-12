@@ -6,3 +6,6 @@ timeformat = "%Y-%m-%d_%H:%M:%S"
 "usb:001,005" = "secondary"
 "usb:001,006" = "tertiary"
 "usb:001,007" = "quaternary"
+
+[web]
+threshold = 80

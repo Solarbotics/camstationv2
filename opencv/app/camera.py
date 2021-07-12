@@ -154,7 +154,7 @@ class ImageSizer(ImageProcessor):
         def cropped(image: Image) -> Image:
             """Crop step"""
             leftMargin = 0
-            rightMargin = 0 # 30
+            rightMargin = 30 # 30
             topMargin = 0
             bottomMargin = 0
             return image[

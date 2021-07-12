@@ -8,6 +8,7 @@ import numpy
 
 from . import camera
 from . import calibrate
+from . import config
 from . import photo
 
 # Enable logging
@@ -81,7 +82,7 @@ def create_app() -> flask.Flask:
             """Yields byte content of responses to reply with."""
             try:
                 while True:
-                    frame = cam.get_jpg(threshold=app.config.get("threshold", DEFAULT_THRESHOLD))
+                    frame = cam.get_jpg(threshold=app.config.get("threshold", config.web.threshold))
                     yield b"--frame\r\n" + b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n"
             finally:
                 pass
@@ -93,10 +94,13 @@ def create_app() -> flask.Flask:
         )
 
 
-    @app.route("/dims")
+    @app.route("/bounds", methods=["GET", "POST"])
     def rect_dimensions() -> str:
         """Returns the current dimensions seen"""
-
+        data = get_camera(app).get_processed_frame(
+            threshold=app.config.get("threshold", config.web.threshold)
+        )[1]
+        return str(data[0][1])
 
     @app.route("/snap", methods=["POST"])
     def snap_corners() -> str:
