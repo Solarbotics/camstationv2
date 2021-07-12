@@ -9,19 +9,32 @@
       }
     </style>
   </head>
+
   <body>
-    <h1>Camera Station</h1>
-    <img src="/camera">
-    <button id="getBounds" disabled>Get Bounds</button>
-    <div id="boundsDisp"></div>
-    <button id="snapshot">Snapshot</button>
-    <div id="snapshotResult"></div>
-    <form id="configOptions">
+    <div class="row">
+      <h1>Camera Station</h1>
+    </div>
+    <div class="row">
+      <img src="/camera">
+    </div>
+    <div class="row action" name="bounds">
+      <button id="bounds" disabled>Bounds</button>
+      <span id="boundsResult"></span>
+    </div>
+    <div class="row">
+      <button id="snapshot">Snapshot</button>
+      <span id="snapshotResult"></span>
+    </div>
+    <div class="row action" name="photos">
+      <button id="photos">Photos</button>
+      <span id="photosResult"></span>
+    </div>
+    <form class="row" id="configOptions">
       <input type="range" min="0" max="255" name="threshold" id="thresholdConfig">
       <output name="thresholdOutput"></output>
       <input type="submit" value="Configure">
     </form>
-    <button id="photo">Photo</button>
+
     <script>
       (function () {
         "use strict";
@@ -76,12 +89,31 @@
           }, 10, 15000);
         });
 
-        let photoButton = document.getElementById("photo");
-        photoButton.addEventListener("click", function (event) {
-          fetch("/photos", {
-            method: "POST"
+        // let photoButton = document.getElementById("photos");
+        // photoButton.addEventListener("click", function (event) {
+        //   fetch("/photos", {
+        //     method: "POST"
+        //   });
+        // })
+
+        // Setup 'actions'.
+        // Each action is a div containing a button for input
+        // and a span for output.
+        // Pressing the button submits a POST request to the endpoint
+        // identified by the 'name' attribute of the row.
+        let actions = document.getElementsByClassName("action")
+        for (const action of actions) {
+          let button = action.children[0]
+          let output = action.children[1]
+          button.addEventListener("click", function (event) {
+            output.textContent = "Working...";
+            fetch("/" + action.getAttribute("name"), {
+              method: "POST"
+            }).then(function (response) {
+              response.text().then(text => output.textContent = text);
+            })
           });
-        })
+        }
 
       })();
     </script>
