@@ -1,0 +1,8 @@
+[photo]
+timeformat = "%Y-%m-%d_%H:%M:%S"
+
+[photo.names]
+"usb:001,004" = "primary"
+"usb:001,005" = "secondary"
+"usb:001,006" = "tertiary"
+"usb:001,007" = "quaternary"

@@ -1,5 +1,7 @@
 """Take photos using remote cameras using gphoto2."""
 
+import datetime
+import pathlib
 import typing as t
 
 # note: using gphoto2 requires the user to be in the plugdev group (or root)
@@ -15,6 +17,8 @@ import gphoto2 as gp
 # port_info_list.load()
 # print(list(port_info_list))
 
+from . import config
+
 def get_cameras() -> t.Sequence[gp.camera.Camera]:
 
     # Prepare list for cameras
@@ -24,7 +28,7 @@ def get_cameras() -> t.Sequence[gp.camera.Camera]:
 
     for name, addr in gp.check_result(gp.gp_camera_autodetect()):
         idx = port_info_list.lookup_path(addr)
-        print("[info]", name,addr,idx, sep=" <|> ")
+        # print("[info]", name,addr,idx, sep=" <|> ")
         camera = gp.Camera()
         camera.set_port_info(port_info_list[idx])
         # print(port_info_list[idx].get_name())
@@ -44,19 +48,22 @@ def capture_image(camera, destination: str) -> None:
     )
     camera_file.save(destination)
 
-def capture_image_set(folder: str) -> None:
+def capture_image_set(folder: str = "photos") -> None:
     """Capture one photo from each camera."""
-    # TODO make sure folder exists using path.mkdir or whatever
+    # Make sure the folder exists
+    root = pathlib.Path(folder)
+    root.mkdir(parents=True, exist_ok=True)
     for index, camera in enumerate(get_cameras()):
-        capture_image(camera, folder+f"/{index}.jpg")
+        # Info of the camera path, i.e. the port its connected to
+        camera_path_info = camera.get_port_info().get_path()
+        # Transform into a set name (e.g. 'overhead', 'side', etc)
+        name = config.photo.names.get(camera_path_info, "unknown")
+        # Format current time for file nae
+        now = datetime.datetime.now().strftime(config.photo.timeformat)
+        # Construct filename as a string to give to gphoto
+        save_path = str(root.joinpath(pathlib.Path(f"{name}_{now}.jpg")))
+
+        capture_image(camera, save_path)
 
 if __name__ == "__main__":
-    all_cams = get_cameras()
-
-    print(all_cams)
-    # print(type(all_cams[0]))
-    # print([entry for entry in dir(gp) if entry.lower().startswith("gp")])
-
-    for index, cam in enumerate(all_cams):
-        capture_image(cam, f"camImages/image{index}.jpg")
-
+    capture_image_set()

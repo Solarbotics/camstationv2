@@ -108,7 +108,7 @@ def create_app() -> flask.Flask:
     @app.route("/photos", methods=["POST"])
     def take_photos() -> str:
         """Take a photo from each remote camera."""
-        photo.capture_image_set("camImages")
+        photo.capture_image_set("photos")
         return "Photos taken"
 
 

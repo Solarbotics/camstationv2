@@ -2,4 +2,5 @@ opencv-python>=4.5
 numpy>=1.20
 flask
 picamera[array]
+toml
 # imutils
