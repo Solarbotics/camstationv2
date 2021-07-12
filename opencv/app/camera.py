@@ -139,14 +139,13 @@ class ImageSizer(ImageProcessor):
             newCamMatrix, roi = cv2.getOptimalNewCameraMatrix(
                 self.cam_matrix,
                 self.dist_coeffs,
-                imageSize=(image.shape[0], image.shape[1]),
-                alpha=1,
-                newImgSize=(image.shape[0], image.shape[1]),
+                imageSize=(image.shape[1], image.shape[0]),
+                alpha=0,
             )
-            # undistorted = cv2.undistort(
-            #     image, self.cam_matrix, self.dist_coeffs, newCameraMatrix=newCamMatrix
-            # )
-            undistorted = cv2.undistort(image, self.cam_matrix, self.dist_coeffs)
+            undistorted = cv2.undistort(
+                image, self.cam_matrix, self.dist_coeffs, newCameraMatrix=newCamMatrix
+            )
+            # undistorted = cv2.undistort(image, self.cam_matrix, self.dist_coeffs)
             # x, y, width, height = roi
             # print(roi)
             # return undistorted[y:y+height, x:x+width]
@@ -155,7 +154,7 @@ class ImageSizer(ImageProcessor):
         def cropped(image: Image) -> Image:
             """Crop step"""
             leftMargin = 0
-            rightMargin = 30
+            rightMargin = 0 # 30
             topMargin = 0
             bottomMargin = 0
             return image[
