@@ -42,3 +42,15 @@ class WebConfig:
     threshold: int
 
 web = WebConfig(raw["web"]["threshold"])
+
+@dataclasses.dataclass()
+class ScaleConfig:
+    """ScaleConfig Schema."""
+
+    port: str
+    baudrate: int
+    timeout: float
+
+    pause: float
+
+scale = ScaleConfig(raw["scale"]["port"], raw["scale"]["baudrate"], raw["scale"]["timeout"], raw["scale"]["pause"])

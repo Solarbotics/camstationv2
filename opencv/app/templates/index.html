@@ -29,6 +29,14 @@
       <button id="photos">Photos</button>
       <span id="photosResult"></span>
     </div>
+    <div class="row action" name="tare">
+      <button id="tare">Tare</button>
+      <span id="tareResult"></span>
+    </div>
+    <div class="row action" name="weight" action="GET">
+      <button id="weight">Weight</button>
+      <span id="weightResult"></span>
+    </div>
     <form class="row" id="configOptions">
       <input type="range" min="0" max="255" name="threshold" id="thresholdConfig">
       <output name="thresholdOutput"></output>
@@ -103,12 +111,16 @@
         // identified by the 'name' attribute of the row.
         let actions = document.getElementsByClassName("action")
         for (const action of actions) {
-          let button = action.children[0]
-          let output = action.children[1]
+          let button = action.children[0];
+          let output = action.children[1];
+          let httpMethod = action.getAttribute("action");
+          if (httpMethod === null) {
+            httpMethod = "POST";
+          }
           button.addEventListener("click", function (event) {
             output.textContent = "Working...";
             fetch("/" + action.getAttribute("name"), {
-              method: "POST"
+              method: httpMethod
             }).then(function (response) {
               response.text().then(text => output.textContent = text);
             })

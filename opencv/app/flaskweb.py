@@ -10,6 +10,7 @@ from . import camera
 from . import calibrate
 from . import config
 from . import photo
+from . import scale
 
 # Enable logging
 root_logger = logging.getLogger()
@@ -115,6 +116,16 @@ def create_app() -> flask.Flask:
         photo.capture_image_set("photos")
         return "Photos taken"
 
+    @app.route("/tare", methods=["POST"])
+    def tare_scale() -> str:
+        """Tare the scale."""
+        scale.Scale().tare()
+        return "Scale tared"
+
+    @app.route("/weight", methods=["GET"])
+    def get_weight() -> str:
+        """Tare the scale."""
+        return str(scale.Scale().read())
 
     @app.route("/config", methods=["POST"])
     def set_config() -> flask.Response:

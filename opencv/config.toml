@@ -9,3 +9,9 @@ timeformat = "%Y-%m-%d_%H:%M:%S"
 
 [web]
 threshold = 80
+
+[scale]
+port = "/dev/ttyUSB0"
+baudrate = 9600
+timeout = 4
+pause = 3
