@@ -54,3 +54,20 @@ class ScaleConfig:
     pause: float
 
 scale = ScaleConfig(raw["scale"]["port"], raw["scale"]["baudrate"], raw["scale"]["timeout"], raw["scale"]["pause"])
+
+Colour = t.Tuple[int, int, int]
+
+@dataclasses.dataclass()
+class ColoursConfig:
+
+    red: Colour
+    blue: Colour
+    green: Colour
+
+@dataclasses.dataclass()
+class CameraConfig:
+    """CameraConfig Schema."""
+
+    colours: ColoursConfig
+
+camera = CameraConfig(ColoursConfig(**{name: tuple(colour) for name, colour in raw["camera"]["colours"].items()}))

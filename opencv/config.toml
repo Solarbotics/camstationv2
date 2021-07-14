@@ -15,3 +15,10 @@ port = "/dev/ttyUSB0"
 baudrate = 9600
 timeout = 4
 pause = 3
+
+[camera]
+
+[camera.colours]
+blue = [255, 0, 0]
+green = [0, 255, 0]
+red = [0, 0, 255]

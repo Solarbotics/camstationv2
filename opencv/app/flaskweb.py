@@ -101,7 +101,7 @@ def create_app() -> flask.Flask:
         data = get_camera(app).get_processed_frame(
             threshold=app.config.get("threshold", config.web.threshold)
         )[1]
-        return str(data[0][1])
+        return str(data[0])
 
     @app.route("/snap", methods=["POST"])
     def snap_corners() -> str:
@@ -134,6 +134,21 @@ def create_app() -> flask.Flask:
         logger.info("Config: %s", data)
         app.config["threshold"] = int(data["threshold"])
         return flask.jsonify({"message": "Config updated"})
+
+    @app.route("/activate", methods=["POST"])
+    def activate() -> str:
+        """Activate a round of the camera station."""
+        # Operate undercamera for sizing
+        sizes = get_camera(app).get_processed_frame(
+            threshold=app.config.get("threshold", config.web.threshold)
+        )[1]
+        size = sizes[0]
+        # Use overhead tech to get depth
+        # Read scale
+        weight = scale.Scale().read()
+        # Take photos
+        photo.capture_image_set()
+        return "X"
 
     # Teardown
     # app.teardown_appcontext(close_camera)

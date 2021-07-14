@@ -12,6 +12,8 @@ import numpy
 import picamera
 from picamera.array import PiRGBArray
 
+from . import config
+
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
@@ -99,6 +101,22 @@ class ImageSizer(ImageProcessor):
     cam_matrix: numpy.ndarray
     dist_coeffs: numpy.ndarray
 
+    def rect_to_size(
+        self,
+        rect: t.Tuple[object, t.Tuple[float, float], object]
+    ) -> t.Tuple[float, float]:
+        """Convert a rotated bounding rect to a scaled size."""
+         # Pixel (corrected) to inches:
+        # Sticky pad size:
+        # 1 & 15/16 Inches = 1.9375 in
+        # by 1 & 15/32 Inches = 1.46875 in
+        # 233 by 168 pixels (approximate)
+        # Ratio: 120.258 and 114.382 (not bad, not good)
+        # pixels_per_centimeter = 1
+        # pixels_per_centimeter = 85/8.255  # TODO approximate measure, should also look at arcuro?
+        PIXELS_PER_CENTIMETER = 82/8.255
+        return tuple(s / PIXELS_PER_CENTIMETER for s in rect[1])
+
     def process_frame(
         self, source: Image, **options: t.Any
     ) -> t.Tuple[Image, t.Sequence[t.Tuple[int, int]]]:
@@ -107,10 +125,6 @@ class ImageSizer(ImageProcessor):
 
         Returns the highlighted image and the width and height of the bounding box.
         """
-
-        blue = (255, 0, 0)
-        green = (0, 255, 0)
-        red = (0, 0, 255)
 
         # list of sizes of contour boxes
         sizes = []
@@ -123,15 +137,6 @@ class ImageSizer(ImageProcessor):
         # blur
         # filter (hsv)
         # find contours
-
-        # Pixel (corrected) to inches:
-        # Sticky pad size:
-        # 1 & 15/16 Inches = 1.9375 in
-        # by 1 & 15/32 Inches = 1.46875 in
-        # 233 by 168 pixels (approximate)
-        # Ratio: 120.258 and 114.382 (not bad, not good)
-        pixels_per_centimeter = 1
-        # pixels_per_centimeter = 85/8.255  # TODO approximate measure, should also look at arcuro?
 
         def corrected(image: Image) -> Image:
             """Correct distortion of the image."""
@@ -206,7 +211,7 @@ class ImageSizer(ImageProcessor):
         # output = corrected_image
         output = cropped_image.copy()
         overlay = numpy.zeros(output.shape, dtype=numpy.uint8)
-        overlay[filtered > 0] = red
+        overlay[filtered > 0] = config.camera.colours.red
         # output[filtered > 0] = red
         output = cv2.addWeighted(output, 0.9, overlay, 0.1, gamma=0)
         # Parse contours
@@ -220,13 +225,13 @@ class ImageSizer(ImageProcessor):
                 # print(rect)
                 box = numpy.int0(cv2.boxPoints(rect))
 
-                highlight_color = blue
+                highlight_color = config.camera.colours.blue
                 highlight_thickness = 1
-                text_color = green
+                text_color = config.camera.colours.green
                 cv2.drawContours(output, [box], 0, highlight_color, highlight_thickness)
                 cv2.putText(
                     output,
-                    text="({0:.{prec}f}, {1:.{prec}f})".format(*[s / pixels_per_centimeter for s in rect[1]], prec=2),
+                    text="({0:.{prec}f}, {1:.{prec}f})".format(*self.rect_to_size(rect), prec=2),
                     org=tuple(map(int, rect[0])),
                     fontFace=cv2.FONT_HERSHEY_PLAIN,
                     fontScale=1.0,
@@ -234,7 +239,7 @@ class ImageSizer(ImageProcessor):
                     thickness=1,
                 )
 
-                sizes.append(rect)
+                sizes.append(self.rect_to_size(rect))
 
         # print(sizes)
 
