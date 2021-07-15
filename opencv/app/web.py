@@ -1,16 +1,15 @@
 """Testing webapp"""
 
-import json
 import logging
 import typing as t
 
 import flask
-import numpy
 
 from . import camera
 from . import calibrate
 from . import config
 from . import photo
+from . import process
 from . import scale
 
 # Enable logging
@@ -23,35 +22,6 @@ root_logger.addHandler(handler)
 root_logger.setLevel(logging.INFO)
 
 logger = logging.getLogger(__name__)
-
-# Load calibration matrices
-camera_matrix = numpy.loadtxt("cameraMatrix.txt", dtype="float", delimiter=",")
-scale_matrix = numpy.loadtxt("cameraScaleMatrix.txt", dtype="float", delimiter=",")
-camera_matrix *= scale_matrix
-distortion_matrix = numpy.loadtxt("cameraDistortion.txt", dtype="float", delimiter=",")
-
-# TODO hmmm. would this scale well? production quality?
-# Construct camera object
-# TODO broken?
-# pi_camera = camera.Camera(
-#     processor=camera.ImageSizer(cam_matrix=camera_matrix, dist_coeffs=distortion_matrix)
-#     # processor=camera.ImageProcessor()
-# )
-def get_camera(app: flask.Flask) -> camera.Camera:
-    """Get the camera."""
-    # if "camera" in flask.g:
-    #     return flask.g.camera
-    # else:
-    #     cam = camera.Camera(
-    #         processor=camera.ImageSizer(cam_matrix=camera_matrix, dist_coeffs=distortion_matrix)
-    #         # processor=camera.ImageProcessor()
-    #     )
-    #     flask.g.camera = cam
-    #     return cam
-    return camera.Camera(
-        processor=camera.ImageSizer(cam_matrix=camera_matrix, dist_coeffs=distortion_matrix)
-        # processor=camera.ImageProcessor()
-    )
 
 def close_camera(error: t.Optional[Exception] = None) -> None:
     """Close the camera."""
@@ -77,7 +47,7 @@ def create_app() -> flask.Flask:
     def video_feed() -> flask.Response:
         """Returns the modified camera stream."""
 
-        pi_camera = get_camera(app)
+        pi_camera = process.get_camera()
 
         # inner generator
         def gen(cam: camera.Camera) -> t.Generator[bytes, None, None]:
@@ -99,7 +69,7 @@ def create_app() -> flask.Flask:
     @app.route("/bounds", methods=["GET", "POST"])
     def rect_dimensions() -> str:
         """Returns the current dimensions seen"""
-        data = get_camera(app).get_processed_frame(
+        data = process.get_camera().get_processed_frame(
             threshold=app.config.get("threshold", config.web.threshold)
         )[1]
         return str(data[0])
@@ -120,7 +90,8 @@ def create_app() -> flask.Flask:
     @app.route("/tare", methods=["POST"])
     def tare_scale() -> str:
         """Tare the scale."""
-        scale.Scale().tare()
+        with scale.managed_scale() as sc:
+            sc.tare()
         return "Scale tared"
 
     @app.route("/weight", methods=["GET"])
@@ -141,20 +112,7 @@ def create_app() -> flask.Flask:
     @app.route("/activate", methods=["POST"])
     def activate() -> str:
         """Activate a round of the camera station."""
-        # Operate undercamera for sizing
-        sizes = get_camera(app).get_processed_frame(
-            threshold=app.config.get("threshold", config.web.threshold)
-        )[1]
-        size = sizes[0]
-        # Use overhead tech to get depth
-        # Read scale
-        with scale.managed_scale() as sc:
-            weight = sc.read()
-        with open("data/new.json", "w", encoding="utf-8") as f:
-            json.dump({"size": size, weight: weight}, f)
-        # Take photos
-        photo.capture_image_set("photos")
-        return "X"
+        return process.activate(threshold=app.config.get("threshold", config.web.threshold))
 
     # Teardown
     # app.teardown_appcontext(close_camera)
