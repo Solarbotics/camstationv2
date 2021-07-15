@@ -2,3 +2,4 @@ cvvenv/
 camvenv/
 *.npy
 *.jpg
+*.json

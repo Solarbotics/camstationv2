@@ -1,5 +1,6 @@
 """Testing webapp"""
 
+import json
 import logging
 import typing as t
 
@@ -146,8 +147,10 @@ def create_app() -> flask.Flask:
         # Use overhead tech to get depth
         # Read scale
         weight = scale.Scale().read()
+        with open("data/new.json", "w", encoding="utf-8") as f:
+            json.dump({"size": size, weight: weight}, f)
         # Take photos
-        photo.capture_image_set()
+        photo.capture_image_set("photos")
         return "X"
 
     # Teardown
