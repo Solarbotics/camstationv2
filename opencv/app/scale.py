@@ -27,72 +27,87 @@ class Scale:
     """Generically receive weight data."""
 
     scale: t.Optional[serial.Serial] = None
+    lock_time: float = 0
 
-    def open(self) -> None:
+    @classmethod
+    def open(cls) -> None:
         """Open scale the scale if neccesary."""
-        if self.scale is None:
-            self.scale = serial.Serial(port=COM_PORT, baudrate=COM_BAUDRATE, timeout=TIMEOUT)
-            self.unlock()
+        if cls.scale is None:
+            cls.scale = serial.Serial(port=COM_PORT, baudrate=COM_BAUDRATE, timeout=TIMEOUT)
+            cls.unlock()
             # scale.is_open()
-            logger.debug("Opened scale: %s", self.scale)
+            logger.debug("Opened scale: %s", cls.scale)
 
-    def close(self) -> None:
+    @classmethod
+    def close(cls) -> None:
         """Close scale."""
-        if self.scale is not None:
-            self.scale.close()
+        if cls.scale is not None:
+            cls.scale.close()
 
-    def unlock(self) -> None:
+    @classmethod
+    def unlock(cls) -> None:
         """Update lock time for safety."""
-        self.lock_time = time.time() + config.scale.pause
+        cls.lock_time = time.time() + config.scale.pause
 
-    def wait(self) -> None:
+    @classmethod
+    def wait(cls) -> None:
         """Wait enough time for the scale to be ready to be messaged."""
         current = time.time()
-        if current < self.lock_time:
-            logger.debug("Sleeping %s", self.lock_time - current)
-            time.sleep(self.lock_time - current)
+        if current < cls.lock_time:
+            logger.debug("Sleeping %s", cls.lock_time - current)
+            time.sleep(cls.lock_time - current)
 
-    def self(self) -> None:
+    @classmethod
+    def tare(cls) -> None:
         """Tare the scale."""
-        self.open()
-        self.wait()
+        cls.open()
+        cls.wait()
+
+        cls.scale.reset_input_buffer()
 
         logger.info("Taring scale")
-        self.scale.write(b'x1x')  # Open menu; tare, close menu
+        cls.scale.write(b'x1x')  # Open menu; tare, close menu
         logger.info("Tare complete")
 
-        self.unlock()
+        cls.unlock()
 
-    def read(self) -> float:
+    @classmethod
+    def read(cls) -> float:
         """Read weight from the scale."""
-        self.open()
-        self.wait()
+        cls.open()
+        cls.wait()
 
         logger.info("Reading scale")
         # b'r' seems to be the read signal
-        self.scale.reset_input_buffer()
-        self.scale.write(b'r')
+        cls.scale.reset_input_buffer()
+        cls.scale.write(b'r')
         # was working before flush but might as well
-        self.scale.flush()
+        cls.scale.flush()
         # upon proper behaviour, get like "0.000,kg,\r\n" 
-        scaleData = self.scale.readline().decode("ascii").split(',')
+        scaleData = cls.scale.readline().decode("ascii").split(',')
         logger.info("Scaledata: %s", scaleData)
-        self.unlock()
+        cls.unlock()
         return scaleData[0]      
 
 
     def __init__(self) -> None:
         """Initiate a view to the scale."""
-        self.lock_time: float = 0
+
+global_scale = [None]
 
 @contextlib.contextmanager
 def managed_scale() -> t.Generator[Scale, None, None]:
     """Return a context-manager version of a Scale."""
+    # scale = Scale()
+    # try:
+    #     yield scale
+    # finally:
+    #     scale.close()
     scale = Scale()
     try:
         yield scale
     finally:
-        scale.close()
+        pass
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
