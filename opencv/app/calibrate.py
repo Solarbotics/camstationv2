@@ -10,9 +10,10 @@ import numpy
 
 from . import camera
 
+
 def next_name(path: str) -> str:
     """Find the next numeric unused path.
-    
+
     E.g. if dir is empty, next_name('dir/file') will return 'dir/file0',
     but if 'dir/file0', 'dir/file1' already exist, then 'dir/file2' will be returned.
 
@@ -29,9 +30,12 @@ def next_name(path: str) -> str:
         index += 1
     return f"{name}{index}{extension}"
 
+
 def save_snapshot(width, height) -> None:
     """Take a snapshot from the camera and pull chessboard data."""
-    _, result = camera.Camera(processor=camera.ChessboardFinder(width, height)).get_processed_frame()
+    _, result = camera.Camera(
+        processor=camera.ChessboardFinder(width, height)
+    ).get_processed_frame()
     data, encoded = result
     # print(data, encoded)
     pathlib.Path("corners").mkdir(parents=True, exist_ok=True)
@@ -41,13 +45,14 @@ def save_snapshot(width, height) -> None:
     with open(next_name("images/image.jpg"), "wb") as imFile:
         imFile.write(encoded)
 
+
 def calculate_parameters(width, height, amount) -> None:
     """Use saved corner arrays and images to find camera and distortion parameters."""
     objpoints = []
     imgpoints = []
 
-    objp = numpy.zeros((height*width,3), numpy.float32)
-    objp[:,:2] = numpy.mgrid[0:height,0:width].T.reshape(-1,2)
+    objp = numpy.zeros((height * width, 3), numpy.float32)
+    objp[:, :2] = numpy.mgrid[0:height, 0:width].T.reshape(-1, 2)
 
     NUM_CORNERS = amount
 
@@ -67,14 +72,18 @@ def calculate_parameters(width, height, amount) -> None:
 
     print(image.shape)
 
-    ret, camMatrix, distCoeffs, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, (image.shape[1], image.shape[0]), None, None)
+    ret, camMatrix, distCoeffs, rvecs, tvecs = cv2.calibrateCamera(
+        objpoints, imgpoints, (image.shape[1], image.shape[0]), None, None
+    )
 
     print(ret, camMatrix, distCoeffs, rvecs, tvecs, sep="\nNEXT\n")
 
     # Calculate error
     mean_error = 0
     for i in range(len(objpoints)):
-        imgpoints2, _ = cv2.projectPoints(objpoints[i], rvecs[i], tvecs[i], camMatrix, distCoeffs)
+        imgpoints2, _ = cv2.projectPoints(
+            objpoints[i], rvecs[i], tvecs[i], camMatrix, distCoeffs
+        )
         error = cv2.norm(imgpoints[i], imgpoints2, cv2.NORM_L2) / len(imgpoints2)
         mean_error += error
 
@@ -82,6 +91,7 @@ def calculate_parameters(width, height, amount) -> None:
     numpy.savetxt("newCameraDistortion.txt", distCoeffs, delimiter=",")
 
     print(f"Error: {mean_error/len(objpoints)}")
+
 
 if __name__ == "__main__":
     BOARD_WIDTH = 7

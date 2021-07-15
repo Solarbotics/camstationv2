@@ -7,9 +7,10 @@ import toml
 
 PATHS = ["config.toml"]
 
+
 def load_data(paths: t.Iterable[str]) -> t.Mapping[str, t.Any]:
     """Load data from all provided paths.
-    
+
     Later paths have shallow key priority.
     """
     data = {}
@@ -18,14 +19,17 @@ def load_data(paths: t.Iterable[str]) -> t.Mapping[str, t.Any]:
             data.update(toml.load(fp))
     return data
 
+
 # Raw, unfiltered config data
 raw = load_data(PATHS)
+
 
 @dataclasses.dataclass()
 class FilesConfig:
     """FilesConfig Schema."""
-    
+
     timeformat: str
+
 
 files = FilesConfig(raw["files"]["timeformat"])
 
@@ -35,13 +39,15 @@ files = FilesConfig(raw["files"]["timeformat"])
 @dataclasses.dataclass()
 class PhotoConfig:
     """PhotoConfig Schema.
-    
+
     Usually not custom instantiated."""
 
     timeformat: str
     names: t.Mapping[str, str]
 
+
 photo = PhotoConfig(raw["photo"]["timeformat"], dict(raw["photo"]["names"]))
+
 
 @dataclasses.dataclass()
 class WebConfig:
@@ -49,7 +55,9 @@ class WebConfig:
 
     threshold: int
 
+
 web = WebConfig(raw["web"]["threshold"])
+
 
 @dataclasses.dataclass()
 class ScaleConfig:
@@ -61,9 +69,16 @@ class ScaleConfig:
 
     pause: float
 
-scale = ScaleConfig(raw["scale"]["port"], raw["scale"]["baudrate"], raw["scale"]["timeout"], raw["scale"]["pause"])
+
+scale = ScaleConfig(
+    raw["scale"]["port"],
+    raw["scale"]["baudrate"],
+    raw["scale"]["timeout"],
+    raw["scale"]["pause"],
+)
 
 Colour = t.Tuple[int, int, int]
+
 
 @dataclasses.dataclass()
 class ColoursConfig:
@@ -72,19 +87,27 @@ class ColoursConfig:
     blue: Colour
     green: Colour
 
+
 @dataclasses.dataclass()
 class CameraConfig:
     """CameraConfig Schema."""
 
     colours: ColoursConfig
 
-camera = CameraConfig(ColoursConfig(**{name: tuple(colour) for name, colour in raw["camera"]["colours"].items()}))
+
+camera = CameraConfig(
+    ColoursConfig(
+        **{name: tuple(colour) for name, colour in raw["camera"]["colours"].items()}
+    )
+)
+
 
 @dataclasses.dataclass()
 class PathsConfig:
 
     photos: str
     data: str
+
 
 @dataclasses.dataclass()
 class ProcessConfig:
@@ -93,4 +116,7 @@ class ProcessConfig:
     data_name: str
     paths: PathsConfig
 
-process = ProcessConfig(raw["process"]["data_name"], PathsConfig(**raw["process"]["paths"]))
+
+process = ProcessConfig(
+    raw["process"]["data_name"], PathsConfig(**raw["process"]["paths"])
+)

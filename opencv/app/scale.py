@@ -7,6 +7,7 @@ Interacting with the serial port requires being in the dialout group.
 import contextlib
 import logging
 import serial
+
 # import sys
 import time
 import typing as t
@@ -19,7 +20,7 @@ logger.addHandler(logging.NullHandler())
 # comport = 'com4'
 COM_PORT = config.scale.port
 COM_BAUDRATE = config.scale.baudrate
-TIMEOUT = config.scale.timeout # seconds
+TIMEOUT = config.scale.timeout  # seconds
 # weight = 0
 
 # TODO consider moving the scale to a seperate thread
@@ -33,7 +34,9 @@ class Scale:
     def open(cls) -> None:
         """Open scale the scale if neccesary."""
         if cls.scale is None:
-            cls.scale = serial.Serial(port=COM_PORT, baudrate=COM_BAUDRATE, timeout=TIMEOUT)
+            cls.scale = serial.Serial(
+                port=COM_PORT, baudrate=COM_BAUDRATE, timeout=TIMEOUT
+            )
             cls.unlock()
             # scale.is_open()
             logger.debug("Opened scale: %s", cls.scale)
@@ -66,7 +69,7 @@ class Scale:
         cls.scale.reset_input_buffer()
 
         logger.info("Taring scale")
-        cls.scale.write(b'x1x')  # Open menu; tare, close menu
+        cls.scale.write(b"x1x")  # Open menu; tare, close menu
         logger.info("Tare complete")
 
         cls.unlock()
@@ -80,20 +83,21 @@ class Scale:
         logger.info("Reading scale")
         # b'r' seems to be the read signal
         cls.scale.reset_input_buffer()
-        cls.scale.write(b'r')
+        cls.scale.write(b"r")
         # was working before flush but might as well
         cls.scale.flush()
-        # upon proper behaviour, get like "0.000,kg,\r\n" 
-        scaleData = cls.scale.readline().decode("ascii").split(',')
+        # upon proper behaviour, get like "0.000,kg,\r\n"
+        scaleData = cls.scale.readline().decode("ascii").split(",")
         logger.info("Scaledata: %s", scaleData)
         cls.unlock()
-        return scaleData[0]      
-
+        return scaleData[0]
 
     def __init__(self) -> None:
         """Initiate a view to the scale."""
 
+
 global_scale = [None]
+
 
 @contextlib.contextmanager
 def managed_scale() -> t.Generator[Scale, None, None]:
@@ -108,6 +112,7 @@ def managed_scale() -> t.Generator[Scale, None, None]:
         yield scale
     finally:
         pass
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
@@ -124,4 +129,3 @@ if __name__ == "__main__":
     scale.tare()
     scale.read()
     scale.close()
-

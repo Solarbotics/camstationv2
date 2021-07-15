@@ -23,13 +23,13 @@ root_logger.setLevel(logging.INFO)
 
 logger = logging.getLogger(__name__)
 
+
 def close_camera(error: t.Optional[Exception] = None) -> None:
     """Close the camera."""
     # cam = flask.g.pop("camera", None)
     # if cam is not None:
     #     cam.close()
-    
-DEFAULT_THRESHOLD = 80
+
 
 def create_app() -> flask.Flask:
     """Create and setup the Flask application."""
@@ -40,7 +40,6 @@ def create_app() -> flask.Flask:
     def index() -> str:
         """Index page"""
         return flask.render_template("index.html")
-
 
     # https://blog.miguelgrinberg.com/post/video-streaming-with-flask
     @app.route("/camera")
@@ -54,7 +53,9 @@ def create_app() -> flask.Flask:
             """Yields byte content of responses to reply with."""
             try:
                 while True:
-                    frame = cam.get_jpg(threshold=app.config.get("threshold", config.web.threshold))
+                    frame = cam.get_jpg(
+                        threshold=app.config.get("threshold", config.web.threshold)
+                    )
                     yield b"--frame\r\n" + b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n"
             finally:
                 pass
@@ -64,7 +65,6 @@ def create_app() -> flask.Flask:
         return flask.Response(
             gen(pi_camera), mimetype="multipart/x-mixed-replace; boundary=frame"
         )
-
 
     @app.route("/bounds", methods=["GET", "POST"])
     def rect_dimensions() -> str:
@@ -112,7 +112,9 @@ def create_app() -> flask.Flask:
     @app.route("/activate", methods=["POST"])
     def activate() -> str:
         """Activate a round of the camera station."""
-        return process.activate(threshold=app.config.get("threshold", config.web.threshold))
+        return process.activate(
+            threshold=app.config.get("threshold", config.web.threshold)
+        )
 
     # Teardown
     # app.teardown_appcontext(close_camera)

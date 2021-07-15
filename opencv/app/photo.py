@@ -18,6 +18,7 @@ import gphoto2 as gp
 from . import config
 from . import files
 
+
 def get_cameras() -> t.Sequence[gp.camera.Camera]:
 
     # Prepare list for cameras
@@ -36,6 +37,7 @@ def get_cameras() -> t.Sequence[gp.camera.Camera]:
         cameras.append(camera)
     return cameras
 
+
 def capture_image(camera, destination: str) -> None:
     """Capture and download an image from the given camera."""
     # trigger camera?
@@ -47,6 +49,7 @@ def capture_image(camera, destination: str) -> None:
     )
     camera_file.save(destination)
 
+
 def capture_image_set(folder: str = "photos") -> None:
     """Capture one photo from each camera."""
     # Make sure the folder exists
@@ -56,9 +59,12 @@ def capture_image_set(folder: str = "photos") -> None:
         # Transform into a set name (e.g. 'overhead', 'side', etc)
         name = config.photo.names.get(camera_path_info, "unknown")
         # Construct filename as a string to give to gphoto
-        save_path = files.data_name(name=name, folder=folder, extension="jpg", timestamp=True)
+        save_path = files.data_name(
+            name=name, folder=folder, extension="jpg", timestamp=True
+        )
 
         capture_image(camera, save_path)
+
 
 if __name__ == "__main__":
     capture_image_set()

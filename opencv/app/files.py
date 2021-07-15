@@ -6,7 +6,13 @@ import typing as t
 
 from . import config
 
-def data_name(name: str, folder: str = ".", extension: t.Optional[str] = None, timestamp: bool = False) -> str:
+
+def data_name(
+    name: str,
+    folder: str = ".",
+    extension: t.Optional[str] = None,
+    timestamp: bool = False,
+) -> str:
     """Construct a data filepath based on given parameters.
 
     Ensures the folder exists (may be a multi-folder path).

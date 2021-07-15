@@ -102,11 +102,10 @@ class ImageSizer(ImageProcessor):
     dist_coeffs: numpy.ndarray
 
     def rect_to_size(
-        self,
-        rect: t.Tuple[object, t.Tuple[float, float], object]
+        self, rect: t.Tuple[object, t.Tuple[float, float], object]
     ) -> t.Tuple[float, float]:
         """Convert a rotated bounding rect to a scaled size."""
-         # Pixel (corrected) to inches:
+        # Pixel (corrected) to inches:
         # Sticky pad size:
         # 1 & 15/16 Inches = 1.9375 in
         # by 1 & 15/32 Inches = 1.46875 in
@@ -114,7 +113,7 @@ class ImageSizer(ImageProcessor):
         # Ratio: 120.258 and 114.382 (not bad, not good)
         # pixels_per_centimeter = 1
         # pixels_per_centimeter = 85/8.255  # TODO approximate measure, should also look at arcuro?
-        PIXELS_PER_CENTIMETER = 82/8.255
+        PIXELS_PER_CENTIMETER = 82 / 8.255
         return tuple(s / PIXELS_PER_CENTIMETER for s in rect[1])
 
     def process_frame(
@@ -159,12 +158,12 @@ class ImageSizer(ImageProcessor):
         def cropped(image: Image) -> Image:
             """Crop step"""
             leftMargin = 0
-            rightMargin = 30 # 30
+            rightMargin = 30  # 30
             topMargin = 0
             bottomMargin = 0
             return image[
-                topMargin:(image.shape[0]-bottomMargin),
-                leftMargin:(image.shape[1]-rightMargin)
+                topMargin : (image.shape[0] - bottomMargin),
+                leftMargin : (image.shape[1] - rightMargin),
             ].copy()
 
         def monoconvert(image: Image) -> Image:
@@ -231,7 +230,9 @@ class ImageSizer(ImageProcessor):
                 cv2.drawContours(output, [box], 0, highlight_color, highlight_thickness)
                 cv2.putText(
                     output,
-                    text="({0:.{prec}f}, {1:.{prec}f})".format(*self.rect_to_size(rect), prec=2),
+                    text="({0:.{prec}f}, {1:.{prec}f})".format(
+                        *self.rect_to_size(rect), prec=2
+                    ),
                     org=tuple(map(int, rect[0])),
                     fontFace=cv2.FONT_HERSHEY_PLAIN,
                     fontScale=1.0,
@@ -245,11 +246,12 @@ class ImageSizer(ImageProcessor):
 
         # display = output
         back = numpy.full(source.shape, 0, dtype=numpy.uint8)
-        back[:output.shape[0], :output.shape[1]] = output
+        back[: output.shape[0], : output.shape[1]] = output
         # print(source.shape, back.shape, source.dtype, back.dtype)
         display = scale(numpy.concatenate((source, back), axis=1), factor=1)
 
         return (display, sizes)
+
 
 def open_camera() -> picamera.PiCamera:
     """Open a properly configured PiCamera."""
@@ -257,6 +259,7 @@ def open_camera() -> picamera.PiCamera:
     # resolution = (640, 480)
     # framerate = 32
     return picamera.PiCamera(resolution=resolution)
+
 
 class Camera:
     """Class to generically provide camera frames."""
@@ -273,7 +276,7 @@ class Camera:
         # Open camera in context manager for proper cleanup
         with open_camera() as camera:
             logger.info("Started PiCamera")
-            
+
             # Wait for camera to warm up
             WARMUP_TIME = 2  # seconds
             # camera.start_preview()
@@ -298,7 +301,7 @@ class Camera:
                 # Break once there are no clients, stopping the thread
                 if time.time() - cls.last_request > cls.IDLE_TIME:
                     break
-        
+
         logger.info("Closed PiCamera.")
         # Remove this thread object from the class once it finishes
         cls.thread = None
@@ -324,10 +327,9 @@ class Camera:
         cls.last_request = time.time()
         logger.debug("Before initialize")
         cls.initialize()
-        
+
         # logger.debug("Inside get_frame: %s", cls.frame)
         return cls.frame
-
 
     def __init__(self, processor: ImageProcessor) -> None:
 
