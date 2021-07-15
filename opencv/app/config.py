@@ -21,6 +21,14 @@ def load_data(paths: t.Iterable[str]) -> t.Mapping[str, t.Any]:
 # Raw, unfiltered config data
 raw = load_data(PATHS)
 
+@dataclasses.dataclass()
+class FilesConfig:
+    """FilesConfig Schema."""
+    
+    timeformat: str
+
+files = FilesConfig(raw["files"]["timeformat"])
+
 # Schemas of fixed, expected, data structures.
 # Provides fast-failing upon loading of this config module,
 # rather than runtime failure upon key access

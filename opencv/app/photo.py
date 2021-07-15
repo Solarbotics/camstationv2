@@ -1,7 +1,5 @@
 """Take photos using remote cameras using gphoto2."""
 
-import datetime
-import pathlib
 import typing as t
 
 # note: using gphoto2 requires the user to be in the plugdev group (or root)
@@ -18,6 +16,7 @@ import gphoto2 as gp
 # print(list(port_info_list))
 
 from . import config
+from . import files
 
 def get_cameras() -> t.Sequence[gp.camera.Camera]:
 
@@ -51,17 +50,13 @@ def capture_image(camera, destination: str) -> None:
 def capture_image_set(folder: str = "photos") -> None:
     """Capture one photo from each camera."""
     # Make sure the folder exists
-    root = pathlib.Path(folder)
-    root.mkdir(parents=True, exist_ok=True)
     for index, camera in enumerate(get_cameras()):
         # Info of the camera path, i.e. the port its connected to
         camera_path_info = camera.get_port_info().get_path()
         # Transform into a set name (e.g. 'overhead', 'side', etc)
         name = config.photo.names.get(camera_path_info, "unknown")
-        # Format current time for file nae
-        now = datetime.datetime.now().strftime(config.photo.timeformat)
         # Construct filename as a string to give to gphoto
-        save_path = str(root.joinpath(pathlib.Path(f"{name}_{now}.jpg")))
+        save_path = files.data_name(name=name, folder=folder, extension="jpg", timestamp=True)
 
         capture_image(camera, save_path)
 
