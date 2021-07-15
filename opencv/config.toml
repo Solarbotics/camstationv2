@@ -25,3 +25,10 @@ pause = 3
 blue = [255, 0, 0]
 green = [0, 255, 0]
 red = [0, 0, 255]
+
+[process]
+data_name = "data"
+
+[process.paths]
+photos = "photos"
+data = "data"

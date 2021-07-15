@@ -79,3 +79,18 @@ class CameraConfig:
     colours: ColoursConfig
 
 camera = CameraConfig(ColoursConfig(**{name: tuple(colour) for name, colour in raw["camera"]["colours"].items()}))
+
+@dataclasses.dataclass()
+class PathsConfig:
+
+    photos: str
+    data: str
+
+@dataclasses.dataclass()
+class ProcessConfig:
+    """ProcessConfig Schema."""
+
+    data_name: str
+    paths: PathsConfig
+
+process = ProcessConfig(raw["process"]["data_name"], PathsConfig(**raw["process"]["paths"]))
