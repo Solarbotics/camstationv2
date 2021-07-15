@@ -126,7 +126,9 @@ def create_app() -> flask.Flask:
     @app.route("/weight", methods=["GET"])
     def get_weight() -> str:
         """Tare the scale."""
-        return str(scale.Scale().read())
+        with scale.managed_scale() as sc:
+            weight = sc.read()
+        return str(weight)
 
     @app.route("/config", methods=["POST"])
     def set_config() -> flask.Response:
@@ -146,7 +148,8 @@ def create_app() -> flask.Flask:
         size = sizes[0]
         # Use overhead tech to get depth
         # Read scale
-        weight = scale.Scale().read()
+        with scale.managed_scale() as sc:
+            weight = sc.read()
         with open("data/new.json", "w", encoding="utf-8") as f:
             json.dump({"size": size, weight: weight}, f)
         # Take photos
