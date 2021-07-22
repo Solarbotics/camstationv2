@@ -32,3 +32,7 @@ data_name = "data"
 [process.paths]
 photos = "photos"
 data = "data"
+
+[lights]
+pin = 12
+
