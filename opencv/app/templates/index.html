@@ -46,6 +46,12 @@
       <output name="thresholdOutput"></output>
       <input type="submit" value="Configure">
     </form>
+    <div class="row">
+      <label for="lightsLevel">Lights</label>
+      <input type="range" min="0" max="100" id="lightsLevel">
+    </div>
+    <div class="row" id="photosGallery">
+    </div>
 
     <script>
       (function () {
@@ -101,12 +107,54 @@
           }, 10, 15000);
         });
 
+        let lightsInput = document.getElementById("lightsLevel")
+        lightsInput.addEventListener("input", function (event) {
+          fetch(
+            "/lights", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({level: lightsInput.value}),
+            }
+          )
+        });
+
         // let photoButton = document.getElementById("photos");
         // photoButton.addEventListener("click", function (event) {
         //   fetch("/photos", {
         //     method: "POST"
         //   });
         // })
+        
+        // Construct a query function to be bound to an event such as click.
+        // Sends an <action> request to /<name>,
+        // setting output.textContent to Working while in progress,
+        // and then calling callback on the text of the response from /<name>
+        let query = function (name, action, output, callback) {
+          let func = function (event) {
+            output.textContent = "Working...";
+            fetch("/" + name, {
+              method: action
+            }).then(function (response) {
+              response.text().then(callback);
+            })
+          };
+          return func;
+        }
+
+        // Take an html element and construct a function
+        // that takes a single parameter and copies it
+        // into the text content of the element
+        let write_on = function(output) {
+          let func = function (text) {
+            output.textContent = text;
+          }
+          return func;
+        }
+
+        let activateButton = document.getElementById("activate");
+        // activateButton.addEventListener("click", function (event))
 
         // Setup 'actions'.
         // Each action is a div containing a button for input
@@ -121,14 +169,7 @@
           if (httpMethod === null) {
             httpMethod = "POST";
           }
-          button.addEventListener("click", function (event) {
-            output.textContent = "Working...";
-            fetch("/" + action.getAttribute("name"), {
-              method: httpMethod
-            }).then(function (response) {
-              response.text().then(text => output.textContent = text);
-            })
-          });
+          button.addEventListener("click", query(action.getAttribute("name"), httpMethod, output, write_on(output)));
         }
 
       })();

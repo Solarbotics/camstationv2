@@ -50,9 +50,12 @@ def capture_image(camera, destination: str) -> None:
     camera_file.save(destination)
 
 
-def capture_image_set(folder: str = "photos") -> None:
-    """Capture one photo from each camera."""
-    # Make sure the folder exists
+def capture_image_set(folder: str = "photos") -> t.Iterable[str]:
+    """Capture one photo from each camera.
+
+    Returns iterable of file names that were saved to.
+    """
+    file_names = []
     for index, camera in enumerate(get_cameras()):
         # Info of the camera path, i.e. the port its connected to
         camera_path_info = camera.get_port_info().get_path()
@@ -62,8 +65,11 @@ def capture_image_set(folder: str = "photos") -> None:
         save_path = files.data_name(
             name=name, folder=folder, extension="jpg", timestamp=True
         )
+        file_names.append(save_path)
 
         capture_image(camera, save_path)
+
+    return file_names
 
 
 if __name__ == "__main__":

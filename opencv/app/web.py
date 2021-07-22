@@ -8,6 +8,7 @@ import flask
 from . import camera
 from . import calibrate
 from . import config
+from . import lights
 from . import photo
 from . import process
 from . import scale
@@ -109,11 +110,19 @@ def create_app() -> flask.Flask:
         app.config["threshold"] = int(data["threshold"])
         return flask.jsonify({"message": "Config updated"})
 
+    @app.route("/lights", methods=["POST"])
+    def set_lights() -> flask.Response:
+        data = flask.request.json
+        lights.ring.level = float(data["level"])/100
+        return flask.jsonify({"message": "Lights updated."})
+
     @app.route("/activate", methods=["POST"])
     def activate() -> str:
         """Activate a round of the camera station."""
-        return process.activate(
-            threshold=app.config.get("threshold", config.web.threshold)
+        return flask.jsonify(
+            process.activate(
+                threshold=app.config.get("threshold", config.web.threshold)
+            )
         )
 
     # Teardown

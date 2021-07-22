@@ -1,8 +1,10 @@
 """Operate main camera station processes."""
 
+import base64
 import json
 import typing as t
 
+import cv2
 import numpy
 
 from . import camera
@@ -37,25 +39,37 @@ def get_camera() -> camera.Camera:
     )
 
 
-def activate(*args: t.Any, **kwargs: t.Any) -> str:
+def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     """Activate a round of the camera station."""
     # Operate undercamera for sizing
     sizes = get_camera().get_processed_frame(threshold=kwargs.get("threshold", None))[1]
     size = sizes[0]
     # Use overhead tech to get depth
     # Read scale
-    with scale.managed_scale() as sc:
-        weight = sc.read()
-    file_name = (
-        files.data_name(
-            name=config.process.data_name,
-            folder=config.process.paths.data,
-            extension="json",
-            timestamp=True,
-        ),
+    try:
+        with scale.managed_scale() as sc:
+            weight = sc.read()
+    except Exception:
+        weight = 0
+    file_name = files.data_name(
+        name=config.process.data_name,
+        folder=config.process.paths.data,
+        extension="json",
+        timestamp=True,
     )
     with open(file_name, "w", encoding="utf-8") as f:
         json.dump({"size": size, "weight": weight}, f)
     # Take photos
-    photo.capture_image_set(config.process.paths.photos)
-    return "X"
+    photo_paths = photo.capture_image_set(config.process.paths.photos)
+    # Encode and return pictures
+    # Return data
+    encoded_images = [
+        base64.b64encode(cv2.imread(path).imencode("jpg").tobytes())
+        for path in photo_paths
+    ]
+    return {
+        "message": "success",
+        "size": size,
+        "weight": weight,
+        "photos": encoded_images,
+    }
