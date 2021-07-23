@@ -12,6 +12,7 @@ from . import config
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+
 def construct_ring_light(pin: int) -> gpiozero.PWMOutputDevice:
     """Construct the ring lights device."""
     lights = gpiozero.PWMOutputDevice(pin)
@@ -21,7 +22,7 @@ def construct_ring_light(pin: int) -> gpiozero.PWMOutputDevice:
 
 class RingLights:
     """Class abstracting implementation of ring light control.
-    
+
     Should not be externally constructed.
     """
 
@@ -49,4 +50,14 @@ class RingLights:
         logger.info("Set lights to %s", value)
 
 
-ring = RingLights(construct_ring_light(config.lights.pin))
+class Lights:
+    """Provides a single instance of the ring lights."""
+
+    _ring = None
+
+    @classmethod
+    def ring(cls) -> RingLights:
+        """Returns the ring lights."""
+        if cls._ring is None:
+            cls._ring = RingLights(construct_ring_light(config.lights.pin))
+        return cls._ring

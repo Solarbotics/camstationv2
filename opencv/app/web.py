@@ -106,18 +106,24 @@ def create_app() -> flask.Flask:
     def set_config() -> flask.Response:
         """Updates the config."""
         data = flask.request.json
-        logger.info("Config: %s", data)
-        app.config["threshold"] = int(data["threshold"])
-        return flask.jsonify({"message": "Config updated"})
+        if data is not None:
+            logger.info("Config: %s", data)
+            app.config["threshold"] = int(data["threshold"])
+            return flask.jsonify({"message": "Config updated"})
+        else:
+            return flask.jsonify({"message": "No JSON received."})
 
     @app.route("/lights", methods=["POST"])
     def set_lights() -> flask.Response:
         data = flask.request.json
-        lights.ring.level = float(data["level"])/100
-        return flask.jsonify({"message": "Lights updated."})
+        if data:
+            lights.Lights().ring().level = float(data["level"]) / 100
+            return flask.jsonify({"message": "Lights updated."})
+        else:
+            return flask.jsonify({"message": "No JSON received."})
 
     @app.route("/activate", methods=["POST"])
-    def activate() -> str:
+    def activate() -> flask.Response:
         """Activate a round of the camera station."""
         return flask.jsonify(
             process.activate(
