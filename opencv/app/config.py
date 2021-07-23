@@ -23,12 +23,6 @@ def load_data(paths: t.Iterable[str]) -> t.Mapping[str, t.Any]:
 # Raw, unfiltered config data
 raw = load_data(PATHS)
 
-
-# def schema(cls: t.Type[T]) -> t.Type[T]:
-#     """Labels a class as a config schema."""
-
-#     annotations = cls.__annotations__
-
 #     # special annotations:
 #     # mapping: not neccesarily need to be treated special
 #     # sequence/iterable: not neccesarily need to be special
@@ -45,17 +39,6 @@ raw = load_data(PATHS)
 #     # isinstance works with stuff like t.Mapping too
 #     # Config-type class
 
-#     @classmethod
-#     def from_raw(clss, raw: t.Mapping[str, object]) -> t.Type[T]:
-#         """Construct the config class from raw mapping data."""
-#         return clss(**{attr: raw[attr] for attr in clss.__annotations__.items()})
-
-#     cls.from_raw = from_raw
-
-#     return cls
-
-T = t.TypeVar("T", bound="Config")
-
 
 def is_sub(cls: t.Any, other: type) -> bool:
     """Determine if the first argument is a subclass of the second.
@@ -69,7 +52,31 @@ def is_sub(cls: t.Any, other: type) -> bool:
         return False
 
 
-class Config:
+MetaT = t.TypeVar("MetaT", bound=type)
+
+
+class DataMeta(type):
+    """Config metaclass.
+
+    Instance classes are automatically decorated as dataclasses."""
+
+    def __new__(
+        cls: t.Type[MetaT],
+        name: str,
+        bases: t.Tuple[type, ...],
+        namespace: t.Dict[str, t.Any],
+        **kwargs: t.Any
+    ) -> MetaT:
+        """Create a new Config class."""
+        new_class = type.__new__(cls, name, bases, namespace)
+        new_class = dataclasses.dataclass(**kwargs)(new_class)
+        return new_class
+
+
+ConfigT = t.TypeVar("ConfigT", bound="Config")
+
+
+class Config(metaclass=DataMeta):
     """Base Config class.
 
     Encodes behaviour for converting from raw data to an object,
@@ -79,7 +86,7 @@ class Config:
     """
 
     @classmethod
-    def from_raw(cls: t.Type[T], raw: t.Mapping[str, t.Any]) -> T:
+    def from_raw(cls: t.Type[ConfigT], raw: t.Mapping[str, t.Any]) -> ConfigT:
         """Construct the config class from raw mapping data."""
         data = {
             attr: raw[attr] if not is_sub(anno, Config) else anno.from_raw(raw[attr])
@@ -193,7 +200,6 @@ process = ProcessConfig(
 )
 
 
-@dataclasses.dataclass()
 class LightsConfig(Config):
     """LightsConfig Schema."""
 
