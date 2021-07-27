@@ -184,7 +184,7 @@ class CameraConfig:
 
 camera = CameraConfig(
     ColoursConfig(
-        **{name: tuple(colour) for name, colour in raw["camera"]["colours"].items()}
+        **{name: tuple(colour) for name, colour in raw["camera"]["colours"].items()}  # type: ignore
     )
 )
 

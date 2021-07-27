@@ -22,19 +22,6 @@ logger.addHandler(logging.NullHandler())
 T = t.TypeVar("T")
 
 
-def pipeline(
-    source: T, transformations: t.Sequence[t.Callable[[T], T]]
-) -> t.Iterable[T]:
-    """Apply a sequence of transformations to a starting value.
-
-    Returns each intermediate result in a sequence,
-    in the same order as the transformations were applied.
-
-    Returns source as the first element of the iterable.
-    """
-    return itertools.accumulate(transformations, func=lambda a, f: f(a), initial=source)
-
-
 # Minor typing restriction, far from sound but better than nothing
 Image = t.Union[numpy.ndarray]
 
@@ -114,11 +101,11 @@ class ImageSizer(ImageProcessor):
         # pixels_per_centimeter = 1
         # pixels_per_centimeter = 85/8.255  # TODO approximate measure, should also look at arcuro?
         PIXELS_PER_CENTIMETER = 82 / 8.255
-        return tuple(s / PIXELS_PER_CENTIMETER for s in rect[1])
+        return (rect[1][0] / PIXELS_PER_CENTIMETER, rect[1][1] / PIXELS_PER_CENTIMETER)
 
     def process_frame(
         self, source: Image, **options: t.Any
-    ) -> t.Tuple[Image, t.Sequence[t.Tuple[int, int]]]:
+    ) -> t.Tuple[Image, t.Sequence[t.Tuple[float, float]]]:
         """Process the given source image,
         resizing and modifying it, searching for bounding boxes.
 
@@ -269,7 +256,7 @@ class Camera:
 
     thread: t.Optional[threading.Thread] = None
     frame: t.Optional[Image] = None
-    last_request: int = 0
+    last_request: float = 0
 
     @classmethod
     def read_camera(cls) -> None:
@@ -329,7 +316,7 @@ class Camera:
         cls.initialize()
 
         # logger.debug("Inside get_frame: %s", cls.frame)
-        return cls.frame
+        return cls.frame  # type: ignore
 
     def __init__(self, processor: ImageProcessor) -> None:
 
