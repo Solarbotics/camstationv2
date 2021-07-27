@@ -22,7 +22,7 @@
       <span id="boundsResult"></span>
     </div>
     <div class="row">
-      <button id="snapshot">Snapshot</button>
+      <button id="snapshot" disabled>Snapshot</button>
       <span id="snapshotResult"></span>
     </div>
     <div class="row action" name="photos">
@@ -50,7 +50,10 @@
       <label for="lightsLevel">Lights</label>
       <input type="range" min="0" max="100" id="lightsLevel">
     </div>
-    <div class="row" id="photosGallery">
+    <div class="row">
+      <label for="photosGallery">Photo Gallery</label>
+      <div id="photosGallery">
+      </div>
     </div>
 
     <script>
@@ -167,6 +170,7 @@
             for (const image_data of data["photos"]) {
               let image = document.createElement("img");
               image.setAttribute("src", "data:image/jpeg;base64," + image_data);
+              gallery.appendChild(image)
             }
             output.textContent = "Size: " + data["size"] + ", weight: " + data["weight"] + ".";
           }

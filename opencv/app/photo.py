@@ -69,7 +69,8 @@ def capture_image_set(folder: str = "photos") -> t.Iterable[str]:
 
         capture_image(camera, save_path)
 
-    return file_names
+    return ["photos/0.jpg"]
+    # return file_names
 
 
 if __name__ == "__main__":

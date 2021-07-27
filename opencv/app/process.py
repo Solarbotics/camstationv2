@@ -68,11 +68,22 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     # Take photos
     photo_paths = photo.capture_image_set(config.process.paths.photos)
     # Encode and return pictures
+    encoded_images: t.List[str] = []
+    for path in photo_paths:
+        # Read and resize photo
+        loaded_photo = cv2.imread(path)
+        loaded_photo = cv2.resize(
+            loaded_photo,
+            # dsize is (width, height), but .shape is (rows, columns)
+            dsize=(400, int(loaded_photo.shape[0] / loaded_photo.shape[1] * 400)),
+            interpolation=cv2.INTER_AREA,
+        )
+        # Encode into jpg and then b64 of that jpg
+        # Allows easy sending over http and then loading into html img tag
+        jpg_bytes = cv2.imencode(".jpg", loaded_photo)[1].tobytes()
+        b64_encoding = base64.b64encode(jpg_bytes).decode("ascii")
+        encoded_images.append(b64_encoding)
     # Return data
-    encoded_images = [
-        base64.b64encode(cv2.imread(path).imencode("jpg").tobytes())
-        for path in photo_paths
-    ]
     return {
         "message": "success",
         "size": size,
