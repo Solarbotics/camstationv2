@@ -37,7 +37,7 @@
       <button id="weight">Weight</button>
       <span id="weightResult"></span>
     </div>
-    <div class="row action" name="activate">
+    <div class="row" name="activate">
       <button id="activate">Activate</button>
       <span id="activateResult"></span>
     </div>
@@ -153,8 +153,31 @@
           return func;
         }
 
+        // Collect elements
         let activateButton = document.getElementById("activate");
+        let activateInfo = document.getElementById("activateResult");
+
+        // Define handling function
+        let activate_function = function (output) {
+          // The actual function that uses the provided output
+          let func = function (text) {
+            let data = JSON.parse(text);
+            let gallery = document.getElementById("photosGallery");
+            gallery.replaceChildren();
+            for (const image_data of data["photos"]) {
+              let image = document.createElement("img");
+              image.setAttribute("src", "data:image/jpeg;base64," + image_data);
+            }
+            output.textContent = "Size: " + data["size"] + ", weight: " + data["weight"] + ".";
+          }
+          return func;
+        }; 
         // activateButton.addEventListener("click", function (event))
+        // Bind query function
+        activateButton.addEventListener(
+          "click",
+          query("activate", "POST", activateInfo, activate_function(activateInfo))
+        );
 
         // Setup 'actions'.
         // Each action is a div containing a button for input

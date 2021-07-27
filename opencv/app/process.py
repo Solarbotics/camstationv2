@@ -10,6 +10,7 @@ import numpy
 from . import camera
 from . import config
 from . import files
+from . import lights
 from . import photo
 from . import scale
 
@@ -41,9 +42,13 @@ def get_camera() -> camera.Camera:
 
 def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     """Activate a round of the camera station."""
+    # Turn on lights
+    lights.Lights().ring().on()
     # Operate undercamera for sizing
     sizes = get_camera().get_processed_frame(threshold=kwargs.get("threshold", None))[1]
     size = sizes[0]
+    # Turn off lights
+    lights.Lights().ring().off()
     # Use overhead tech to get depth
     # Read scale
     try:
@@ -51,6 +56,7 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
             weight = sc.read()
     except Exception:
         weight = 0
+    # Save gathered data
     file_name = files.data_name(
         name=config.process.data_name,
         folder=config.process.paths.data,

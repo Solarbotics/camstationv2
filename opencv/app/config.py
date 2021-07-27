@@ -85,6 +85,15 @@ class Config(metaclass=DataMeta):
     Expects the class to have an init method such as created by dataclasses.
     """
 
+    def __init__(self, **kwargs: t.Any) -> None:
+        """Initialize attributes from kwargs.
+
+        Should be overridden by metaclass,
+        provided to sooth mypy.
+        """
+        for name, value in kwargs.items():
+            setattr(self, name, value)
+
     @classmethod
     def from_raw(cls: t.Type[ConfigT], raw: t.Mapping[str, t.Any]) -> ConfigT:
         """Construct the config class from raw mapping data."""
