@@ -35,7 +35,7 @@ def close_camera(error: t.Optional[Exception] = None) -> None:
 def create_app() -> flask.Flask:
     """Create and setup the Flask application."""
 
-    app = flask.Flask(__name__, static_url_path="/static", static_folder="static")
+    app = flask.Flask(__name__, static_url_path="")
 
     @app.route("/")
     def index() -> str:
