@@ -46,7 +46,7 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     lights.Lights().ring().on()
     # Operate undercamera for sizing
     sizes = get_camera().get_processed_frame(threshold=kwargs.get("threshold", None))[1]
-    size = sizes[0]
+    size = tuple(f"{val:.2f}" for val in sizes[0])
     # Turn off lights
     lights.Lights().ring().off()
     # Use overhead tech to get depth

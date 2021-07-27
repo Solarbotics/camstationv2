@@ -73,7 +73,8 @@ def create_app() -> flask.Flask:
         data = process.get_camera().get_processed_frame(
             threshold=app.config.get("threshold", config.web.threshold)
         )[1]
-        return str(data[0])
+        bounds = tuple(f"{val:.2f}" for val in data[0])
+        return f"({bounds[0]}, {bounds[1]})"
 
     @app.route("/snap", methods=["POST"])
     def snap_corners() -> str:
