@@ -124,17 +124,26 @@ def create_app() -> flask.Flask:
         else:
             return flask.jsonify({"message": "No JSON received."})
 
+    @app.route("/calibrate_depth", methods=["POST"])
+    def calibrate_height() -> flask.Response:
+        # Read current depth
+        with measure.default_sensor() as sensor:
+            depth = sensor.read()
+        app.config["base_depth"] = depth
+        return flask.jsonify({"message": "Platform depth calibrated."})
+
     @app.route("/height")
     def get_height() -> str:
         with measure.default_sensor() as sensor:
-            return str(sensor.read())
+            return str(sensor.height(base_depth=app.config.get("base_depth", 0)))
 
     @app.route("/activate", methods=["POST"])
     def activate() -> flask.Response:
         """Activate a round of the camera station."""
         return flask.jsonify(
             process.activate(
-                threshold=app.config.get("threshold", config.web.threshold)
+                threshold=app.config.get("threshold", config.web.threshold),
+                base_depth=app.config.get("base_depth", 0),
             )
         )
 

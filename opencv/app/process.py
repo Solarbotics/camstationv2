@@ -2,6 +2,7 @@
 
 import base64
 import json
+import logging
 import time
 import typing as t
 
@@ -15,6 +16,9 @@ from . import lights
 from . import measure
 from . import photo
 from . import scale
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 # Load calibration matrices
 camera_matrix = numpy.loadtxt(config.process.cameraMatrix, dtype="float", delimiter=",")
@@ -59,14 +63,16 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     # Use overhead tech to get depth
     try:
         with measure.default_sensor() as sensor:
-            height = sensor.read()
-    except Exception:
+            height = sensor.height(base_depth=kwargs.get("base_depth", 0))
+    except Exception as e:
+        logger.error(e)
         height = 0
     # Read scale
     try:
         with scale.managed_scale() as sc:
             weight = sc.read()
-    except Exception:
+    except Exception as e:
+        logger.error(e)
         weight = 0
     # Save gathered data
     file_name = files.data_name(
@@ -78,7 +84,10 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     with open(file_name, "w", encoding="utf-8") as f:
         json.dump({"size": size, "weight": weight, "height": height}, f)
     # Take photos
-    photo_paths = photo.capture_image_set(config.process.paths.photos)
+    try:
+        photo_paths = photo.capture_image_set(config.process.paths.photos)
+    except Exception as e:
+        logger.error(e)
     # Encode and return pictures
     encoded_images: t.List[str] = []
     for path in photo_paths:

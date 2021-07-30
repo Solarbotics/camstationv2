@@ -30,9 +30,22 @@ class Sensor:
         return self
 
     def read(self) -> int:
-        """Read the distance sensed."""
+        """Read the unit distance sensed.
+
+        Most likely millimetres.
+        """
         distance = self.tof.get_distance()
         return distance
+
+    def height(self, base_depth: int = 0) -> int:
+        """Calculate the height of a sensed object.
+
+        Assumes the object to be sitting on a surface `base_depth` units aways,
+        and calculates height = base_depth - object_depth.
+
+        Gets the depth of the object from a sensor read.
+        """
+        return base_depth - self.read()
 
     def close(self) -> None:
         """Close the sensor."""
