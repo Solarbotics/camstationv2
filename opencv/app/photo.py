@@ -28,7 +28,7 @@ def get_cameras() -> t.Sequence[gp.camera.Camera]:
 
     for name, addr in gp.check_result(gp.gp_camera_autodetect()):
         idx = port_info_list.lookup_path(addr)
-        # print("[info]", name,addr,idx, sep=" <|> ")
+        # print("[info]", name, addr, idx, sep=" <|> ")
         camera = gp.Camera()
         camera.set_port_info(port_info_list[idx])
         # print(port_info_list[idx].get_name())
@@ -59,6 +59,7 @@ def capture_image_set(folder: str = "photos") -> t.Iterable[str]:
     for index, camera in enumerate(get_cameras()):
         # Info of the camera path, i.e. the port its connected to
         camera_path_info = camera.get_port_info().get_path()
+        # print(camera_path_info)
         # Transform into a set name (e.g. 'overhead', 'side', etc)
         name = config.photo.names.get(camera_path_info, "unknown")
         # Construct filename as a string to give to gphoto
@@ -69,8 +70,9 @@ def capture_image_set(folder: str = "photos") -> t.Iterable[str]:
 
         capture_image(camera, save_path)
 
-    return ["photos/0.jpg"]
-    # return file_names
+    # print(file_names)
+    # return ["photos/0.jpg"]
+    return file_names
 
 
 if __name__ == "__main__":
