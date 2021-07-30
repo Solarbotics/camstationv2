@@ -26,9 +26,11 @@ def data_name(
     now = datetime.datetime.now().strftime(config.files.timeformat)
 
     if extension is not None:
-        file_name = f"{name}_{now}.{extension}"
+        file_name = (config.files.format + ".{extension}").format(
+            name=name, time=now, extension=extension
+        )
     else:
-        file_name = f"{name}_{now}"
+        file_name = config.files.format.format(name=name, time=now)
 
     save_path = str(root.joinpath(pathlib.Path(file_name)))
 

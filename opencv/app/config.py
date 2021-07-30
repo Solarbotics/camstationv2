@@ -111,14 +111,14 @@ class Config(metaclass=DataMeta):
         return cls(**data)
 
 
-@dataclasses.dataclass()
-class FilesConfig:
+class FilesConfig(Config):
     """FilesConfig Schema."""
 
+    format: str
     timeformat: str
 
 
-files = FilesConfig(raw["files"]["timeformat"])
+files = FilesConfig.from_raw(raw["files"])
 
 # Schemas of fixed, expected, data structures.
 # Provides fast-failing upon loading of this config module,
@@ -193,6 +193,7 @@ class PathsConfig(Config):
 
     photos: str
     data: str
+
 
 class ProcessCameraConfig(Config):
 
