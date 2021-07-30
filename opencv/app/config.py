@@ -216,3 +216,13 @@ class LightsConfig(Config):
 
 
 lights = LightsConfig.from_raw(raw["lights"])
+
+class MeasureConfig(Config):
+    """MeasureConfig Schema."""
+
+    bus: int
+    address: int
+
+    range: int
+
+measure = MeasureConfig.from_raw(raw["measure"])

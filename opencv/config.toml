@@ -36,3 +36,7 @@ data = "data"
 [lights]
 pin = 12
 
+[measure]
+bus = 1
+address = 41
+range = 3

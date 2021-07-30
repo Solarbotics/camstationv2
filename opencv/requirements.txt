@@ -6,5 +6,7 @@ toml
 gphoto2
 pyserial
 gpiozero
-rpi.gpio
+RPi.GPIO
+smbus2
+vl53l1x
 # imutils
