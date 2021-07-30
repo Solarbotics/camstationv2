@@ -1,6 +1,17 @@
 # Camera Station
 
-## Notes:
+## Behaviour
+
+Activation:
+ - Turn on lights
+ - Get bounds from undercamera using opencv shadow-based box detection
+ - Turn off lights
+ - Read scale
+ - Read height distance sensor (TODO: use calibration to calculate height, not depth)
+ - Take photos from connected cameras
+ - Save data into files and return data to website
+
+## Notes
 
 Groups required:
  - `plugdev` for usb photo camera
