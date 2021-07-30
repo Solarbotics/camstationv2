@@ -99,7 +99,7 @@ def create_app() -> flask.Flask:
 
     @app.route("/weight", methods=["GET"])
     def get_weight() -> str:
-        """Tare the scale."""
+        """Read the scale."""
         with scale.managed_scale() as sc:
             weight = sc.read()
         return str(weight)
@@ -136,6 +136,17 @@ def create_app() -> flask.Flask:
     def get_height() -> str:
         with measure.default_sensor() as sensor:
             return str(sensor.height(base_depth=app.config.get("base_depth", 0)))
+
+    @app.route("/setup", methods=["POST"])
+    def setup() -> str:
+        # Tare scale
+        # Calibrate depth sensor
+        with scale.managed_scale() as sc:
+            sc.tare()
+        with measure.default_sensor() as sensor:
+            depth = sensor.read()
+        app.config["base_depth"] = depth
+        return "Setup complete."
 
     @app.route("/activate", methods=["POST"])
     def activate() -> flask.Response:
