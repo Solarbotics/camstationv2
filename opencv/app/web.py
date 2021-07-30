@@ -9,6 +9,7 @@ from . import camera
 from . import calibrate
 from . import config
 from . import lights
+from . import measure
 from . import photo
 from . import process
 from . import scale
@@ -122,6 +123,11 @@ def create_app() -> flask.Flask:
             return flask.jsonify({"message": "Lights updated."})
         else:
             return flask.jsonify({"message": "No JSON received."})
+
+    @app.route("/height")
+    def get_height() -> str:
+        with measure.default_sensor() as sensor:
+            return str(sensor.read())
 
     @app.route("/activate", methods=["POST"])
     def activate() -> flask.Response:
