@@ -113,7 +113,12 @@
           image.setAttribute("src", "data:image/jpeg;base64," + image_data);
           gallery.appendChild(image)
         }
-        output.textContent = "Size: " + data["size"] + ", weight: " + data["weight"] + ".";
+        output.textContent = (
+          "Size: " + data["size"]
+          + ", weight: " + data["weight"]
+          + ", height: " + data["height"]
+          + "."
+        );
       }
       return func;
     }; 

@@ -28,6 +28,13 @@ red = [0, 0, 255]
 
 [process]
 data_name = "data"
+cameraMatrix = "cameraMatrix.txt"
+cameraScaleMatrix = "cameraScaleMatrix.txt"
+cameraDistortionMatrix = "cameraDistortionMatrix.txt"
+
+[process.camera]
+# Time to wait after turning lights on before capturing
+wait = 2
 
 [process.paths]
 photos = "photos"

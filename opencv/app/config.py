@@ -189,24 +189,29 @@ camera = CameraConfig(
 )
 
 
-@dataclasses.dataclass()
-class PathsConfig:
+class PathsConfig(Config):
 
     photos: str
     data: str
 
+class ProcessCameraConfig(Config):
 
-@dataclasses.dataclass()
-class ProcessConfig:
+    wait: int
+
+
+class ProcessConfig(Config):
     """ProcessConfig Schema."""
 
     data_name: str
     paths: PathsConfig
+    camera: ProcessCameraConfig
+
+    cameraMatrix: str
+    cameraScaleMatrix: str
+    cameraDistortionMatrix: str
 
 
-process = ProcessConfig(
-    raw["process"]["data_name"], PathsConfig(**raw["process"]["paths"])
-)
+process = ProcessConfig.from_raw(raw["process"])
 
 
 class LightsConfig(Config):
@@ -217,6 +222,7 @@ class LightsConfig(Config):
 
 lights = LightsConfig.from_raw(raw["lights"])
 
+
 class MeasureConfig(Config):
     """MeasureConfig Schema."""
 
@@ -224,5 +230,6 @@ class MeasureConfig(Config):
     address: int
 
     range: int
+
 
 measure = MeasureConfig.from_raw(raw["measure"])

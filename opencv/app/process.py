@@ -2,6 +2,7 @@
 
 import base64
 import json
+import time
 import typing as t
 
 import cv2
@@ -11,14 +12,19 @@ from . import camera
 from . import config
 from . import files
 from . import lights
+from . import measure
 from . import photo
 from . import scale
 
 # Load calibration matrices
-camera_matrix = numpy.loadtxt("cameraMatrix.txt", dtype="float", delimiter=",")
-scale_matrix = numpy.loadtxt("cameraScaleMatrix.txt", dtype="float", delimiter=",")
+camera_matrix = numpy.loadtxt(config.process.cameraMatrix, dtype="float", delimiter=",")
+scale_matrix = numpy.loadtxt(
+    config.process.cameraScaleMatrix, dtype="float", delimiter=","
+)
 camera_matrix *= scale_matrix
-distortion_matrix = numpy.loadtxt("cameraDistortion.txt", dtype="float", delimiter=",")
+distortion_matrix = numpy.loadtxt(
+    config.process.cameraDistortionMatrix, dtype="float", delimiter=","
+)
 
 
 def get_camera() -> camera.Camera:
@@ -44,12 +50,18 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     """Activate a round of the camera station."""
     # Turn on lights
     lights.Lights().ring().on()
+    time.sleep(config.process.camera.wait)
     # Operate undercamera for sizing
     sizes = get_camera().get_processed_frame(threshold=kwargs.get("threshold", None))[1]
     size = tuple(f"{val:.2f}" for val in sizes[0])
     # Turn off lights
     lights.Lights().ring().off()
     # Use overhead tech to get depth
+    try:
+        with measure.default_sensor() as sensor:
+            height = sensor.read()
+    except Exception:
+        height = 0
     # Read scale
     try:
         with scale.managed_scale() as sc:
@@ -64,7 +76,7 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
         timestamp=True,
     )
     with open(file_name, "w", encoding="utf-8") as f:
-        json.dump({"size": size, "weight": weight}, f)
+        json.dump({"size": size, "weight": weight, "height": height}, f)
     # Take photos
     photo_paths = photo.capture_image_set(config.process.paths.photos)
     # Encode and return pictures
@@ -88,5 +100,6 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
         "message": "success",
         "size": size,
         "weight": weight,
+        "height": height,
         "photos": encoded_images,
     }
