@@ -6,12 +6,12 @@ html {
     box-sizing: inherit;
 }
 
-button {
-    margin: 5px;
-}
-
 .outline {
     border-style: solid;
     border-color: red;
     border-width: 4px;
+}
+
+.row {
+    margin: 5px;
 }

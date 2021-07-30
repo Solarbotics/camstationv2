@@ -98,8 +98,9 @@
     }
 
     // Collect elements
-    let activateButton = document.getElementById("activate");
-    let activateInfo = document.getElementById("activateResult");
+    let activateAction = document.getElementById("activateAction");
+    let activateButton = activateAction.children[0];
+    let activateInfo = activateAction.children[1];
 
     // Define handling function
     let activate_function = function (output) {

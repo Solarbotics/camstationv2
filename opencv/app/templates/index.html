@@ -1,6 +1,7 @@
 <html>
   <head>
     <title>Camera Station</title>
+    <link rel="shortcut icon" href="/favicon.ico">
     <link href="index.css" rel="stylesheet">
     <script src="index.js" defer></script>
   </head>
@@ -9,50 +10,57 @@
     <div class="row">
       <h1>Camera Station</h1>
     </div>
+
     <div class="row">
       <img src="/camera">
     </div>
-    <div class="row action" name="bounds">
-      <button id="bounds">Bounds</button>
-      <span id="boundsResult"></span>
-    </div>
+
     <div class="row">
       <button id="snapshot" disabled>Snapshot</button>
       <span id="snapshotResult"></span>
     </div>
+    <div class="row action" name="bounds">
+      <button>Bounds</button>
+      <span></span>
+    </div>
     <div class="row action" name="photos">
-      <button id="photos">Photos</button>
-      <span id="photosResult"></span>
+      <button>Photos</button>
+      <span></span>
     </div>
     <div class="row action" name="tare">
-      <button id="tare">Tare</button>
-      <span id="tareResult"></span>
+      <button>Tare</button>
+      <span></span>
     </div>
     <div class="row action" name="weight" action="GET">
-      <button id="weight">Weight</button>
-      <span id="weightResult"></span>
+      <button>Weight</button>
+      <span></span>
     </div>
     <div class="row action" name="calibrate_depth" action="POST">
-      <button id="calibrate_depth">Calibrate Depth</button>
+      <button>Calibrate Depth</button>
       <span></span>
     </div>
     <div class="row action" name="height" action="GET">
-      <button id="height">Height</button>
-      <span id="heightResult"></span>
+      <button>Height</button>
+      <span></span>
     </div>
-    <div class="row" name="activate">
-      <button id="activate">Activate</button>
-      <span id="activateResult"></span>
+
+    <div class="row" name="activate" id="activateAction">
+      <button>Activate</button>
+      <span></span>
     </div>
+
     <form class="row" id="configOptions">
+      <label for="thresholdConfig">Threshold</label>
       <input type="range" min="0" max="255" name="threshold" id="thresholdConfig">
       <output name="thresholdOutput"></output>
       <input type="submit" value="Configure">
     </form>
+
     <div class="row">
       <label for="lightsLevel">Lights</label>
       <input type="range" min="0" max="100" id="lightsLevel">
     </div>
+
     <div class="row">
       <label for="photosGallery">Photo Gallery</label>
       <div id="photosGallery">
