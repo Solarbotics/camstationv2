@@ -1,5 +1,14 @@
 # Camera Station
 
+## Structure
+
+Parts:
+ - Raspberry Pi Camera Module (`opencv` box detection for width and length)
+ - VL53L0X distance sensor (height detection)
+ - DSLR Cameras (product photos)
+ - Weight scale (product weight)
+ - Lights (illuminating product and shadowcast)
+
 ## Behaviour
 
 Activation:
