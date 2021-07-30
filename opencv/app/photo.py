@@ -1,8 +1,10 @@
 """Take photos using remote cameras using gphoto2."""
 
+import base64
 import typing as t
 
 # note: using gphoto2 requires the user to be in the plugdev group (or root)
+import cv2
 import gphoto2 as gp
 
 # camera = gp.Camera()
@@ -73,6 +75,26 @@ def capture_image_set(folder: str = "photos") -> t.Iterable[str]:
     # print(file_names)
     # return ["photos/0.jpg"]
     return file_names
+
+
+def encode_image(path: str) -> str:
+    """Encode an image from a file path into unicode base64.
+
+    Also scales the image to display and transport reasonably."""
+    HEIGHT = 300
+    # Read and resize photo
+    loaded_photo = cv2.imread(path)
+    loaded_photo = cv2.resize(
+        loaded_photo,
+        # dsize is (width, height), but .shape is (rows, columns)
+        dsize=(int(loaded_photo.shape[1] / loaded_photo.shape[0] * HEIGHT), HEIGHT),
+        interpolation=cv2.INTER_AREA,
+    )
+    # Encode into jpg and then b64 of that jpg
+    # Allows easy sending over http and then loading into html img tag
+    jpg_bytes = cv2.imencode(".jpg", loaded_photo)[1].tobytes()
+    b64_encoding = base64.b64encode(jpg_bytes).decode("ascii")
+    return b64_encoding
 
 
 if __name__ == "__main__":
