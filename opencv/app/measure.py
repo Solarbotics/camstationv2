@@ -3,6 +3,7 @@
 import contextlib
 import logging
 import signal
+import threading
 import time
 import typing as t
 
@@ -16,7 +17,43 @@ logger = logging.Logger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-class Sensor:
+class Reporter:
+    """Base class that can report a distance and height.
+
+    Can be used as a context manager,
+    although this base implementation does nothing with the context.
+    """
+
+    def read(self) -> int:
+        """Method to be overridden."""
+        raise NotImplementedError
+
+    def height(self, base_depth: int = 0) -> int:
+        """Calculate the height of a sensed object.
+
+        Assumes the object to be sitting on a surface `base_depth` units aways,
+        and calculates height = base_depth - object_depth.
+
+        Gets the depth of the object from a read.
+        """
+        return base_depth - self.read()
+
+    def close(self) -> None:
+        """Close the Reporter.
+
+        Implementations may have actual behaviour here.
+        """
+
+    def __enter__(self) -> "Reporter":
+        """Create context manager view, i.e. self."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        """Exit the context by closing this Reporter."""
+        self.close()
+
+
+class Sensor(Reporter):
     """Construct a distance sensor."""
 
     def __init__(self, tof: VL53L0X.VL53L0X, level: int = 1) -> None:
@@ -37,31 +74,13 @@ class Sensor:
         distance = self.tof.get_distance()
         return distance
 
-    def height(self, base_depth: int = 0) -> int:
-        """Calculate the height of a sensed object.
-
-        Assumes the object to be sitting on a surface `base_depth` units aways,
-        and calculates height = base_depth - object_depth.
-
-        Gets the depth of the object from a sensor read.
-        """
-        return base_depth - self.read()
-
     def close(self) -> None:
         """Close the sensor."""
         self.tof.stop_ranging()
         self.tof.close()
 
-    def __enter__(self) -> "Sensor":
-        """Create context manager view, i.e. self."""
-        return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        """Exit the context, closing the sensor."""
-        self.close()
-
-
-def default_sensor() -> Sensor:
+def _default_sensor() -> Sensor:
     """Construct the default sensor.
 
     Controlled by config values.
@@ -71,6 +90,49 @@ def default_sensor() -> Sensor:
     )
     sensor = Sensor(tof, level=config.measure.range)
     return sensor
+
+
+class ThreadedSensor(Reporter):
+    """Lazily maintains a single thread running a default Sensor."""
+
+    IDLE_TIME = 10
+
+    thread: t.Optional[threading.Thread] = None
+    last_access: float = 0
+    distance: t.Optional[int] = None
+
+    @classmethod
+    def operate(cls) -> None:
+        """Create and continually read a Sensor."""
+        with _default_sensor() as sensor:
+            logger.info("Opened VL53LXX sensor.")
+            while time.time() - cls.last_access > cls.IDLE_TIME:
+                cls.distance = sensor.read()
+
+    @classmethod
+    def start(cls) -> None:
+        """Start a new thread if neccesary."""
+        if cls.thread is None:
+            logger.info("Starting distance sensor thread.")
+            cls.thread = threading.Thread(target=cls.operate)
+            cls.thread.start()
+
+    @classmethod
+    def read(cls) -> int:
+        """Obtain the last read distance value."""
+        cls.last_access = time.time()
+        cls.start()
+        while cls.distance is None:
+            logger.debug("Waiting for distance.")
+            time.sleep(0)
+        return cls.distance
+
+
+def default_sensor() -> Reporter:
+    """Return a reporter."""
+    return ThreadedSensor()
+
+    # default_sensor = _default_sensor
 
 
 def main() -> None:
