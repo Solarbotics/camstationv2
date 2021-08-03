@@ -1,5 +1,10 @@
 # Camera Station
 
+## Usage
+ - Activate venv (e.g. `. camvenv/bin/venv` from `opencv` directory)
+ - Start Flask (i.e. `flask run -h <address>`) (defaults to localhost address)
+ - Buttons are labelled with what they get, `Activate` should run everything
+
 ## Structure
 
 Parts:
