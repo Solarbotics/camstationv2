@@ -1,6 +1,8 @@
 """Take photos using remote cameras using gphoto2."""
 
 import base64
+import dataclasses
+import logging
 import typing as t
 
 # note: using gphoto2 requires the user to be in the plugdev group (or root)
@@ -20,8 +22,44 @@ import gphoto2 as gp
 from . import config
 from . import files
 
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+
+
+T = t.TypeVar("T")
+
+
+@dataclasses.dataclass()
+class IterableManager(t.Generic[T]):
+    """Wraps an iterable in a context manager.
+
+    Returns the iterable on entry,
+    and calls the provided cleanup function
+    on each item of the iterable on exit.
+
+    Note that if the iterable is single-use,
+    objects may not be cleaned up correctly.
+    """
+
+    items: t.Iterable[T]
+    cleanup: t.Callable[[T], object] = lambda x: None
+
+    def __enter__(self) -> t.Iterable[T]:
+        """Provide wrapped iterable in context."""
+        return self.items
+
+    def __exit__(self, *exc_info) -> None:
+        """Cleanup items in wrapped iterable."""
+        for item in self.items:
+            self.cleanup(item)
+
 
 def get_cameras() -> t.Sequence[gp.camera.Camera]:
+    """Open all detected cameras.
+
+    Caller is responsible for closing each camera,
+    although they will also usually be closed on memory cleanup.
+    """
 
     # Prepare list for cameras
     cameras = []
@@ -51,6 +89,11 @@ def capture_image(camera, destination: str) -> None:
     )
     camera_file.save(destination)
 
+def close_camera(camera) -> None:
+    """Cleanup the provided camera."""
+    logger.info("Closing camera %s", camera)
+    camera.exit()
+
 
 def capture_image_set(folder: str = "photos") -> t.Iterable[str]:
     """Capture one photo from each camera.
@@ -58,19 +101,20 @@ def capture_image_set(folder: str = "photos") -> t.Iterable[str]:
     Returns iterable of file names that were saved to.
     """
     file_names = []
-    for index, camera in enumerate(get_cameras()):
-        # Info of the camera path, i.e. the port its connected to
-        camera_path_info = camera.get_port_info().get_path()
-        # print(camera_path_info)
-        # Transform into a set name (e.g. 'overhead', 'side', etc)
-        name = config.photo.names.get(camera_path_info, "unknown")
-        # Construct filename as a string to give to gphoto
-        save_path = files.data_name(
-            name=name, folder=folder, extension="jpg", timestamp=True
-        )
-        file_names.append(save_path)
+    with IterableManager(get_cameras(), close_camera) as cameras:
+        for index, camera in enumerate(cameras):
+            # Info of the camera path, i.e. the port its connected to
+            camera_path_info = camera.get_port_info().get_path()
+            # print(camera_path_info)
+            # Transform into a set name (e.g. 'overhead', 'side', etc)
+            name = config.photo.names.get(camera_path_info, "unknown")
+            # Construct filename as a string to give to gphoto
+            save_path = files.data_name(
+                name=name, folder=folder, extension="jpg", timestamp=True
+            )
+            file_names.append(save_path)
 
-        capture_image(camera, save_path)
+            capture_image(camera, save_path)
 
     # print(file_names)
     # return ["photos/0.jpg"]
