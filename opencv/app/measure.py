@@ -106,7 +106,8 @@ class ThreadedSensor(Reporter):
         """Create and continually read a Sensor."""
         with _default_sensor() as sensor:
             logger.info("Opened VL53LXX sensor.")
-            while time.time() - cls.last_access > cls.IDLE_TIME:
+            # while time.time() - cls.last_access > cls.IDLE_TIME:
+            while True:
                 cls.distance = sensor.read()
 
     @classmethod
