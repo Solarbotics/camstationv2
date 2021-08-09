@@ -95,7 +95,7 @@ def _default_sensor() -> Sensor:
 class ThreadedSensor(Reporter):
     """Lazily maintains a single thread running a default Sensor."""
 
-    IDLE_TIME = 10
+    IDLE_TIME = 3600
 
     thread: t.Optional[threading.Thread] = None
     last_access: float = 0
@@ -106,8 +106,8 @@ class ThreadedSensor(Reporter):
         """Create and continually read a Sensor."""
         with _default_sensor() as sensor:
             logger.info("Opened VL53LXX sensor.")
-            # while time.time() - cls.last_access > cls.IDLE_TIME:
-            while True:
+            while time.time() - cls.last_access <= cls.IDLE_TIME:
+                # while True:
                 cls.distance = sensor.read()
 
     @classmethod
