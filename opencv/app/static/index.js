@@ -146,4 +146,18 @@
       button.addEventListener("click", query(action.getAttribute("name"), httpMethod, output, write_on(output)));
     }
 
+    // Fetch streams and attach readers
+    let temp = "";
+    fetch("/weight_stream", {
+        method: "GET"
+    }).then(function (response) {
+        const reader = response.body.getReader();
+        reader.read().then(function process({done, value}) {
+            if (done) {
+                return;
+            }
+            temp = temp + value;
+        });
+    });
+
 })();

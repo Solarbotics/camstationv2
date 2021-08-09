@@ -104,6 +104,18 @@ def create_app() -> flask.Flask:
             weight = sc.read()
         return str(weight)
 
+    @app.route("/weight_stream")
+    def stream_weight() -> flask.Response:
+        """Continuously read the scale."""
+
+        def gen() -> t.Generator[str, None, None]:
+            """Generate scale values."""
+            with scale.managed_scale() as sc:
+                while True:
+                    yield str(sc.read()) + ","
+
+        return flask.Response(gen(), mimetype="application/text")
+
     @app.route("/config", methods=["POST"])
     def set_config() -> flask.Response:
         """Updates the config."""
@@ -162,8 +174,3 @@ def create_app() -> flask.Flask:
     # app.teardown_appcontext(close_camera)
 
     return app
-
-
-# https://www.pyimagesearch.com/2019/09/02/opencv-stream-video-to-web-browser-html-page/
-# https://blog.miguelgrinberg.com/post/video-streaming-with-flask
-# https://www.pyimagesearch.com/2015/03/30/accessing-the-raspberry-pi-camera-with-opencv-and-python/
