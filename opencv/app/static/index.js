@@ -182,7 +182,7 @@
         let start = Date.now();
         fetch("/" + name, {method: method}).then(function (response) {
           response.text().then(
-            update_on(span)
+            write_on(span)
           ).then(function (value) {
             setTimeout(update, Math.max(0, GAP - (Date.now() - start)));
           })
@@ -193,8 +193,11 @@
 
     }
 
-    start_polling("weight");
-    start_polling("height");
-    start_polling("bounds");
+    let start = document.getElementById("start");
+    start.addEventListener("click", function () {
+      start_polling("weight");
+      start_polling("height");
+      start_polling("bounds");
+    });
 
 })();
