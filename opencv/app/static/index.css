@@ -15,3 +15,16 @@ html {
 .row {
     margin: 5px;
 }
+
+.working-button {
+    background-color: orange;
+    /* border-color: orange; */
+}
+
+.finished-button {
+    background-color: green;
+}
+
+.errored-button {
+    background-color: red;
+}

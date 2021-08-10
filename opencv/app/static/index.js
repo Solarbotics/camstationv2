@@ -72,12 +72,13 @@
     // })
     
     // Construct a query function to be bound to an event such as click.
+    // Executing the returned function:
+    // Calls prep
     // Sends an <action> request to /<name>,
-    // setting output.textContent to Working while in progress,
-    // and then calling callback on the text of the response from /<name>
-    let query = function (name, action, output, callback) {
+    // Calls callback on the text of the response from /<name>
+    let query = function (name, action, prep, callback) {
       let func = function (event) {
-        output.textContent = "Working...";
+        prep();
         fetch("/" + name, {
           method: action
         }).then(function (response) {
@@ -86,6 +87,7 @@
       };
       return func;
     }
+
 
     // Take an html element and construct a function
     // that takes a single parameter and copies it
@@ -135,7 +137,7 @@
     // Bind query function
     activateButton.addEventListener(
       "click",
-      query("activate", "POST", activateInfo, activate_function(activateInfo))
+      query("activate", "POST", (() => write_on(activateInfo)("Working...")), activate_function(activateInfo))
     );
 
     // Setup 'actions'.
@@ -144,6 +146,7 @@
     // Pressing the button submits a POST request to the endpoint
     // identified by the 'name' attribute of the row.
     let actions = document.getElementsByClassName("action")
+    const COLOR_TIME = 500;
     for (const action of actions) {
       let button = action.children[0];
       let output = action.children[1];
@@ -151,7 +154,18 @@
       if (httpMethod === null) {
         httpMethod = "POST";
       }
-      button.addEventListener("click", query(action.getAttribute("name"), httpMethod, output, write_on(output)));
+      button.addEventListener("click", query(
+        action.getAttribute("name"),
+        httpMethod,
+        function () {
+          button.classList.add("working-button");
+        },
+        function () {
+          button.classList.remove("working-button");
+          button.classList.add("finished-button");
+          setTimeout(() => button.classList.remove("finished-button"), COLOR_TIME);
+        }
+      ));
     }
 
     // Setup polling
