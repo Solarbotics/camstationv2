@@ -97,6 +97,14 @@
       return func;
     }
 
+    let update_on = function (output) {
+      let func = function (text) {
+        text = text + " (" + String(Date.now()) + ")";
+        write_on(output)(text);
+      }
+      return func;
+    }
+
     // Collect elements
     let activateAction = document.getElementById("activateAction");
     let activateButton = activateAction.children[0];
@@ -146,18 +154,33 @@
       button.addEventListener("click", query(action.getAttribute("name"), httpMethod, output, write_on(output)));
     }
 
-    // Fetch streams and attach readers
-    let temp = "";
-    fetch("/weight_stream", {
-        method: "GET"
-    }).then(function (response) {
-        const reader = response.body.getReader();
-        reader.read().then(function process({done, value}) {
-            if (done) {
-                return;
-            }
-            temp = temp + value;
+    // Setup polling
+    function start_polling(name, method) {
+
+      const GAP = 1000;
+
+      if (method === undefined) {
+        method = "GET";
+      }
+
+      let span = document.getElementById(name);
+      function update() {
+        let start = Date.now();
+        fetch("/" + name, {method: method}).then(function (response) {
+          response.text().then(
+            update_on(span)
+          ).then(function (value) {
+            setTimeout(update, Math.max(0, GAP - (Date.now() - start)));
+          })
         });
-    });
+      }
+      // Start polling
+      setTimeout(update, 0);
+
+    }
+
+    start_polling("weight");
+    start_polling("height");
+    start_polling("bounds");
 
 })();

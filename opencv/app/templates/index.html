@@ -19,38 +19,45 @@
       <button id="snapshot" disabled>Snapshot</button>
       <span id="snapshotResult"></span>
     </div>
-    <div class="row action" name="bounds">
-      <button>Bounds</button>
-      <span></span>
+    <div class="row" name="bounds">
+      <label for="bounds">Bounds:</label>
+      <span id="bounds" class="info" name="bounds"></span>
+    </div>    
+    <div class="row" name="weight">
+      <label for="weight">Weight:</label>
+      <span id="weight" class="info" name="weight"></span>
     </div>
-    <div class="row action" name="photos">
-      <button>Photos</button>
-      <span></span>
+    <div class="row" name="height">
+      <label for="height">Height:</label>
+      <span id="height" class="info" name="height"></span>
     </div>
-    <div class="row action" name="tare">
-      <button>Tare</button>
-      <span></span>
-    </div>
-    <div class="row action" name="weight" action="GET">
-      <button>Weight</button>
-      <span></span>
-    </div>
-    <div class="row action" name="calibrate_depth" action="POST">
-      <button>Calibrate Depth</button>
-      <span></span>
-    </div>
-    <div class="row action" name="height" action="GET">
-      <button>Height</button>
-      <span></span>
-    </div>
+
     
-    <div class="row action" name="setup" action="POST">
-      <button>Setup</button>
-      <span></span>
+
+    <div class="row">
+      <span class="action" name="tare" action="POST">
+        <button>Tare</button>
+        <span></span>
+      </span>
+      <span class="action" name="calibrate_depth" action="POST">
+        <button>Calibrate Depth</button>
+        <span></span>
+      </span>
+      <span class="action" name="setup" action="POST">
+        <button>Setup</button>
+        <span></span>
+      </span>
     </div>
-    <div class="row" name="activate" id="activateAction">
-      <button>Activate</button>
-      <span></span>
+
+    <div class="row">
+      <span class="action" name="photos" action="POST">
+        <button>Photos</button>
+        <span></span>
+      </span>
+      <span name="activate" id="activateAction">
+        <button>Activate</button>
+        <span></span>
+      </span>
     </div>
 
     <form class="row" id="configOptions">

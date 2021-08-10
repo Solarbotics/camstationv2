@@ -104,18 +104,6 @@ def create_app() -> flask.Flask:
             weight = sc.read()
         return str(weight)
 
-    @app.route("/weight_stream")
-    def stream_weight() -> flask.Response:
-        """Continuously read the scale."""
-
-        def gen() -> t.Generator[str, None, None]:
-            """Generate scale values."""
-            with scale.managed_scale() as sc:
-                while True:
-                    yield str(sc.read()) + ","
-
-        return flask.Response(gen(), mimetype="application/text")
-
     @app.route("/config", methods=["POST"])
     def set_config() -> flask.Response:
         """Updates the config."""
