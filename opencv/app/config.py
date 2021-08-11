@@ -129,11 +129,10 @@ class PhotoConfig:
 
     Usually not custom instantiated."""
 
-    timeformat: str
     names: t.Mapping[str, str]
 
 
-photo = PhotoConfig(raw["photo"]["timeformat"], dict(raw["photo"]["names"]))
+photo = PhotoConfig(dict(raw["photo"]["names"]))
 
 
 @dataclasses.dataclass()

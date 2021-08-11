@@ -7,31 +7,72 @@ import typing as t
 from . import config
 
 
+def format_timestamp(
+    timestamp: t.Optional[datetime.datetime] = None, timeformat: t.Optional[str] = None
+) -> str:
+    """Create a timestamp from the provided datetime and format string.
+
+    If a datetime is not provided, defaults to now() (naive).
+
+    Has a default format string that can be used if one is not provided.
+    """
+    if timestamp is None:
+        timestamp = datetime.datetime.now()
+    if timeformat is None:
+        timeformat = config.files.timeformat
+    return timestamp.strftime(timeformat)
+
+
 def data_name(
     name: str,
+    *,
     folder: str = ".",
     extension: t.Optional[str] = None,
-    timestamp: bool = False,
+    format: t.Optional[str] = None,
+    use_timestamp: bool = True,
+    timestamp: t.Optional[datetime.datetime] = None,
+    timeformat: t.Optional[str] = None,
 ) -> str:
     """Construct a data filepath based on given parameters.
 
     Ensures the folder exists (may be a multi-folder path).
 
-    If timestamp is true, appends a timestamp to the end of the file name.
-    If extension is provided, a '.' and it are appended to the end of the file (after timestamp).
+    Creates a filepath with the given folder as a directory,
+    and then constructs a filename based on `name`,
+    timestamp parameters, `extension`, and format parameters.
+
+    The file name is constructed by calling .format on `format`, passing `name` as key `name`.
+    A timestamp can also be formatted in, as described below.
+
+    If `use_timestamp` is true, a timestamp is formatted into the file name using key `time`.
+    A timestamp can be provided to `timestamp`, or .now() (naive) will be used by default.
+    The datetime is first formatted into a string using `timeformat` as a format string,
+    before being formatted into the final file name.
+
+    If an extension is provided, it is appended to the end of the file, after a '.' literal.
     """
+
+    # Pull format from config if not provided
+    if format is None:
+        format = config.files.format
+
+    # We call the local file name (i.e. in the local directory)
+    # `label`, to differentiate from parameter `name`
+    # format_timestamp will pull a default timeformat if its None
+    if use_timestamp:
+        formatted_time = format_timestamp(timestamp, timeformat=timeformat)
+        label = format.format(name=name, time=formatted_time)
+    else:
+        label = format.format(name=name)
+
+    # Add extension if it exists
+    if extension is not None:
+        label += f".{extension}"
+
+    # Ensure that the folder exists
     root = pathlib.Path(folder)
     root.mkdir(parents=True, exist_ok=True)
 
-    now = datetime.datetime.now().strftime(config.files.timeformat)
-
-    if extension is not None:
-        file_name = (config.files.format + ".{extension}").format(
-            name=name, time=now, extension=extension
-        )
-    else:
-        file_name = config.files.format.format(name=name, time=now)
-
-    save_path = str(root.joinpath(pathlib.Path(file_name)))
+    save_path = str(root.joinpath(pathlib.Path(label)))
 
     return save_path

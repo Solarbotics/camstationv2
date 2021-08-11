@@ -79,7 +79,7 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
         name=config.process.data_name,
         folder=config.process.paths.data,
         extension="json",
-        timestamp=True,
+        use_timestamp=True,
     )
     with open(file_name, "w", encoding="utf-8") as f:
         json.dump({"size": size, "weight": weight, "height": height}, f)

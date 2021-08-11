@@ -135,7 +135,7 @@ def capture_image_set(folder: str = "photos") -> t.Iterable[str]:
             name = config.photo.names.get(serialnumber, "unknown")
             # Construct filename as a string to give to gphoto
             save_path = files.data_name(
-                name=name, folder=folder, extension="jpg", timestamp=True
+                name=name, folder=folder, extension="jpg", use_timestamp=True
             )
             file_names.append(save_path)
 
