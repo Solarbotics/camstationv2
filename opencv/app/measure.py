@@ -111,6 +111,7 @@ class ThreadedSensor(Reporter):
             while time.time() - cls.last_access <= cls.IDLE_TIME:
                 history.append(sensor.read())
                 cls.distance = round(sum(history) / len(history))
+                # Debugging, assumes distance to be 2 digits and appends into an int
                 # cls.distance = sum(
                 #     val * 10 ** (2 * i)
                 #     for i, val in enumerate(
