@@ -46,3 +46,5 @@ level = 0.0
 bus = 1
 address = 41
 range = 3
+
+sample_window = 100

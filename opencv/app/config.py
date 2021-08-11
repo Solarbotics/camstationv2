@@ -232,5 +232,8 @@ class MeasureConfig(Config):
 
     range: int
 
+    # Number of historical samples to keep and average over
+    sample_window: int
+
 
 measure = MeasureConfig.from_raw(raw["measure"])

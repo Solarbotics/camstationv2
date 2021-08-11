@@ -1,5 +1,6 @@
 """Methods for measuring (the height of) the product."""
 
+import collections
 import contextlib
 import logging
 import signal
@@ -104,11 +105,18 @@ class ThreadedSensor(Reporter):
     @classmethod
     def operate(cls) -> None:
         """Create and continually read a Sensor."""
+        history: t.Deque[int] = collections.deque(maxlen=config.measure.sample_window)
         with _default_sensor() as sensor:
             logger.info("Opened VL53LXX sensor.")
             while time.time() - cls.last_access <= cls.IDLE_TIME:
-                # while True:
-                cls.distance = sensor.read()
+                history.append(sensor.read())
+                cls.distance = round(sum(history) / len(history))
+                # cls.distance = sum(
+                #     val * 10 ** (2 * i)
+                #     for i, val in enumerate(
+                #         list(history) + [round(sum(history) / len(history))]
+                #     )
+                # )
 
     @classmethod
     def start(cls) -> None:
