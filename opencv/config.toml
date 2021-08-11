@@ -40,7 +40,7 @@ data = "data"
 
 [lights]
 pin = 12
-level = 0.4
+level = 0.0
 
 [measure]
 bus = 1
