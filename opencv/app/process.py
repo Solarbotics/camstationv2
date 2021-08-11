@@ -1,8 +1,10 @@
 """Operate main camera station processes."""
 
 import base64
+import datetime
 import json
 import logging
+import pathlib
 import time
 import typing as t
 
@@ -60,6 +62,7 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     size = tuple(f"{val:.2f}" for val in sizes[0]) if sizes else (0, 0)
     # Turn off lights
     lights.Lights().ring().off()
+
     # Use overhead tech to get depth
     try:
         with measure.default_sensor() as sensor:
@@ -67,6 +70,7 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     except Exception as e:
         logger.error(e)
         height = 0
+
     # Read scale
     try:
         with scale.managed_scale() as sc:
@@ -74,22 +78,32 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     except Exception as e:
         logger.error(e)
         weight = 0
+
     # Save gathered data
+    # Construct root folder
+    now = datetime.datetime.now()
+    data_folder = pathlib.Path(config.process.paths.data).joinpath(
+        files.format_timestamp(now)
+    )
     file_name = files.data_name(
         name=config.process.data_name,
-        folder=config.process.paths.data,
+        folder=data_folder,
         extension="json",
         use_timestamp=True,
+        timestamp=now,
     )
     with open(file_name, "w", encoding="utf-8") as f:
         json.dump({"size": size, "weight": weight, "height": height}, f)
     # Take photos
     try:
-        photo_paths = photo.capture_image_set(config.process.paths.photos)
+        photo_paths = photo.capture_image_set(
+            str(data_folder.joinpath(config.process.paths.photos)), timestamp=now
+        )
         logger.info("Photos: %s", photo_paths)
     except Exception as e:
         photo_paths = []
         logger.error(e)
+
     # Encode and return pictures
     encoded_images: t.List[str] = [photo.encode_image(path) for path in photo_paths]
     # Return data

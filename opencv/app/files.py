@@ -26,7 +26,7 @@ def format_timestamp(
 def data_name(
     name: str,
     *,
-    folder: str = ".",
+    folder: t.Union[str, pathlib.Path] = ".",
     extension: t.Optional[str] = None,
     format: t.Optional[str] = None,
     use_timestamp: bool = True,
