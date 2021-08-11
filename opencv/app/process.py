@@ -53,7 +53,7 @@ def get_camera() -> camera.Camera:
 def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     """Activate a round of the camera station."""
     # Turn on lights
-    lights.Lights().ring().on()
+    lights.Lights().ring().level = config.lights.level
     time.sleep(config.process.camera.wait)
     # Operate undercamera for sizing
     sizes = get_camera().get_processed_frame(threshold=kwargs.get("threshold", None))[1]
