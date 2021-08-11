@@ -219,6 +219,7 @@ class LightsConfig(Config):
     """LightsConfig Schema."""
 
     pin: int
+    level: float
 
 
 lights = LightsConfig.from_raw(raw["lights"])
