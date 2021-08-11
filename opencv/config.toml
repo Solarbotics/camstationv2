@@ -2,10 +2,8 @@
 timeformat = "%Y-%m-%d_%H:%M:%S"
 
 [photo.names]
-"usb:001,004" = "primary"
-"usb:001,005" = "secondary"
-"usb:001,006" = "tertiary"
-"usb:001,007" = "quaternary"
+"55b1bffb3a794523b949da0b1aca60fe"= "tq"
+"a63fbd67eb9641778bdb46d5ae35e573" = "oh"
 
 [files]
 format = "{time}_{name}"

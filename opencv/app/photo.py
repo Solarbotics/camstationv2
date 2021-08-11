@@ -1,5 +1,6 @@
 """Take photos using remote cameras using gphoto2."""
 
+import argparse
 import base64
 import dataclasses
 import logging
@@ -78,6 +79,36 @@ def get_cameras() -> t.Sequence[gp.camera.Camera]:
     return cameras
 
 
+def close_camera(camera) -> None:
+    """Cleanup the provided camera."""
+    logger.info("Closing camera %s", camera)
+    camera.exit()
+
+
+def config_value(camera, key: str) -> str:
+    """Retrieve the value of the requested config key of the provided camera.
+
+    Example keys:
+    'serialnumber',
+    'cameramodel',
+    """
+    return gp.check_result(
+        gp.gp_widget_get_child_by_name(camera.get_config(), key)
+    ).get_value()
+
+
+def cameras_info() -> t.Sequence[t.Sequence[str]]:
+    """Open and collect information on connected cameras.
+
+    Closes the cameras automatically.
+    """
+    with IterableManager(get_cameras(), close_camera) as cameras:
+        return [
+            (config_value(camera, "cameramodel"), config_value(camera, "serialnumber"))
+            for camera in cameras
+        ]
+
+
 def capture_image(camera, destination: str) -> None:
     """Capture and download an image from the given camera."""
     # trigger camera?
@@ -89,11 +120,6 @@ def capture_image(camera, destination: str) -> None:
     )
     camera_file.save(destination)
 
-def close_camera(camera) -> None:
-    """Cleanup the provided camera."""
-    logger.info("Closing camera %s", camera)
-    camera.exit()
-
 
 def capture_image_set(folder: str = "photos") -> t.Iterable[str]:
     """Capture one photo from each camera.
@@ -103,11 +129,10 @@ def capture_image_set(folder: str = "photos") -> t.Iterable[str]:
     file_names = []
     with IterableManager(get_cameras(), close_camera) as cameras:
         for index, camera in enumerate(cameras):
-            # Info of the camera path, i.e. the port its connected to
-            camera_path_info = camera.get_port_info().get_path()
-            # print(camera_path_info)
+            # Serial number of the camera for keying
+            serialnumber = config_value(camera, "serialnumber")
             # Transform into a set name (e.g. 'overhead', 'side', etc)
-            name = config.photo.names.get(camera_path_info, "unknown")
+            name = config.photo.names.get(serialnumber, "unknown")
             # Construct filename as a string to give to gphoto
             save_path = files.data_name(
                 name=name, folder=folder, extension="jpg", timestamp=True
@@ -116,7 +141,7 @@ def capture_image_set(folder: str = "photos") -> t.Iterable[str]:
 
             capture_image(camera, save_path)
 
-    # print(file_names)
+    logger.info("Photos: %s", file_names)
     # return ["photos/0.jpg"]
     return file_names
 
@@ -141,5 +166,25 @@ def encode_image(path: str) -> str:
     return b64_encoding
 
 
+def cmd(arguments: t.Optional[t.Sequence[str]] = None) -> None:
+    """Run argparse and command-line functionality."""
+    parser = argparse.ArgumentParser(
+        description="Interact with connected photo cameras."
+    )
+    parser.add_argument(
+        "mode", choices=("capture", "detect"), default="detect", help="Mode to run."
+    )
+
+    args = parser.parse_args(arguments)
+
+    if args.mode == "capture":
+        paths = capture_image_set()
+        print(f"Images captured: {paths}")
+    elif args.mode == "detect":
+        info = cameras_info()
+        for piece in info:
+            print(f"Info: {piece}")
+
+
 if __name__ == "__main__":
-    capture_image_set()
+    cmd()

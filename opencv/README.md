@@ -1,6 +1,8 @@
 # Camera Station
 
 ## Usage
+ - The Raspberry Pi controlling the camera station
+ can be found at the address `camerastation` (or `192.168.2.165` as of writing).
  - Activate venv (e.g. `. camvenv/bin/venv` from `opencv` directory)
  - Start Flask (i.e. `flask run -h <address>`) (defaults to localhost address)
  - Buttons are labelled with what they get, `Activate` should run everything

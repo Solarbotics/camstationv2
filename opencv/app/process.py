@@ -88,6 +88,7 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
         photo_paths = photo.capture_image_set(config.process.paths.photos)
         logger.info("Photos: %s", photo_paths)
     except Exception as e:
+        photo_paths = []
         logger.error(e)
     # Encode and return pictures
     encoded_images: t.List[str] = [photo.encode_image(path) for path in photo_paths]
