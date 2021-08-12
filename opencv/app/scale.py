@@ -31,8 +31,12 @@ class Scale:
     lock_time: float = 0
 
     @classmethod
-    def open(cls) -> None:
-        """Open scale the scale if neccesary."""
+    def open(cls) -> serial.Serial:
+        """Open the scale if neccesary, and return it.
+
+        Consecutive calls should return the same scale object,
+        unless the previous scale was closed in between.
+        """
         if cls.scale is None:
             cls.scale = serial.Serial(
                 port=COM_PORT, baudrate=COM_BAUDRATE, timeout=TIMEOUT
@@ -40,6 +44,7 @@ class Scale:
             cls.unlock()
             # scale.is_open()
             logger.debug("Opened scale: %s", cls.scale)
+        return cls.scale
 
     @classmethod
     def close(cls) -> None:
@@ -63,13 +68,13 @@ class Scale:
     @classmethod
     def tare(cls) -> None:
         """Tare the scale."""
-        cls.open()
+        scale = cls.open()
         cls.wait()
 
-        cls.scale.reset_input_buffer()
+        scale.reset_input_buffer()
 
         logger.info("Taring scale")
-        cls.scale.write(b"x1x")  # Open menu; tare, close menu
+        scale.write(b"x1x")  # Open menu; tare, close menu
         logger.info("Tare complete")
 
         cls.unlock()
@@ -77,17 +82,17 @@ class Scale:
     @classmethod
     def read(cls) -> float:
         """Read weight from the scale."""
-        cls.open()
+        scale = cls.open()
         cls.wait()
 
         logger.info("Reading scale")
         # b'r' seems to be the read signal
-        cls.scale.reset_input_buffer()
-        cls.scale.write(b"r")
+        scale.reset_input_buffer()
+        scale.write(b"r")
         # was working before flush but might as well
-        cls.scale.flush()
+        scale.flush()
         # upon proper behaviour, get like "0.000,kg,\r\n"
-        scaleData = cls.scale.readline().decode("ascii").split(",")
+        scaleData = scale.readline().decode("ascii").split(",")
         logger.info("Scaledata: %s", scaleData)
         cls.unlock()
         return scaleData[0]
