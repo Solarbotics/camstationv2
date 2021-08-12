@@ -3,6 +3,7 @@
     <title>Camera Station</title>
     <link rel="shortcut icon" href="/favicon.ico">
     <link href="index.css" rel="stylesheet">
+    <script src="config.js" defer></script>
     <script src="index.js" defer></script>
   </head>
 
@@ -81,6 +82,15 @@
       <label for="photosGallery">Photo Gallery</label>
       <div id="photosGallery">
       </div>
+    </div>
+
+    <div class="row">
+      <form id="query">
+        <input type="text" placeholder="sku" name="query">
+        <input type="submit" value="Query">
+      </form>
+    </div>
+    <div class="row" id="queryResult">
     </div>
 
   </body>

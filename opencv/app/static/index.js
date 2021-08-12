@@ -200,4 +200,19 @@
       start_polling("bounds");
     });
 
+    let queryForm = document.getElementById("query");
+    queryForm.addEventListener("submit", function (event) {
+      // queryForm.elements["query"].value = "";
+      queryForm.elements["query"].select();
+      fetch(
+        config.lookup + "/lookup.html?query=" + queryForm.elements["query"].value,
+        {method: "GET"}
+      ).then(function (response) {
+        let output = document.getElementById("queryResult");
+        response.text().then(text => output.innerHTML = text);
+      });
+      event.preventDefault();
+      return false;
+    })
+
 })();
