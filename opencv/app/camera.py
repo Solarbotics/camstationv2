@@ -312,7 +312,7 @@ class Camera:
     def get_frame(cls) -> Image:
         """Get the latest image frame."""
         cls.last_request = time.time()
-        logger.debug("Before initialize")
+        # logger.debug("Before initialize")
         cls.initialize()
 
         # logger.debug("Inside get_frame: %s", cls.frame)
@@ -328,7 +328,7 @@ class Camera:
         raw = type(self).get_frame()
         # logger.debug("Inside get_processed_frame: %s", raw)
         result = self.processor.process_frame(raw, **options)
-        logger.debug("Processed frame")
+        # logger.debug("Processed frame")
         return result
 
     def get_jpg(self, **options: t.Any) -> bytes:
