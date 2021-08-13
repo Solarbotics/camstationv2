@@ -70,9 +70,9 @@ class Scale(reader.Reader[float], TaredReader):
 
         self.device.reset_input_buffer()
 
-        logger.info("Taring scale")
+        logger.debug("Taring scale")
         self.device.write(b"x1x")  # Open menu; tare, close menu
-        logger.info("Tare complete")
+        logger.debug("Tare complete")
 
         self.unlock()
 
@@ -88,7 +88,7 @@ class Scale(reader.Reader[float], TaredReader):
     def read(self) -> float:
         """Read weight from the scale."""
         self.wait()
-        logger.info("Reading scale")
+        logger.debug("Reading scale")
 
         # b'r' seems to be the read signal
         self.device.reset_input_buffer()
@@ -99,7 +99,7 @@ class Scale(reader.Reader[float], TaredReader):
         # upon proper behaviour, get like "0.000,kg,\r\n"
         scaleData = self.device.readline().decode("ascii").split(",")
         self.unlock()
-        logger.info("Scaledata: %s", scaleData)
+        logger.debug("Scaledata: %s", scaleData)
 
         try:
             value = float(scaleData[0])
