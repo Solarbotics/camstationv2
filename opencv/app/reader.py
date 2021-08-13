@@ -162,8 +162,9 @@ class ThreadedReader(Reader[T]):
             while not stop.is_set() and (
                 self.timeout is None or time.time() - self.last_read <= self.timeout
             ):
+                value = self.get_value(reader)
                 condition.acquire()
-                self.value = self.get_value(reader)
+                self.value = value
                 condition.notify_all()
                 condition.release()
 
