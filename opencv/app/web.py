@@ -98,20 +98,6 @@ def create_app() -> flask.Flask:
         photo.capture_image_set("photos")
         return "Photos taken"
 
-    @app.route("/tare", methods=["POST"])
-    def tare_scale() -> str:
-        """Tare the scale."""
-        with scale.scale() as sc:
-            sc.tare()
-        return "Scale tared"
-
-    @app.route("/weight", methods=["GET"])
-    def get_weight() -> str:
-        """Read the scale."""
-        with scale.scale() as sc:
-            weight = sc.read()
-        return str(weight)
-
     @app.route("/config", methods=["POST"])
     def set_config() -> flask.Response:
         """Updates the config."""
@@ -132,6 +118,21 @@ def create_app() -> flask.Flask:
         else:
             return flask.jsonify({"message": "No JSON received."})
 
+    @app.route("/tare", methods=["POST"])
+    def tare_scale() -> str:
+        """Tare the scale."""
+        with scale.scale() as sc:
+            weight = sc.read()
+        app.config["tare"] = weight
+        return "Scale tared"
+
+    @app.route("/weight", methods=["GET"])
+    def get_weight() -> str:
+        """Read the scale."""
+        with scale.scale() as sc:
+            weight = sc.obtain(base=app.config.get("tare", 0))
+        return str(weight)
+
     @app.route("/calibrate_depth", methods=["POST"])
     def calibrate_height() -> flask.Response:
         # Read current depth
@@ -150,7 +151,8 @@ def create_app() -> flask.Flask:
         # Tare scale
         # Calibrate depth sensor
         with scale.scale() as sc:
-            sc.tare()
+            weight = sc.read()
+        app.config["tare"] = weight
         with measure.sensor() as sensor:
             depth = sensor.read()
         app.config["base_depth"] = depth

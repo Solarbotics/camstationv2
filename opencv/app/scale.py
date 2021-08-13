@@ -19,7 +19,21 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-class Scale(reader.Reader[float]):
+class TaredReader(reader.Obtainer[float]):
+    """Mixin that provides a .obtain method.
+
+    Returns the difference between the provided base and the read value.
+    """
+
+    def read(self) -> float:
+        raise NotImplementedError
+
+    def obtain(self, base: float) -> float:
+        """Read the calculated weight, based on provided base tare."""
+        return self.read() - base
+
+
+class Scale(reader.Reader[float], TaredReader):
     """Generically receive weight data."""
 
     def __init__(self, device: serial.Serial, *, pause: float = 0) -> None:
@@ -30,6 +44,8 @@ class Scale(reader.Reader[float]):
         self.device: serial.Serial = device
         self.lock_time: float = 0
         self.pause = pause
+
+        self.tare_amount: float = 0
 
         self.unlock()
 
@@ -60,6 +76,15 @@ class Scale(reader.Reader[float]):
 
         self.unlock()
 
+    # TODO NOT THREADSAFE
+    def tare(self) -> None:
+        """Tare this scale object.
+
+        The tare is only maintained in-code,
+        not on the device itself.
+        """
+        self.tare_amount = self.read()
+
     def read(self) -> float:
         """Read weight from the scale."""
         self.wait()
@@ -81,7 +106,7 @@ class Scale(reader.Reader[float]):
         except (ValueError, IndexError):
             logger.error("Could not obtain value from scale data.")
             value = 0
-        return value
+        return value - self.tare_amount
 
     def close(self) -> None:
         """Close the serial."""
@@ -103,13 +128,17 @@ def _default_scale() -> Scale:
     return scale
 
 
+class ThreadedScale(reader.ThreadedReader[float], TaredReader):
+    """Combination of a ThreadedReader[float] and a TaredReader."""
+
+
 # Construct a single (threaded) scale
-threaded_scale = reader.ThreadedReader(
+threaded_scale = ThreadedScale(
     _default_scale, timeout=config.readers.inactivity_timeout
 )
 
 
-def scale() -> reader.Reader[float]:
+def scale() -> ThreadedScale:
     """Return a constant Scale manager."""
     return threaded_scale
 
