@@ -28,8 +28,8 @@ class CloseableContext:
     def close(self) -> None:
         """Close this object."""
 
-    def __enter__(self) -> "CloseableContext":
-        """Create context manager view, i.e. self, opening first."""
+    def __enter__(self: T) -> T:
+        """Create context manager view, i.e. self."""
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
@@ -43,10 +43,6 @@ class Reader(CloseableContext, t.Generic[T]):
     Provides dummy methods that allow it to be used as a context manager.
     Default implementation returns self on entry and calls self.close() on exit.
     """
-
-    def __enter__(self) -> "Reader":
-        """Explicitly return this as a Reader."""
-        return self
 
     def read(self) -> T:
         """Read a single value."""

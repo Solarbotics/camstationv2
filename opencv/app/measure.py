@@ -73,12 +73,6 @@ class ThreadedSensor(reader.ThreadedReader[int], CalibratedSensor):
             maxlen=config.measure.sample_window
         )
 
-    def __enter__(self) -> "ThreadedSensor":
-        """Specifically mark this as returning a ThreadedSensor.
-
-        This allows proper type checking in contexts."""
-        return self
-
     def get_value(self, reader: reader.Reader[int]) -> int:
         """Average the latest value over the rolling window."""
         self.history.append(reader.read())
