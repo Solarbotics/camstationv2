@@ -16,30 +16,41 @@ logger.addHandler(logging.NullHandler())
 T = t.TypeVar("T")
 
 
-class Reader(t.Generic[T]):
+class CloseableContext:
+    """Context manager class that relies on a close method.
+
+    Returns self in __enter,
+    and calls self.close in __exit__.
+
+    This base class has an empty close method.
+    """
+
+    def close(self) -> None:
+        """Close this object."""
+
+    def __enter__(self) -> "CloseableContext":
+        """Create context manager view, i.e. self, opening first."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        """Exit the context by closing this object."""
+        self.close()
+
+
+class Reader(CloseableContext, t.Generic[T]):
     """Class that can read a value.
 
     Provides dummy methods that allow it to be used as a context manager.
     Default implementation returns self on entry and calls self.close() on exit.
     """
 
+    def __enter__(self) -> "Reader":
+        """Explicitly return this as a Reader."""
+        return self
+
     def read(self) -> T:
         """Read a single value."""
         raise NotImplementedError
-
-    def close(self) -> None:
-        """Close the Reader.
-
-        Implementations may have actual behaviour here.
-        """
-
-    def __enter__(self) -> "Reader":
-        """Create context manager view, i.e. self."""
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        """Exit the context by closing this Reader."""
-        self.close()
 
 
 class Obtainer(t.Generic[T]):
@@ -51,6 +62,18 @@ class Obtainer(t.Generic[T]):
 
 
 TIMEOUT = 3600
+
+
+class ThreadObjects(t.NamedTuple):
+    """Various threading objects used by ThreadedReader.
+
+    Composed into a single class since they either all exist
+    or none exist.
+    """
+
+    thread: threading.Thread
+    condition: threading.Condition
+    stop_flag: threading.Event
 
 
 class ThreadedReader(Reader[T]):
@@ -83,18 +106,14 @@ class ThreadedReader(Reader[T]):
         """
         self.factory = factory
         self.timeout = timeout
+        self.lazy = lazy
 
-        self.thread_objects: t.Optional[
-            t.Tuple[threading.Thread, threading.Condition]
-        ] = None
+        self.thread_objects: t.Optional[ThreadObjects] = None
 
         self.last_read: float = 0
         self.value: t.Optional[T] = None
 
         self.post_init()
-
-        if not lazy:
-            self.activate()
 
     def post_init(self) -> None:
         """Run initialization logic after the default init.
@@ -108,15 +127,16 @@ class ThreadedReader(Reader[T]):
         if self.thread_objects is None:
             lock = threading.Lock()
             condition = threading.Condition(lock)
-            # Trailing comma in args= is important as it makes a tuple
-            thread = threading.Thread(target=self.operate, args=(condition,))
-            self.thread_objects = (thread, condition)
+            # Event defaults to false
+            stop = threading.Event()
+            thread = threading.Thread(target=self.operate, args=(condition, stop))
+            self.thread_objects = ThreadObjects(thread, condition, stop)
             thread.start()
             return condition
         else:
-            return self.thread_objects[1]
+            return self.thread_objects.condition
 
-    def operate(self, condition: threading.Condition) -> None:
+    def operate(self, condition: threading.Condition, stop: threading.Event) -> None:
         """Run seperate thread logic.
         Should not be called manually, is instead called by
         constructing a thread on this function from self.activate.
@@ -140,7 +160,9 @@ class ThreadedReader(Reader[T]):
             # checking the right side
             # If its not None, the right side must be true for the loop
             # to continue to execute
-            while self.timeout is None or time.time() - self.last_read <= self.timeout:
+            while not stop.is_set() and (
+                self.timeout is None or time.time() - self.last_read <= self.timeout
+            ):
                 condition.acquire()
                 self.value = self.get_value(reader)
                 condition.notify_all()
@@ -166,5 +188,17 @@ class ThreadedReader(Reader[T]):
         condition.acquire()
         while self.value is None:
             condition.wait()
+        value = self.value
         condition.release()
-        return self.value
+        return value
+
+    def stop(self) -> None:
+        """Stops the ThreadedReader, stopping the contained thread.
+
+        Blocks until the thread stops.
+
+        If no thread was running, returns instantly"""
+        if self.thread_objects is not None:
+            self.thread_objects.stop_flag.set()
+            self.thread_objects.thread.join()
+            self.thread_objects = None
