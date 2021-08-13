@@ -1,10 +1,8 @@
 """Methods for measuring (the height of) the product."""
 
 import collections
-import contextlib
 import logging
 import signal
-import threading
 import time
 import typing as t
 
