@@ -109,6 +109,9 @@ class ThreadedReader(Reader[T]):
         self.last_read: float = 0
         self.value: t.Optional[T] = None
 
+        if not self.lazy:
+            self.activate()
+
         self.post_init()
 
     def post_init(self) -> None:
