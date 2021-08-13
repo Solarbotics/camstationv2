@@ -169,21 +169,21 @@
     }
 
     // Setup polling
-    function start_polling(name, method) {
+    function start_polling_data(endpoint, names) {
 
       const GAP = 1000;
 
-      if (method === undefined) {
-        method = "GET";
-      }
+      const method = "GET";
 
-      let span = document.getElementById(name);
       function update() {
         let start = Date.now();
-        fetch("/" + name, {method: method}).then(function (response) {
-          response.text().then(
-            write_on(span)
-          ).then(function (value) {
+        fetch(endpoint, {method: method}).then(function (response) {
+          response.json().then(function (data) {
+            for (const name of names) {
+              let span = document.getElementById(name);
+              write_on(span)(data[name])
+            }
+          }).then(function (value) {
             setTimeout(update, Math.max(0, GAP - (Date.now() - start)));
           })
         });
@@ -195,9 +195,7 @@
 
     let start = document.getElementById("start");
     start.addEventListener("click", function () {
-      start_polling("weight");
-      start_polling("height");
-      start_polling("bounds");
+      start_polling_data("/data", ["weight", "height", "bounds"]);
     });
 
     let queryForm = document.getElementById("query");

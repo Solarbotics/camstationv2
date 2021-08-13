@@ -146,6 +146,21 @@ def create_app() -> flask.Flask:
         with measure.sensor() as sensor:
             return str(sensor.obtain(base=app.config.get("base_depth", 0)))
 
+    @app.route("/data")
+    def get_data() -> flask.Response:
+        """Retrive all the live data values."""
+        with scale.scale() as sc:
+            weight = sc.obtain(base=app.config.get("tare", 0))
+        with measure.sensor() as sensor:
+            height = sensor.obtain(base=app.config.get("base_depth", 0))
+        data = process.get_camera().get_processed_frame(
+            threshold=app.config.get("threshold", config.web.threshold)
+        )[1]
+        bounds = tuple(f"{val:.2f}" for val in (data[0] if data else (0, 0)))
+        message = {"weight": weight, "height": height, "bounds": bounds}
+        logger.info("Data: %s", message)
+        return flask.jsonify(message)
+
     @app.route("/setup", methods=["POST"])
     def setup() -> str:
         # Tare scale
