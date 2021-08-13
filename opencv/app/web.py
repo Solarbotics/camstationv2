@@ -17,13 +17,21 @@ from . import scale
 # Enable logging
 root_logger = logging.getLogger()
 handler = logging.StreamHandler()
-handler.setFormatter(
-    logging.Formatter("[%(asctime)s] [%(levelname)s] %(name)s - %(message)s")
-)
+handler.setFormatter(logging.Formatter(config.logging.format))
 root_logger.addHandler(handler)
-root_logger.setLevel(logging.INFO)
+root_logger.setLevel(config.logging.level)
 
 logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+
+werkzeug_logger = logging.getLogger("werkzeug")
+# By prebuilding a list of handlers,
+# we avoid iterating directly over the handler list
+# that we are likely mutating
+for _handler in list(werkzeug_logger.handlers):
+    werkzeug_logger.removeHandler(_handler)
+
+# logging.getLogger("app.camera").setLevel(logging.INFO)
 
 
 def close_camera(error: t.Optional[Exception] = None) -> None:
@@ -127,15 +135,15 @@ def create_app() -> flask.Flask:
     @app.route("/calibrate_depth", methods=["POST"])
     def calibrate_height() -> flask.Response:
         # Read current depth
-        with measure.default_sensor() as sensor:
+        with measure.sensor() as sensor:
             depth = sensor.read()
         app.config["base_depth"] = depth
         return flask.jsonify({"message": "Platform depth calibrated."})
 
     @app.route("/height")
     def get_height() -> str:
-        with measure.default_sensor() as sensor:
-            return str(sensor.height(base_depth=app.config.get("base_depth", 0)))
+        with measure.sensor() as sensor:
+            return str(sensor.obtain(base=app.config.get("base_depth", 0)))
 
     @app.route("/setup", methods=["POST"])
     def setup() -> str:
@@ -143,7 +151,7 @@ def create_app() -> flask.Flask:
         # Calibrate depth sensor
         with scale.managed_scale() as sc:
             sc.tare()
-        with measure.default_sensor() as sensor:
+        with measure.sensor() as sensor:
             depth = sensor.read()
         app.config["base_depth"] = depth
         return "Setup complete."

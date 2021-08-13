@@ -13,48 +13,27 @@ import typing as t
 import VL53L0X
 
 from . import config
+from . import reader
 
 logger = logging.Logger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-class Reporter:
-    """Base class that can report a distance and height.
+class CalibratedSensor(reader.Obtainer[int]):
+    """Mixin that provides a .obtain method.
 
-    Can be used as a context manager,
-    although this base implementation does nothing with the context.
+    Returns the difference between the provided base and the read value.
     """
 
     def read(self) -> int:
-        """Method to be overridden."""
         raise NotImplementedError
 
-    def height(self, base_depth: int = 0) -> int:
-        """Calculate the height of a sensed object.
-
-        Assumes the object to be sitting on a surface `base_depth` units aways,
-        and calculates height = base_depth - object_depth.
-
-        Gets the depth of the object from a read.
-        """
-        return base_depth - self.read()
-
-    def close(self) -> None:
-        """Close the Reporter.
-
-        Implementations may have actual behaviour here.
-        """
-
-    def __enter__(self) -> "Reporter":
-        """Create context manager view, i.e. self."""
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        """Exit the context by closing this Reporter."""
-        self.close()
+    def obtain(self, base: int) -> int:
+        """Read the calibrated height, based on provided base height."""
+        return base - self.read()
 
 
-class Sensor(Reporter):
+class Sensor(reader.Reader[int], CalibratedSensor):
     """Construct a distance sensor."""
 
     def __init__(self, tof: VL53L0X.VL53L0X, level: int = 1) -> None:
@@ -63,6 +42,7 @@ class Sensor(Reporter):
         self._open(level)
 
     def _open(self, level: int = 1) -> "Sensor":
+        """Open the sensor."""
         self.tof.open()
         self.tof.start_ranging(level)
         return self
@@ -81,6 +61,30 @@ class Sensor(Reporter):
         self.tof.close()
 
 
+class ThreadedSensor(reader.ThreadedReader[int], CalibratedSensor):
+    """Maintain a seperate-threaded Sensor."""
+
+    def post_init(self) -> None:
+        """Perform post init logic.
+
+        Initialize the rolling history window.
+        """
+        self.history: t.Deque[int] = collections.deque(
+            maxlen=config.measure.sample_window
+        )
+
+    def __enter__(self) -> "ThreadedSensor":
+        """Specifically mark this as returning a ThreadedSensor.
+
+        This allows proper type checking in contexts."""
+        return self
+
+    def get_value(self, reader: reader.Reader[int]) -> int:
+        """Average the latest value over the rolling window."""
+        self.history.append(reader.read())
+        return round(sum(self.history) / len(self.history))
+
+
 def _default_sensor() -> Sensor:
     """Construct the default sensor.
 
@@ -90,59 +94,17 @@ def _default_sensor() -> Sensor:
         i2c_bus=config.measure.bus, i2c_address=config.measure.address
     )
     sensor = Sensor(tof, level=config.measure.range)
+    logger.info("Opened VL53LXX sensor.")
     return sensor
 
 
-class ThreadedSensor(Reporter):
-    """Lazily maintains a single thread running a default Sensor."""
-
-    IDLE_TIME = 3600
-
-    thread: t.Optional[threading.Thread] = None
-    last_access: float = 0
-    distance: t.Optional[int] = None
-
-    @classmethod
-    def operate(cls) -> None:
-        """Create and continually read a Sensor."""
-        history: t.Deque[int] = collections.deque(maxlen=config.measure.sample_window)
-        with _default_sensor() as sensor:
-            logger.info("Opened VL53LXX sensor.")
-            while time.time() - cls.last_access <= cls.IDLE_TIME:
-                history.append(sensor.read())
-                cls.distance = round(sum(history) / len(history))
-                # Debugging, assumes distance to be 2 digits and appends into an int
-                # cls.distance = sum(
-                #     val * 10 ** (2 * i)
-                #     for i, val in enumerate(
-                #         list(history) + [round(sum(history) / len(history))]
-                #     )
-                # )
-
-    @classmethod
-    def start(cls) -> None:
-        """Start a new thread if neccesary."""
-        if cls.thread is None:
-            logger.info("Starting distance sensor thread.")
-            cls.thread = threading.Thread(target=cls.operate)
-            cls.thread.start()
-
-    @classmethod
-    def read(cls) -> int:
-        """Obtain the last read distance value."""
-        cls.last_access = time.time()
-        cls.start()
-        while cls.distance is None:
-            logger.debug("Waiting for distance.")
-            time.sleep(0)
-        return cls.distance
+# Construct a single sensor
+measure_sensor = ThreadedSensor(_default_sensor, timeout=3600)
 
 
-def default_sensor() -> Reporter:
-    """Return a reporter."""
-    return ThreadedSensor()
-
-    # default_sensor = _default_sensor
+def sensor() -> ThreadedSensor:
+    """Return a sensor."""
+    return measure_sensor
 
 
 def main() -> None:
@@ -155,7 +117,7 @@ def main() -> None:
     logger.setLevel(logging.INFO)
 
     # Construct ToF and sensor object
-    sensor = default_sensor()
+    _sensor = sensor()
 
     # Nasty little mutable high scope boolean
     # but less nasty than using `global`
@@ -164,14 +126,14 @@ def main() -> None:
     # SIGINT handler
     def shutdown(signal: signal.Signals, frame) -> None:
         running[0] = False
-        sensor.close()
+        _sensor.close()
         logger.info("Cleaned up.")
 
     signal.signal(signal.SIGINT, shutdown)
 
     # Main loop, periodically read and log data
     while running[0]:
-        data = sensor.read()
+        data = _sensor.read()
         logger.info(data)
         time.sleep(0.2)
 

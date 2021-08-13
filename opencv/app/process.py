@@ -65,8 +65,8 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
 
     # Use overhead tech to get depth
     try:
-        with measure.default_sensor() as sensor:
-            height = sensor.height(base_depth=kwargs.get("base_depth", 0))
+        with measure.sensor() as sensor:
+            height = sensor.obtain(base=kwargs.get("base_depth", 0))
     except Exception as e:
         logger.error(e)
         height = 0
