@@ -238,10 +238,21 @@ class MeasureConfig(Config):
 
 measure = MeasureConfig.from_raw(raw["measure"])
 
+
 class LoggingConfig(Config):
     """LoggingConfig Schema."""
 
     level: str
     format: str
 
+
 logging = LoggingConfig.from_raw(raw["logging"])
+
+
+class ReadersConfig(Config):
+    """ReadersConfig Schema."""
+
+    inactivity_timeout: float
+
+
+readers = ReadersConfig.from_raw(raw["readers"])

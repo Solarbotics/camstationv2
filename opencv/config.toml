@@ -19,6 +19,9 @@ threshold = 80
 port = "/dev/ttyUSB0"
 baudrate = 9600
 timeout = 4
+# 3 seconds of a pause seems to be slightly overkill
+# but it keeps it reliable
+# 2.x somewhere is whats neccesary most of the time
 pause = 3
 
 [camera]
@@ -52,3 +55,6 @@ address = 41
 range = 3
 
 sample_window = 100
+
+[readers]
+inactivity_timeout = 300

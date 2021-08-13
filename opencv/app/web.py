@@ -101,14 +101,14 @@ def create_app() -> flask.Flask:
     @app.route("/tare", methods=["POST"])
     def tare_scale() -> str:
         """Tare the scale."""
-        with scale.managed_scale() as sc:
+        with scale.scale() as sc:
             sc.tare()
         return "Scale tared"
 
     @app.route("/weight", methods=["GET"])
     def get_weight() -> str:
         """Read the scale."""
-        with scale.managed_scale() as sc:
+        with scale.scale() as sc:
             weight = sc.read()
         return str(weight)
 
@@ -149,7 +149,7 @@ def create_app() -> flask.Flask:
     def setup() -> str:
         # Tare scale
         # Calibrate depth sensor
-        with scale.managed_scale() as sc:
+        with scale.scale() as sc:
             sc.tare()
         with measure.sensor() as sensor:
             depth = sensor.read()

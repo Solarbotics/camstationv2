@@ -73,7 +73,7 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
 
     # Read scale
     try:
-        with scale.managed_scale() as sc:
+        with scale.scale() as sc:
             weight = sc.read()
     except Exception as e:
         logger.error(e)

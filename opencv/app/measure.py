@@ -91,7 +91,9 @@ def _default_sensor() -> Sensor:
 
 
 # Construct a single sensor
-measure_sensor = ThreadedSensor(_default_sensor, timeout=3600)
+measure_sensor = ThreadedSensor(
+    _default_sensor, timeout=config.readers.inactivity_timeout
+)
 
 
 def sensor() -> ThreadedSensor:

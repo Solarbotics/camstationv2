@@ -13,124 +13,111 @@ import time
 import typing as t
 
 from . import config
+from . import reader
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-# comport = 'com4'
-COM_PORT = config.scale.port
-COM_BAUDRATE = config.scale.baudrate
-TIMEOUT = config.scale.timeout  # seconds
-# weight = 0
 
-# TODO consider moving the scale to a seperate thread
-class Scale:
+class Scale(reader.Reader[float]):
     """Generically receive weight data."""
 
-    scale: t.Optional[serial.Serial] = None
-    lock_time: float = 0
+    def __init__(self, device: serial.Serial, *, pause: float = 0) -> None:
+        """Initiate a view to the scale.
 
-    @classmethod
-    def open(cls) -> serial.Serial:
-        """Open the scale if neccesary, and return it.
+        Scale operations will wait a minimum of `pause` seconds
+        between IO operations."""
+        self.device: serial.Serial = device
+        self.lock_time: float = 0
+        self.pause = pause
 
-        Consecutive calls should return the same scale object,
-        unless the previous scale was closed in between.
-        """
-        if cls.scale is None:
-            cls.scale = serial.Serial(
-                port=COM_PORT, baudrate=COM_BAUDRATE, timeout=TIMEOUT
-            )
-            cls.unlock()
-            # scale.is_open()
-            logger.debug("Opened scale: %s", cls.scale)
-        return cls.scale
+        self.unlock()
 
-    @classmethod
-    def close(cls) -> None:
-        """Close scale."""
-        if cls.scale is not None:
-            cls.scale.close()
+    def unlock(self) -> None:
+        """Update lock time."""
+        self.lock_time = time.time() + self.pause
 
-    @classmethod
-    def unlock(cls) -> None:
-        """Update lock time for safety."""
-        cls.lock_time = time.time() + config.scale.pause
-
-    @classmethod
-    def wait(cls) -> None:
-        """Wait enough time for the scale to be ready to be messaged."""
+    def wait(self) -> None:
+        """Wait enough time for the underlying device to be safely used."""
         current = time.time()
-        if current < cls.lock_time:
-            logger.debug("Sleeping %s", cls.lock_time - current)
-            time.sleep(cls.lock_time - current)
+        if current < self.lock_time:
+            logger.debug("Sleeping %s", self.lock_time - current)
+            time.sleep(self.lock_time - current)
 
-    @classmethod
-    def tare(cls) -> None:
-        """Tare the scale."""
-        scale = cls.open()
-        cls.wait()
+    def _device_tare(self) -> None:
+        """Tare the scale.
 
-        scale.reset_input_buffer()
+        THIS METHOD IS DEPRECEATED;
+        Taring is more quickly and reliably done client side.
+        """
+        self.wait()
+
+        self.device.reset_input_buffer()
 
         logger.info("Taring scale")
-        scale.write(b"x1x")  # Open menu; tare, close menu
+        self.device.write(b"x1x")  # Open menu; tare, close menu
         logger.info("Tare complete")
 
-        cls.unlock()
+        self.unlock()
 
-    @classmethod
-    def read(cls) -> float:
+    def read(self) -> float:
         """Read weight from the scale."""
-        scale = cls.open()
-        cls.wait()
-
+        self.wait()
         logger.info("Reading scale")
+
         # b'r' seems to be the read signal
-        scale.reset_input_buffer()
-        scale.write(b"r")
+        self.device.reset_input_buffer()
+        self.device.write(b"r")
         # was working before flush but might as well
-        scale.flush()
+        self.device.flush()
+
         # upon proper behaviour, get like "0.000,kg,\r\n"
-        scaleData = scale.readline().decode("ascii").split(",")
+        scaleData = self.device.readline().decode("ascii").split(",")
+        self.unlock()
         logger.info("Scaledata: %s", scaleData)
-        cls.unlock()
-        return scaleData[0]
 
-    def __init__(self) -> None:
-        """Initiate a view to the scale."""
+        try:
+            value = float(scaleData[0])
+        except (ValueError, IndexError):
+            logger.error("Could not obtain value from scale data.")
+            value = 0
+        return value
+
+    def close(self) -> None:
+        """Close the serial."""
+        self.device.close()
 
 
-global_scale = [None]
+# class ThreadedScale(reader.ThreadedReader):
+# """Object to run a Scale on a seperate thread."""
 
 
-@contextlib.contextmanager
-def managed_scale() -> t.Generator[Scale, None, None]:
-    """Return a context-manager version of a Scale."""
-    # scale = Scale()
-    # try:
-    #     yield scale
-    # finally:
-    #     scale.close()
-    scale = Scale()
-    try:
-        yield scale
-    finally:
-        pass
+def _default_scale() -> Scale:
+    """Construct a default Scale."""
+    device = serial.Serial(
+        port=config.scale.port,
+        baudrate=config.scale.baudrate,
+        timeout=config.scale.timeout,
+    )
+    scale = Scale(device, pause=config.scale.pause)
+    return scale
+
+
+# Construct a single (threaded) scale
+threaded_scale = reader.ThreadedReader(
+    _default_scale, timeout=config.readers.inactivity_timeout
+)
+
+
+def scale() -> reader.Reader[float]:
+    """Return a constant Scale manager."""
+    return threaded_scale
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
 
-    # with new_scale() as scale:
-    #     # time.sleep(3)
-    #     tare(scale)
-    #     # 3 doesn't seem to be required
-    #     # lower usually works (like 2.x)
-    #     # but 3 seems to always work
-    #     # time.sleep(3) # neccesary
-    #     print(read_weight(scale))
-    scale = Scale()
-    scale.tare()
-    scale.read()
-    scale.close()
+    _scale = _default_scale()
+    _scale._device_tare()
+    _scale.read()
+    _scale.close()
