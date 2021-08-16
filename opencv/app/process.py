@@ -20,22 +20,37 @@ logger.addHandler(logging.NullHandler())
 # (str, str) or (float, float)?
 def read_bounds(threshold: t.Optional[int] = None) -> t.Tuple[float, float]:
     """Obtain the bounds provided by the camera station."""
-    sizes = devices.get_camera().get_processed_frame(threshold=threshold)[1]
-    main = sizes[0]
-    size = (round(float(main[0]), 2), round(float(main[1]), 2)) if sizes else (0.0, 0.0)
+    try:
+        sizes = devices.get_camera().get_processed_frame(threshold=threshold)[1]
+    except Exception as e:
+        logger.error(e)
+        size = (0.0, 0.0)
+    else:
+        main = sizes[0] if sizes else (0.0, 0.0)
+        size = (round(float(main[0]), 2), round(float(main[1]), 2))
     return size
 
 
 def read_weight(tare: float = 0) -> float:
     """Obtain the weight provided by the camera station."""
-    with devices.get_scale() as sc:
-        return sc.obtain(tare)
+    try:
+        with devices.get_scale() as sc:
+            weight = sc.obtain(tare)
+    except Exception as e:
+        logger.error(e)
+        weight = 0.0
+    return weight
 
 
 def read_height(base: int = 0) -> int:
     """Obtain the height provided by the camera station."""
-    with devices.get_sensor() as sensor:
-        return sensor.obtain(base)
+    try:
+        with devices.get_sensor() as sensor:
+            height = sensor.obtain(base)
+    except Exception as e:
+        logger.error(e)
+        height = 0
+    return height
 
 
 def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
@@ -49,18 +64,9 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     lights.Lights().ring().off()
 
     # Use overhead tech to get depth
-    try:
-        height = read_height(base=kwargs.get("base_depth", 0))
-    except Exception as e:
-        logger.error(e)
-        height = 0
-
+    height = read_height(base=kwargs.get("base_depth", 0))
     # Read scale
-    try:
-        weight = read_weight(tare=kwargs.get("tare", 0))
-    except Exception as e:
-        logger.error(e)
-        weight = 0.0
+    weight = read_weight(tare=kwargs.get("tare", 0))
 
     # Save gathered data
     # Construct root folder
