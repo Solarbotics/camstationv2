@@ -8,11 +8,10 @@ import flask
 from . import camera
 from . import calibrate
 from . import config
+from . import devices
 from . import lights
-from . import measure
 from . import photo
 from . import process
-from . import scale
 
 # Enable logging
 root_logger = logging.getLogger()
@@ -56,7 +55,7 @@ def create_app() -> flask.Flask:
     def video_feed() -> flask.Response:
         """Returns the modified camera stream."""
 
-        pi_camera = process.get_camera()
+        pi_camera = devices.get_camera()
 
         # inner generator
         def gen(cam: camera.Camera) -> t.Generator[bytes, None, None]:
@@ -79,7 +78,7 @@ def create_app() -> flask.Flask:
     @app.route("/bounds", methods=["GET", "POST"])
     def rect_dimensions() -> str:
         """Returns the current dimensions seen"""
-        data = process.get_camera().get_processed_frame(
+        data = devices.get_camera().get_processed_frame(
             threshold=app.config.get("threshold", config.web.threshold)
         )[1]
         bounds = tuple(f"{val:.2f}" for val in (data[0] if data else (0, 0)))
@@ -121,7 +120,7 @@ def create_app() -> flask.Flask:
     @app.route("/tare", methods=["POST"])
     def tare_scale() -> str:
         """Tare the scale."""
-        with scale.scale() as sc:
+        with devices.get_scale() as sc:
             weight = sc.read()
         app.config["tare"] = weight
         return "Scale tared"
@@ -129,31 +128,31 @@ def create_app() -> flask.Flask:
     @app.route("/weight", methods=["GET"])
     def get_weight() -> str:
         """Read the scale."""
-        with scale.scale() as sc:
+        with devices.get_scale() as sc:
             weight = sc.obtain(base=app.config.get("tare", 0))
         return str(weight)
 
     @app.route("/calibrate_depth", methods=["POST"])
     def calibrate_height() -> flask.Response:
         # Read current depth
-        with measure.sensor() as sensor:
+        with devices.get_sensor() as sensor:
             depth = sensor.read()
         app.config["base_depth"] = depth
         return flask.jsonify({"message": "Platform depth calibrated."})
 
     @app.route("/height")
     def get_height() -> str:
-        with measure.sensor() as sensor:
+        with devices.get_sensor() as sensor:
             return str(sensor.obtain(base=app.config.get("base_depth", 0)))
 
     @app.route("/data")
     def get_data() -> flask.Response:
         """Retrive all the live data values."""
-        with scale.scale() as sc:
+        with devices.get_scale() as sc:
             weight = sc.obtain(base=app.config.get("tare", 0))
-        with measure.sensor() as sensor:
+        with devices.get_sensor() as sensor:
             height = sensor.obtain(base=app.config.get("base_depth", 0))
-        data = process.get_camera().get_processed_frame(
+        data = devices.get_camera().get_processed_frame(
             threshold=app.config.get("threshold", config.web.threshold)
         )[1]
         bounds = tuple(f"{val:.2f}" for val in (data[0] if data else (0, 0)))
@@ -165,10 +164,10 @@ def create_app() -> flask.Flask:
     def setup() -> str:
         # Tare scale
         # Calibrate depth sensor
-        with scale.scale() as sc:
+        with devices.get_scale() as sc:
             weight = sc.read()
         app.config["tare"] = weight
-        with measure.sensor() as sensor:
+        with devices.get_sensor() as sensor:
             depth = sensor.read()
         app.config["base_depth"] = depth
         return "Setup complete."

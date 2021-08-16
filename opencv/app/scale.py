@@ -4,7 +4,6 @@ Interacting with the serial port requires being in the dialout group.
 """
 
 # import re
-import contextlib
 import logging
 import serial
 
@@ -12,7 +11,6 @@ import serial
 import time
 import typing as t
 
-from . import config
 from . import reader
 
 logger = logging.getLogger(__name__)
@@ -113,40 +111,5 @@ class Scale(reader.Reader[float], TaredReader):
         self.device.close()
 
 
-# class ThreadedScale(reader.ThreadedReader):
-# """Object to run a Scale on a seperate thread."""
-
-
-def _default_scale() -> Scale:
-    """Construct a default Scale."""
-    device = serial.Serial(
-        port=config.scale.port,
-        baudrate=config.scale.baudrate,
-        timeout=config.scale.timeout,
-    )
-    scale = Scale(device, pause=config.scale.pause)
-    return scale
-
-
 class ThreadedScale(reader.ThreadedReader[float], TaredReader):
     """Combination of a ThreadedReader[float] and a TaredReader."""
-
-
-# Construct a single (threaded) scale
-threaded_scale = ThreadedScale(
-    _default_scale, timeout=config.readers.inactivity_timeout
-)
-
-
-def scale() -> ThreadedScale:
-    """Return a constant Scale manager."""
-    return threaded_scale
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
-
-    _scale = _default_scale()
-    _scale._device_tare()
-    _scale.read()
-    _scale.close()

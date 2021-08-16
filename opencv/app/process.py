@@ -8,48 +8,14 @@ import pathlib
 import time
 import typing as t
 
-import cv2
-import numpy
-
-from . import camera
 from . import config
+from . import devices
 from . import files
 from . import lights
-from . import measure
 from . import photo
-from . import scale
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
-
-# Load calibration matrices
-camera_matrix = numpy.loadtxt(config.process.cameraMatrix, dtype="float", delimiter=",")
-scale_matrix = numpy.loadtxt(
-    config.process.cameraScaleMatrix, dtype="float", delimiter=","
-)
-camera_matrix *= scale_matrix
-distortion_matrix = numpy.loadtxt(
-    config.process.cameraDistortionMatrix, dtype="float", delimiter=","
-)
-
-
-def get_camera() -> camera.Camera:
-    """Get the camera."""
-    # if "camera" in flask.g:
-    #     return flask.g.camera
-    # else:
-    #     cam = camera.Camera(
-    #         processor=camera.ImageSizer(cam_matrix=camera_matrix, dist_coeffs=distortion_matrix)
-    #         # processor=camera.ImageProcessor()
-    #     )
-    #     flask.g.camera = cam
-    #     return cam
-    return camera.Camera(
-        processor=camera.ImageSizer(
-            cam_matrix=camera_matrix, dist_coeffs=distortion_matrix
-        )
-        # processor=camera.ImageProcessor()
-    )
 
 
 def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
@@ -58,22 +24,24 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     lights.Lights().ring().level = config.lights.level
     time.sleep(config.process.camera.wait)
     # Operate undercamera for sizing
-    sizes = get_camera().get_processed_frame(threshold=kwargs.get("threshold", None))[1]
+    sizes = devices.get_camera().get_processed_frame(
+        threshold=kwargs.get("threshold", None)
+    )[1]
     size = tuple(f"{val:.2f}" for val in sizes[0]) if sizes else (0, 0)
     # Turn off lights
     lights.Lights().ring().off()
 
     # Use overhead tech to get depth
     try:
-        with measure.sensor() as sensor:
-            height = sensor.obtain(base=kwargs.get("base_depth", 0))
+        with devices.get_sensor() as sens:
+            height = sens.obtain(base=kwargs.get("base_depth", 0))
     except Exception as e:
         logger.error(e)
         height = 0
 
     # Read scale
     try:
-        with scale.scale() as sc:
+        with devices.get_scale() as sc:
             weight = sc.read()
     except Exception as e:
         logger.error(e)
