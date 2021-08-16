@@ -140,7 +140,6 @@ def create_app() -> flask.Flask:
             threshold=app.config.get("threshold", config.web.threshold)
         )
         message = {"weight": weight, "height": height, "bounds": bounds}
-        logger.info("Data: %s", message)
         return flask.jsonify(message)
 
     @app.route("/setup", methods=["POST"])
