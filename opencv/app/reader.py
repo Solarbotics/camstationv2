@@ -163,10 +163,9 @@ class ThreadedReader(Reader[T]):
                 self.timeout is None or time.time() - self.last_read <= self.timeout
             ):
                 value = self.get_value(reader)
-                condition.acquire()
-                self.value = value
-                condition.notify_all()
-                condition.release()
+                with condition:
+                    self.value = value
+                    condition.notify_all()
 
     def get_value(self, reader: Reader[T]) -> T:
         """Implementation dependent update behaviour that happens on every loop of the thread.
@@ -185,11 +184,10 @@ class ThreadedReader(Reader[T]):
         and blocks until a value is available.
         """
         condition = self.activate()
-        condition.acquire()
-        while self.value is None:
-            condition.wait()
-        value = self.value
-        condition.release()
+        with condition:
+            while self.value is None:
+                condition.wait()
+            value = self.value
         return value
 
     def stop(self) -> None:
