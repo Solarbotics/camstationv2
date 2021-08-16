@@ -14,6 +14,10 @@ from . import scale as scale
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+
+# Camera methods and objects
+
+
 # Load calibration matrices
 camera_matrix = numpy.loadtxt(config.process.cameraMatrix, dtype="float", delimiter=",")
 scale_matrix = numpy.loadtxt(
@@ -33,6 +37,9 @@ def get_camera() -> camera.Camera:
         )
         # processor=camera.ImageProcessor()
     )
+
+
+# Scale methods and object
 
 
 def _default_scale() -> scale.Scale:
@@ -55,6 +62,9 @@ threaded_scale = scale.ThreadedScale(
 def get_scale() -> scale.ThreadedScale:
     """Return a constant Scale manager."""
     return threaded_scale
+
+
+# Sensor methods and object
 
 
 def _default_sensor() -> measure.Sensor:
