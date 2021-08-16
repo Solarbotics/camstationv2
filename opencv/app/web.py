@@ -23,21 +23,13 @@ root_logger.setLevel(config.logging.level)
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+# Remove werkzeug handlers
 werkzeug_logger = logging.getLogger("werkzeug")
 # By prebuilding a list of handlers,
 # we avoid iterating directly over the handler list
 # that we are likely mutating
 for _handler in list(werkzeug_logger.handlers):
     werkzeug_logger.removeHandler(_handler)
-
-# logging.getLogger("app.camera").setLevel(logging.INFO)
-
-
-def close_camera(error: t.Optional[Exception] = None) -> None:
-    """Close the camera."""
-    # cam = flask.g.pop("camera", None)
-    # if cam is not None:
-    #     cam.close()
 
 
 def create_app() -> flask.Flask:
@@ -75,15 +67,6 @@ def create_app() -> flask.Flask:
             gen(pi_camera), mimetype="multipart/x-mixed-replace; boundary=frame"
         )
 
-    @app.route("/bounds", methods=["GET", "POST"])
-    def rect_dimensions() -> str:
-        """Returns the current dimensions seen"""
-        data = devices.get_camera().get_processed_frame(
-            threshold=app.config.get("threshold", config.web.threshold)
-        )[1]
-        bounds = tuple(f"{val:.2f}" for val in (data[0] if data else (0, 0)))
-        return f"({bounds[0]}, {bounds[1]})"
-
     @app.route("/snap", methods=["POST"])
     def snap_corners() -> str:
         """Takes a snapshot and searches for chessboard corners."""
@@ -111,26 +94,27 @@ def create_app() -> flask.Flask:
     @app.route("/lights", methods=["POST"])
     def set_lights() -> flask.Response:
         data = flask.request.json
-        if data:
+        if data is not None:
             lights.Lights().ring().level = float(data["level"]) / 100
             return flask.jsonify({"message": "Lights updated."})
         else:
             return flask.jsonify({"message": "No JSON received."})
 
+    @app.route("/bounds")
+    def rect_dimensions() -> str:
+        """Returns the current dimensions seen"""
+        bounds = process.read_bounds(
+            threshold=app.config.get("threshold", config.web.threshold)
+        )
+        return f"({bounds[0]:.2f}, {bounds[1]:.2f})"
+
     @app.route("/tare", methods=["POST"])
-    def tare_scale() -> str:
+    def tare_scale() -> flask.Response:
         """Tare the scale."""
         with devices.get_scale() as sc:
             weight = sc.read()
         app.config["tare"] = weight
-        return "Scale tared"
-
-    @app.route("/weight", methods=["GET"])
-    def get_weight() -> str:
-        """Read the scale."""
-        with devices.get_scale() as sc:
-            weight = sc.obtain(base=app.config.get("tare", 0))
-        return str(weight)
+        return flask.jsonify({"message": "Scale tared."})
 
     @app.route("/calibrate_depth", methods=["POST"])
     def calibrate_height() -> flask.Response:
@@ -140,22 +124,23 @@ def create_app() -> flask.Flask:
         app.config["base_depth"] = depth
         return flask.jsonify({"message": "Platform depth calibrated."})
 
+    @app.route("/weight")
+    def get_weight() -> str:
+        """Read the scale."""
+        return str(process.read_weight(tare=app.config.get("tare", 0)))
+
     @app.route("/height")
     def get_height() -> str:
-        with devices.get_sensor() as sensor:
-            return str(sensor.obtain(base=app.config.get("base_depth", 0)))
+        return str(process.read_height(base=app.config.get("base_depth", 0)))
 
     @app.route("/data")
     def get_data() -> flask.Response:
         """Retrive all the live data values."""
-        with devices.get_scale() as sc:
-            weight = sc.obtain(base=app.config.get("tare", 0))
-        with devices.get_sensor() as sensor:
-            height = sensor.obtain(base=app.config.get("base_depth", 0))
-        data = devices.get_camera().get_processed_frame(
+        weight = process.read_weight(tare=app.config.get("tare", 0))
+        height = process.read_height(base=app.config.get("base_depth", 0))
+        bounds = process.read_bounds(
             threshold=app.config.get("threshold", config.web.threshold)
-        )[1]
-        bounds = tuple(f"{val:.2f}" for val in (data[0] if data else (0, 0)))
+        )
         message = {"weight": weight, "height": height, "bounds": bounds}
         logger.info("Data: %s", message)
         return flask.jsonify(message)
@@ -179,10 +164,8 @@ def create_app() -> flask.Flask:
             process.activate(
                 threshold=app.config.get("threshold", config.web.threshold),
                 base_depth=app.config.get("base_depth", 0),
+                tare=app.config.get("tare", 0),
             )
         )
-
-    # Teardown
-    # app.teardown_appcontext(close_camera)
 
     return app
