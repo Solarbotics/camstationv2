@@ -16,13 +16,16 @@ logger.addHandler(logging.NullHandler())
 T = t.TypeVar("T")
 
 
-class CloseableContext:
-    """Context manager class that relies on a close method.
+class SelfContext:
+    """Simple minimum context implementation.
 
-    Returns self in __enter,
-    and calls self.close in __exit__.
+    Designed for objects that are opened on construction
+    and can then be closed.
 
-    This base class has an empty close method.
+    Returns self on entry,
+    and calls self.close on exit.
+
+    Default self.close is implemented to be empty.
     """
 
     def close(self) -> None:
@@ -37,12 +40,8 @@ class CloseableContext:
         self.close()
 
 
-class Reader(CloseableContext, t.Generic[T]):
-    """Class that can read a value.
-
-    Provides dummy methods that allow it to be used as a context manager.
-    Default implementation returns self on entry and calls self.close() on exit.
-    """
+class Reader(t.Generic[T]):
+    """Type that can read and return a value."""
 
     def read(self) -> T:
         """Read a single value."""
@@ -55,6 +54,18 @@ class Obtainer(t.Generic[T]):
     def obtain(self, base: T) -> T:
         """Produce a calibrated value."""
         raise NotImplementedError
+
+
+class ReaderContext(SelfContext, Reader[T]):
+    """Reader that is also a context manager.
+
+    Returns self on entry and calls an empty close() on exit,
+    and has an abstract methods for reading a value.
+    """
+
+
+class Device(ReaderContext[T], Obtainer[T]):
+    """Readable device that also has calibration capabilities."""
 
 
 TIMEOUT = 3600
@@ -81,7 +92,7 @@ class ThreadedReader(Reader[T]):
 
     def __init__(
         self,
-        factory: t.Callable[[], Reader[T]],
+        factory: t.Callable[[], ReaderContext[T]],
         *,
         lazy: bool = True,
         timeout: t.Optional[float] = TIMEOUT

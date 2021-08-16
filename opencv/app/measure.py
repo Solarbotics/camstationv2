@@ -29,7 +29,7 @@ class CalibratedSensor(reader.Obtainer[int]):
         return base - self.read()
 
 
-class Sensor(reader.Reader[int], CalibratedSensor):
+class Sensor(reader.ReaderContext[int], CalibratedSensor):
     """Construct a distance sensor."""
 
     def __init__(self, tof: VL53L0X.VL53L0X, level: int = 1) -> None:
@@ -57,7 +57,7 @@ class Sensor(reader.Reader[int], CalibratedSensor):
         self.tof.close()
 
 
-class ThreadedSensor(reader.ThreadedReader[int], CalibratedSensor):
+class ThreadedSensor(reader.ThreadedReader[int], CalibratedSensor, reader.Device[int]):
     """Maintain a seperate-threaded Sensor."""
 
     def post_init(self) -> None:
@@ -73,6 +73,7 @@ class ThreadedSensor(reader.ThreadedReader[int], CalibratedSensor):
         """Average the latest value over the rolling window."""
         self.history.append(reader.read())
         return round(sum(self.history) / len(self.history))
+
 
 # https://github.com/kplindegaard/smbus2
 # https://solarbotics.com/product/51112/

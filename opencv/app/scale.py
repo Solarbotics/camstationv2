@@ -31,7 +31,7 @@ class TaredReader(reader.Obtainer[float]):
         return self.read() - base
 
 
-class Scale(reader.Reader[float], TaredReader):
+class Scale(reader.ReaderContext[float], TaredReader):
     """Generically receive weight data."""
 
     def __init__(self, device: serial.Serial, *, pause: float = 0) -> None:
@@ -111,5 +111,5 @@ class Scale(reader.Reader[float], TaredReader):
         self.device.close()
 
 
-class ThreadedScale(reader.ThreadedReader[float], TaredReader):
+class ThreadedScale(reader.ThreadedReader[float], TaredReader, reader.Device[float]):
     """Combination of a ThreadedReader[float] and a TaredReader."""

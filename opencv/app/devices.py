@@ -9,7 +9,8 @@ import VL53L0X
 from . import camera
 from . import config
 from . import measure
-from . import scale as scale
+from . import reader
+from . import scale
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -59,7 +60,7 @@ threaded_scale = scale.ThreadedScale(
 )
 
 
-def get_scale() -> scale.ThreadedScale:
+def get_scale() -> reader.Device[float]:
     """Return a constant Scale manager."""
     return threaded_scale
 
@@ -86,6 +87,6 @@ measure_sensor = measure.ThreadedSensor(
 )
 
 
-def get_sensor() -> measure.ThreadedSensor:
+def get_sensor() -> reader.Device[int]:
     """Return a sensor."""
     return measure_sensor
