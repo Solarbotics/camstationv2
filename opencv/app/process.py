@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 # (str, str) or (float, float)?
-def read_bounds(threshold: t.Optional[int] = None) -> t.Tuple[float, float]:
+def read_bounds(threshold: int = 0) -> t.Tuple[float, float]:
     """Obtain the bounds provided by the camera station."""
     try:
         sizes = devices.get_camera().get_processed_frame(threshold=threshold)[1]
@@ -31,22 +31,30 @@ def read_bounds(threshold: t.Optional[int] = None) -> t.Tuple[float, float]:
     return size
 
 
-def read_weight(tare: float = 0) -> float:
-    """Obtain the weight provided by the camera station."""
+def read_weight(tare: t.Optional[float] = None) -> float:
+    """Obtain the weight provided by the camera station.
+
+    If no tare is provided, returns the raw value read."""
     try:
         with devices.get_scale() as sc:
-            weight = sc.obtain(tare)
+            if tare is not None:
+                weight = sc.obtain(tare)
+            else:
+                weight = sc.read()
     except Exception as e:
         logger.error(e)
         weight = 0.0
     return weight
 
 
-def read_height(base: int = 0) -> int:
+def read_height(base: t.Optional[int] = 0) -> int:
     """Obtain the height provided by the camera station."""
     try:
         with devices.get_sensor() as sensor:
-            height = sensor.obtain(base)
+            if base is not None:
+                height = sensor.obtain(base)
+            else:
+                height = sensor.read()
     except Exception as e:
         logger.error(e)
         height = 0
@@ -59,7 +67,7 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     lights.Lights().ring().level = config.lights.level
     time.sleep(config.process.camera.wait)
     # Operate undercamera for sizing
-    size = tuple(f"{val:.2f}" for val in read_bounds())
+    size = tuple(f"{val:.2f}" for val in read_bounds(threshold=kwargs.get("threshold", 0)))
     # Turn off lights
     lights.Lights().ring().off()
 

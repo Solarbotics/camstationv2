@@ -111,16 +111,14 @@ def create_app() -> flask.Flask:
     @app.route("/tare", methods=["POST"])
     def tare_scale() -> flask.Response:
         """Tare the scale."""
-        with devices.get_scale() as sc:
-            weight = sc.read()
+        weight = process.read_weight()
         app.config["tare"] = weight
         return flask.jsonify({"message": "Scale tared."})
 
     @app.route("/calibrate_depth", methods=["POST"])
     def calibrate_height() -> flask.Response:
         # Read current depth
-        with devices.get_sensor() as sensor:
-            depth = sensor.read()
+        depth = process.read_height()
         app.config["base_depth"] = depth
         return flask.jsonify({"message": "Platform depth calibrated."})
 
@@ -149,11 +147,9 @@ def create_app() -> flask.Flask:
     def setup() -> str:
         # Tare scale
         # Calibrate depth sensor
-        with devices.get_scale() as sc:
-            weight = sc.read()
+        weight = process.read_weight()
+        depth = process.read_height()
         app.config["tare"] = weight
-        with devices.get_sensor() as sensor:
-            depth = sensor.read()
         app.config["base_depth"] = depth
         return "Setup complete."
 
