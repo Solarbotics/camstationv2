@@ -47,7 +47,7 @@ def read_weight(tare: t.Optional[float] = None) -> float:
     return weight
 
 
-def read_height(base: t.Optional[int] = 0) -> int:
+def read_height(base: t.Optional[int] = None) -> int:
     """Obtain the height provided by the camera station."""
     try:
         with devices.get_sensor() as sensor:
@@ -67,7 +67,9 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     lights.Lights().ring().level = config.lights.level
     time.sleep(config.process.camera.wait)
     # Operate undercamera for sizing
-    size = tuple(f"{val:.2f}" for val in read_bounds(threshold=kwargs.get("threshold", 0)))
+    size = tuple(
+        f"{val:.2f}" for val in read_bounds(threshold=kwargs.get("threshold", 0))
+    )
     # Turn off lights
     lights.Lights().ring().off()
 
