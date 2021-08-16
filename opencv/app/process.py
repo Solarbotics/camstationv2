@@ -61,6 +61,20 @@ def read_height(base: t.Optional[int] = None) -> int:
     return height
 
 
+def take_photos(
+    folder: t.Union[str, pathlib.Path],
+    timestamp: t.Optional[datetime.datetime] = None,
+) -> t.List[str]:
+    """Takes a set of photos, saving onto disk and returning base64 encodings."""
+    try:
+        photo_paths = photo.capture_image_set(folder=str(folder), timestamp=timestamp)
+    except Exception as e:
+        logger.error(e)
+        return []
+    else:
+        return [photo.encode_image(path) for path in photo_paths]
+
+
 def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     """Activate a round of the camera station."""
     # Turn on lights
@@ -94,17 +108,10 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     with open(file_name, "w", encoding="utf-8") as f:
         json.dump({"size": size, "weight": weight, "height": height}, f)
     # Take photos
-    try:
-        photo_paths = photo.capture_image_set(
-            str(data_folder.joinpath(config.process.paths.photos)), timestamp=now
-        )
-        logger.info("Photos: %s", photo_paths)
-    except Exception as e:
-        photo_paths = []
-        logger.error(e)
+    encoded_images = take_photos(
+        data_folder.joinpath(config.process.paths.photos), timestamp=now
+    )
 
-    # Encode and return pictures
-    encoded_images: t.List[str] = [photo.encode_image(path) for path in photo_paths]
     # Return data
     return {
         "message": "success",

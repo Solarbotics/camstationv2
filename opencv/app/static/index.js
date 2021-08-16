@@ -85,9 +85,7 @@
         prep();
         fetch("/" + name, {
           method: action
-        }).then(function (response) {
-          response.text().then(callback);
-        })
+        }).then(callback)
       };
       return func;
     }
@@ -111,6 +109,16 @@
       return func;
     }
 
+    let fill_gallery = function(photos) {
+      let gallery = document.getElementById("photosGallery");
+      gallery.replaceChildren();
+      for (const image_data of photos) {
+        let image = document.createElement("img");
+        image.setAttribute("src", "data:image/jpeg;base64," + image_data);
+        gallery.appendChild(image)
+      }
+    }
+
     // Collect elements
     let activateAction = document.getElementById("activateAction");
     let activateButton = activateAction.children[0];
@@ -119,15 +127,9 @@
     // Define handling function
     let activate_function = function (output) {
       // The actual function that uses the provided output
-      let func = function (text) {
-        let data = JSON.parse(text);
-        let gallery = document.getElementById("photosGallery");
-        gallery.replaceChildren();
-        for (const image_data of data["photos"]) {
-          let image = document.createElement("img");
-          image.setAttribute("src", "data:image/jpeg;base64," + image_data);
-          gallery.appendChild(image)
-        }
+      let func = async function (response) {
+        let data = await response.json()
+        fill_gallery(data["photos"])
         output.textContent = (
           "Size: " + data["size"]
           + ", weight: " + data["weight"]
@@ -144,33 +146,52 @@
       query("activate", "POST", (() => write_on(activateInfo)("Working...")), activate_function(activateInfo))
     );
 
-    // Setup 'actions'.
-    // Each action is a div containing a button for input
-    // and a span for output.
-    // Pressing the button submits a POST request to the endpoint
-    // identified by the 'name' attribute of the row.
-    let actions = document.getElementsByClassName("action")
-    const COLOR_TIME = 500;
-    for (const action of actions) {
-      let button = action.children[0];
-      let output = action.children[1];
-      let httpMethod = action.getAttribute("action");
-      if (httpMethod === null) {
-        httpMethod = "POST";
-      }
-      button.addEventListener("click", query(
-        action.getAttribute("name"),
-        httpMethod,
-        function () {
-          button.classList.add("working");
-        },
-        function () {
-          button.classList.remove("working");
-          button.classList.add("finished");
-          setTimeout(() => button.classList.remove("finished"), COLOR_TIME);
+    function setup_actions(handlers) {
+
+      // Setup 'actions'.
+      // Each action is a div containing a button for input
+      // and a span for output.
+      // Pressing the button submits a POST request to the endpoint
+      // identified by the 'name' attribute of the row.
+      let actions = document.getElementsByClassName("action");
+      const COLOR_TIME = 500;
+      for (const action of actions) {
+        let button = action.children[0];
+        let output = action.children[1];
+        let httpMethod = action.getAttribute("action");
+        if (httpMethod === null) {
+          httpMethod = "POST";
         }
-      ));
+        let name = action.getAttribute("name");
+        button.addEventListener("click", query(
+          name,
+          httpMethod,
+          function () {
+            button.classList.add("working");
+          },
+          function (response) {
+            button.classList.remove("working");
+            button.classList.add("finished");
+            // call handler
+            if (handlers.hasOwnProperty(name)) {
+              handlers[name](response);
+            }
+            setTimeout(() => button.classList.remove("finished"), COLOR_TIME);
+          }
+        ));
+      }
+
     }
+
+    const action_handlers = {
+      "photos": function (response) {
+        console.log("handling photos");
+        response.json().then(function (data) {
+          fill_gallery(data["photos"])
+        })
+      },
+    }
+    setup_actions(action_handlers);
 
     let polling;
 
