@@ -1,6 +1,10 @@
 (function () {
     "use strict";
 
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
     function submit_threshold() {
       let form = document.getElementById("configOptions")
       // console.log(form);
@@ -158,44 +162,52 @@
         action.getAttribute("name"),
         httpMethod,
         function () {
-          button.classList.add("working-button");
+          button.classList.add("working");
         },
         function () {
-          button.classList.remove("working-button");
-          button.classList.add("finished-button");
-          setTimeout(() => button.classList.remove("finished-button"), COLOR_TIME);
+          button.classList.remove("working");
+          button.classList.add("finished");
+          setTimeout(() => button.classList.remove("finished"), COLOR_TIME);
         }
       ));
     }
+
+    let polling;
 
     // Setup polling
     function start_polling_data(endpoint, names) {
 
       const GAP = 1000;
-
       const method = "GET";
 
-      function update() {
-        let start = Date.now();
-        fetch(endpoint, {method: method}).then(function (response) {
-          response.json().then(function (data) {
-            for (const name of names) {
-              let span = document.getElementById(name);
-              write_on(span)(data[name])
-            }
-          }).then(function (value) {
-            setTimeout(update, Math.max(0, GAP - (Date.now() - start)));
-          })
-        });
+      document.getElementById("control").classList.add("working");
+      polling = true;
+
+      async function update() {
+        while (polling) {
+          let start = Date.now();
+          let response = await fetch(endpoint, {method: method})
+          let data = await response.json()
+          for (const name of names) {
+            let span = document.getElementById(name);
+            write_on(span)(data[name])
+          }
+          await sleep(Math.max(0, GAP - (Date.now() - start)))
+        }
       }
-      // Start polling
-      setTimeout(update, 0);
+      update();
 
     }
 
     let start = document.getElementById("start");
     start.addEventListener("click", function () {
       start_polling_data("/data", ["weight", "height", "bounds"]);
+    });
+
+    let stop = document.getElementById("stop");
+    stop.addEventListener("click", function () {
+      document.getElementById("control").classList.remove("working");
+      polling = false;
     });
 
     let queryForm = document.getElementById("query");

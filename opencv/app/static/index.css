@@ -16,15 +16,15 @@ html {
     margin: 5px;
 }
 
-.working-button {
+.working {
     background-color: orange;
     /* border-color: orange; */
 }
 
-.finished-button {
+.finished {
     background-color: green;
 }
 
-.errored-button {
+.errored {
     background-color: red;
 }
