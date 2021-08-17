@@ -27,7 +27,7 @@ pause = 3
 precision = 3
 
 [camera]
-precision = 2
+precision = 1
 
 [camera.colours]
 blue = [255, 0, 0]

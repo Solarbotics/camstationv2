@@ -134,10 +134,16 @@ def create_app() -> flask.Flask:
     @app.route("/data")
     def get_data() -> flask.Response:
         """Retrive all the live data values."""
-        weight = process.read_weight(tare=app.config.get("tare", 0))
-        height = process.read_height(base=app.config.get("base_depth", 0))
-        bounds = process.read_bounds(
-            threshold=app.config.get("threshold", config.web.threshold)
+        weight = process.format_weight(
+            process.read_weight(tare=app.config.get("tare", 0))
+        )
+        height = process.format_height(
+            process.read_height(base=app.config.get("base_depth", 0))
+        )
+        bounds = process.format_bounds(
+            process.read_bounds(
+                threshold=app.config.get("threshold", config.web.threshold)
+            )
         )
         message = {"weight": weight, "height": height, "bounds": bounds}
         return flask.jsonify(message)

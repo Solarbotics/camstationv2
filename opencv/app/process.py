@@ -34,8 +34,17 @@ def read_bounds(threshold: int = 0) -> t.Tuple[float, float]:
         size = (0.0, 0.0)
     else:
         main = sorted(sizes, key=area, reverse=True)[0] if sizes else (0.0, 0.0)
-        size = (round(float(main[0]), config.camera.precision), round(float(main[1]), config.camera.precision))
+        size = (
+            round(float(main[0]), config.camera.precision),
+            round(float(main[1]), config.camera.precision),
+        )
     return size
+
+
+def format_bounds(bounds: t.Tuple[float, float]) -> str:
+    """Create formatted string version of bounds."""
+    p = config.camera.precision
+    return f"{bounds[0]:.{p}f} cm x {bounds[1]:.{p}f} cm"
 
 
 def read_weight(tare: t.Optional[float] = None) -> float:
@@ -56,6 +65,12 @@ def read_weight(tare: t.Optional[float] = None) -> float:
     return weight
 
 
+def format_weight(weight: float) -> str:
+    """Create formatted string version of weight."""
+    p = config.scale.precision
+    return f"{weight:.{p}f} kg"
+
+
 def read_height(base: t.Optional[float] = None) -> float:
     """Obtain the height provided by the camera station."""
     try:
@@ -70,6 +85,12 @@ def read_height(base: t.Optional[float] = None) -> float:
     else:
         height = round(height, config.measure.precision)
     return height
+
+
+def format_height(height: float) -> str:
+    """Create formatted string version of height."""
+    p = config.measure.precision
+    return f"{height:.{p}f} cm"
 
 
 def take_photos(
@@ -90,10 +111,7 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     """Activate a round of the camera station."""
 
     # Read bounds from undercamera
-    size = tuple(
-        f"{val:.2f}" for val in read_bounds(threshold=kwargs.get("threshold", 0))
-    )
-
+    size = read_bounds(threshold=kwargs.get("threshold", 0))
     # Use overhead tech to get depth
     height = read_height(base=kwargs.get("base_depth", 0))
     # Read scale
@@ -129,8 +147,8 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     # Return data
     return {
         "message": "success",
-        "size": size,
-        "weight": weight,
-        "height": height,
+        "size": format_bounds(size),
+        "weight": format_weight(weight),
+        "height": format_height(height),
         "photos": encoded_images,
     }
