@@ -1,6 +1,5 @@
 """Operate main camera station processes."""
 
-import base64
 import datetime
 import json
 import logging
@@ -17,6 +16,14 @@ from . import photo
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+
+def area(dimensions: t.Tuple[float, float]) -> float:
+    """Area based on a (width, height) dimension pair."""
+    return dimensions[0] * dimensions[1]
+
+
+x = area((3, 2))
+
 # (str, str) or (float, float)?
 def read_bounds(threshold: int = 0) -> t.Tuple[float, float]:
     """Obtain the bounds provided by the camera station."""
@@ -26,7 +33,7 @@ def read_bounds(threshold: int = 0) -> t.Tuple[float, float]:
         logger.error(e)
         size = (0.0, 0.0)
     else:
-        main = sizes[0] if sizes else (0.0, 0.0)
+        main = sorted(sizes, key=area, reverse=True)[0] if sizes else (0.0, 0.0)
         size = (round(float(main[0]), 2), round(float(main[1]), 2))
     return size
 
@@ -77,15 +84,11 @@ def take_photos(
 
 def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     """Activate a round of the camera station."""
-    # Turn on lights
-    lights.Lights().ring().level = config.lights.level
-    time.sleep(config.process.camera.wait)
-    # Operate undercamera for sizing
+
+    # Read bounds from undercamera
     size = tuple(
         f"{val:.2f}" for val in read_bounds(threshold=kwargs.get("threshold", 0))
     )
-    # Turn off lights
-    lights.Lights().ring().off()
 
     # Use overhead tech to get depth
     height = read_height(base=kwargs.get("base_depth", 0))
@@ -107,10 +110,17 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     )
     with open(file_name, "w", encoding="utf-8") as f:
         json.dump({"size": size, "weight": weight, "height": height}, f)
+
+    # Turn on underside ringlights to improve light conditions
+    lights.Lights().ring().level = config.lights.level
+    # Wait a bit for lights to turn on properly
+    time.sleep(config.process.camera.wait)
     # Take photos
     encoded_images = take_photos(
         data_folder.joinpath(config.process.paths.photos), timestamp=now
     )
+    # Turn off lights
+    lights.Lights().ring().off()
 
     # Return data
     return {
