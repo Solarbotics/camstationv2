@@ -132,33 +132,6 @@
       }
     }
 
-    // Collect elements
-    let activateAction = document.getElementById("activateAction");
-    let activateButton = activateAction.children[0];
-    let activateInfo = activateAction.children[1];
-
-    // Define handling function
-    let activate_function = function (output) {
-      // The actual function that uses the provided output
-      let func = async function (response) {
-        let data = await response.json()
-        fill_gallery(data["photos"])
-        output.textContent = (
-          "Size: " + data["size"]
-          + ", weight: " + data["weight"]
-          + ", height: " + data["height"]
-          + "."
-        );
-      }
-      return func;
-    }; 
-    // activateButton.addEventListener("click", function (event))
-    // Bind query function
-    activateButton.addEventListener(
-      "click",
-      query("activate", "POST", (() => write_on(activateInfo)("Working...")), activate_function(activateInfo))
-    );
-
     function setup_actions(handlers) {
 
       // Setup 'actions'.
@@ -196,6 +169,25 @@
 
     }
 
+    // Collect elements
+    let activateInfo = document.getElementById("activateAction").children[1];
+
+    // Define handling function
+    let activate_function = function (output) {
+      // The actual function that uses the provided output
+      let func = async function (response) {
+        let data = await response.json()
+        fill_gallery(data["photos"])
+        output.textContent = (
+          "Size: " + data["size"]
+          + ", weight: " + data["weight"]
+          + ", height: " + data["height"]
+          + "."
+        );
+      }
+      return func;
+    }; 
+
     const action_handlers = {
       "photos": function (response) {
         console.log("handling photos");
@@ -203,6 +195,7 @@
           fill_gallery(data["photos"])
         })
       },
+      "activate": activate_function(activateInfo),
     }
     setup_actions(action_handlers);
 
