@@ -34,7 +34,7 @@ def read_bounds(threshold: int = 0) -> t.Tuple[float, float]:
         size = (0.0, 0.0)
     else:
         main = sorted(sizes, key=area, reverse=True)[0] if sizes else (0.0, 0.0)
-        size = (round(float(main[0]), 2), round(float(main[1]), 2))
+        size = (round(float(main[0]), config.camera.precision), round(float(main[1]), config.camera.precision))
     return size
 
 
@@ -51,6 +51,8 @@ def read_weight(tare: t.Optional[float] = None) -> float:
     except Exception as e:
         logger.error(e)
         weight = 0.0
+    else:
+        weight = round(weight, config.scale.precision)
     return weight
 
 
@@ -65,6 +67,8 @@ def read_height(base: t.Optional[float] = None) -> float:
     except Exception as e:
         logger.error(e)
         height = 0
+    else:
+        height = round(height, config.measure.precision)
     return height
 
 

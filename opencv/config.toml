@@ -24,7 +24,10 @@ timeout = 4
 # 2.x somewhere is whats neccesary most of the time
 pause = 3
 
+precision = 3
+
 [camera]
+precision = 2
 
 [camera.colours]
 blue = [255, 0, 0]
@@ -55,6 +58,8 @@ address = 41
 range = 3
 
 sample_window = 100
+
+precision = 1
 
 [readers]
 inactivity_timeout = 300

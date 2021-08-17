@@ -145,8 +145,7 @@ class WebConfig:
 web = WebConfig(raw["web"]["threshold"])
 
 
-@dataclasses.dataclass()
-class ScaleConfig:
+class ScaleConfig(Config):
     """ScaleConfig Schema."""
 
     port: str
@@ -155,13 +154,10 @@ class ScaleConfig:
 
     pause: float
 
+    precision: int
 
-scale = ScaleConfig(
-    raw["scale"]["port"],
-    raw["scale"]["baudrate"],
-    raw["scale"]["timeout"],
-    raw["scale"]["pause"],
-)
+
+scale = ScaleConfig.from_raw(raw["scale"])
 
 Colour = t.Tuple[int, int, int]
 
@@ -179,12 +175,14 @@ class CameraConfig:
     """CameraConfig Schema."""
 
     colours: ColoursConfig
+    precision: int
 
 
 camera = CameraConfig(
     ColoursConfig(
         **{name: tuple(colour) for name, colour in raw["camera"]["colours"].items()}  # type: ignore
-    )
+    ),
+    precision=raw["camera"]["precision"],
 )
 
 
@@ -234,6 +232,8 @@ class MeasureConfig(Config):
 
     # Number of historical samples to keep and average over
     sample_window: int
+
+    precision: int
 
 
 measure = MeasureConfig.from_raw(raw["measure"])
