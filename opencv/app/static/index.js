@@ -55,17 +55,30 @@
       }, 10, 15000);
     });
 
-    let lightsInput = document.getElementById("lightsLevel")
-    lightsInput.addEventListener("input", function (event) {
-      fetch(
-        "/lights", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({level: lightsInput.value}),
-        }
-      )
+    let last_lights_level = 0;
+    let lightsForm = document.getElementById("lights");
+    lightsForm.addEventListener("input", function (event) {
+
+      let value;
+      if (lightsForm.elements["enabled"].checked) {
+        value = lightsForm.elements["value"].value;
+      } else {
+        value = 0;
+      }
+
+      if (value != last_lights_level) {
+        last_lights_level = value;
+        fetch(
+          "/lights", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({level: value}),
+          }
+        )
+      }
+      
     });
 
     // let photoButton = document.getElementById("photos");
