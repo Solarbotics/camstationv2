@@ -6,6 +6,10 @@ html {
     box-sizing: inherit;
 }
 
+form {
+    margin: 0px;
+}
+
 .outline {
     border-style: solid;
     border-color: red;
@@ -27,4 +31,8 @@ html {
 
 .errored {
     background-color: red;
+}
+
+.inline {
+    display: inline-block;
 }
