@@ -231,11 +231,10 @@ class ImageSizer(ImageProcessor):
 
         # print(sizes)
 
-        # display = output
-        back = numpy.full(source.shape, 0, dtype=numpy.uint8)
-        back[: output.shape[0], : output.shape[1]] = output
-        # print(source.shape, back.shape, source.dtype, back.dtype)
-        display = scale(numpy.concatenate((source, back), axis=1), factor=1)
+        display = output
+        # back = numpy.full(source.shape, 0, dtype=numpy.uint8)
+        # back[: output.shape[0], : output.shape[1]] = output
+        # display = scale(numpy.concatenate((source, back), axis=1), factor=1)
 
         return (display, sizes)
 
