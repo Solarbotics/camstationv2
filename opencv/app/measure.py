@@ -15,21 +15,21 @@ logger = logging.Logger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-class CalibratedSensor(reader.Obtainer[int]):
+class CalibratedSensor(reader.Obtainer[float]):
     """Mixin that provides a .obtain method.
 
     Returns the difference between the provided base and the read value.
     """
 
-    def read(self) -> int:
+    def read(self) -> float:
         raise NotImplementedError
 
-    def obtain(self, base: int) -> int:
+    def obtain(self, base: float) -> float:
         """Read the calibrated height, based on provided base height."""
         return base - self.read()
 
 
-class Sensor(reader.ReaderContext[int], CalibratedSensor):
+class Sensor(reader.ReaderContext[float], CalibratedSensor):
     """Construct a distance sensor."""
 
     def __init__(self, tof: VL53L0X.VL53L0X, level: int = 1) -> None:
@@ -43,12 +43,12 @@ class Sensor(reader.ReaderContext[int], CalibratedSensor):
         self.tof.start_ranging(level)
         return self
 
-    def read(self) -> int:
+    def read(self) -> float:
         """Read the unit distance sensed.
 
-        Most likely millimetres.
+        Should return centimeters with up to one decimal place.
         """
-        distance = self.tof.get_distance()
+        distance = float(self.tof.get_distance()) / 10
         return distance
 
     def close(self) -> None:
@@ -57,7 +57,9 @@ class Sensor(reader.ReaderContext[int], CalibratedSensor):
         self.tof.close()
 
 
-class ThreadedSensor(reader.ThreadedReader[int], CalibratedSensor, reader.Device[int]):
+class ThreadedSensor(
+    reader.ThreadedReader[float], CalibratedSensor, reader.Device[float]
+):
     """Maintain a seperate-threaded Sensor."""
 
     def post_init(self) -> None:
@@ -65,14 +67,14 @@ class ThreadedSensor(reader.ThreadedReader[int], CalibratedSensor, reader.Device
 
         Initialize the rolling history window.
         """
-        self.history: t.Deque[int] = collections.deque(
+        self.history: t.Deque[float] = collections.deque(
             maxlen=config.measure.sample_window
         )
 
-    def get_value(self, reader: reader.Reader[int]) -> int:
+    def get_value(self, reader: reader.Reader[float]) -> float:
         """Average the latest value over the rolling window."""
         self.history.append(reader.read())
-        return round(sum(self.history) / len(self.history))
+        return sum(self.history) / len(self.history)
 
 
 # https://github.com/kplindegaard/smbus2

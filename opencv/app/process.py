@@ -54,7 +54,7 @@ def read_weight(tare: t.Optional[float] = None) -> float:
     return weight
 
 
-def read_height(base: t.Optional[int] = None) -> int:
+def read_height(base: t.Optional[float] = None) -> float:
     """Obtain the height provided by the camera station."""
     try:
         with devices.get_sensor() as sensor:

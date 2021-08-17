@@ -87,6 +87,6 @@ measure_sensor = measure.ThreadedSensor(
 )
 
 
-def get_sensor() -> reader.Device[int]:
+def get_sensor() -> reader.Device[float]:
     """Return a sensor."""
     return measure_sensor
