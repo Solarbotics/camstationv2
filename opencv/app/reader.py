@@ -68,9 +68,6 @@ class Device(ReaderContext[T], Obtainer[T]):
     """Readable device that also has calibration capabilities."""
 
 
-TIMEOUT = 3600
-
-
 class ThreadObjects(t.NamedTuple):
     """Various threading objects used by ThreadedReader.
 
@@ -95,7 +92,7 @@ class ThreadedReader(Reader[T]):
         factory: t.Callable[[], ReaderContext[T]],
         *,
         lazy: bool = True,
-        timeout: t.Optional[float] = TIMEOUT
+        timeout: t.Optional[float] = None
     ) -> None:
         """Construct a new ThreadedReader.
 

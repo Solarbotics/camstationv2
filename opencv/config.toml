@@ -62,4 +62,4 @@ sample_window = 100
 precision = 1
 
 [readers]
-inactivity_timeout = 300
+inactivity_timeout = 60
