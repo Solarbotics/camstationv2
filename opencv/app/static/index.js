@@ -276,4 +276,15 @@
       return false;
     })
 
+    function setup_clearButtons() {
+      let clearButtons = document.getElementsByClassName("clear-next");
+      for (const button of clearButtons) {
+        button.addEventListener("click", function () {
+          button.nextElementSibling.innerHTML = "";
+        })
+      }
+    }
+    setup_clearButtons();
+    
+
 })();
