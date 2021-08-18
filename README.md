@@ -1,24 +1,42 @@
-# Latest Status
-Because it can be days between updates, let's keep track of what I'm doing here.
+# Camera Station
 
-Code: The subdirectory "testbase" contains the latest functional codeset.
-# camstationv2
-Mobile product documentation Camera station
+## Usage
+ - The Raspberry Pi controlling the camera station
+ can be found at the address `camerastation` (or `192.168.2.165` as of writing).
+ - Activate venv (e.g. `. camvenv/bin/venv` from `opencv` directory)
+ - Start Flask (i.e. `flask run -h <address>`) (defaults to localhost address)
+ - Buttons are labelled with what they get, `Activate` should run everything
 
-This is the next iteration of the mobile Camstation that we worked with [Kevin Loney](https://github.com/solarboticsltd/Internal-Tools/blob/master/cam_station/) to create something that we could:
+## Structure
 
- 1. Roll down a store's isle
- 2. Take a product and
-	 1. Scan it (barcode / etc)
-	 2. Confirm its database details (polling RMS / QB Databases)
-	 3. Photograph it (using 2 or 3 cameras using gphoto library)
-	 4. Weigh it (using Sparkfun Scale Module) **More or less complete in codefile "camscale.py"
-	 5. Dimension it by
-		1. Using underside camera picture of shadow-cast to get X by Y
-		2. Use overhead Time-of-Flight sensor to read any change in plane to get Z-offset
- 3. Save the data to a database for inclusion to the Solarbotics.com website.
- 
- This is well documented on the Solarbotics' internal wiki at 
- - http://192.168.2.8/index.php/camstation-v2-development-list/ and 
- - http://192.168.2.8/index.php/realsense-camera-depth-measurement-for-camstation/camstation-v2-hardware/
+Parts:
+ - Raspberry Pi Camera Module (`opencv` box detection for width and length)
+ - VL53L0X distance sensor (height detection)
+ - DSLR Cameras (product photos)
+ - Weight scale (product weight)
+ - Lights (illuminating product and shadowcast)
 
+## Behaviour
+
+Activation:
+ - Turn on lights
+ - Get bounds from undercamera using opencv shadow-based box detection
+ - Turn off lights
+ - Read scale
+ - Read height distance sensor (TODO: use calibration to calculate height, not depth)
+ - Take photos from connected cameras
+ - Save data into files and return data to website
+
+## Notes
+
+Groups required:
+ - `plugdev` for usb photo camera
+ - `dialout` (`tty` may also be required) for scale
+ - `video` for something (picamera likely)
+ - `gpio` for gpio access (for lights)
+ - `i2c` for i2c access (for ToF sensor)
+
+Photo:
+ - Prone to giving random errors.
+   Restarting the camera(s) and running `gphoto2 --reset` 
+   may alleviate some of these.
