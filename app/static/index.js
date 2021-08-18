@@ -225,7 +225,7 @@
     // Setup polling
     function start_polling_data(endpoint, names) {
 
-      const GAP = 1000;
+      const GAP = 200;
       const method = "GET";
 
       document.getElementById("control").classList.add("working");

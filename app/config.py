@@ -165,28 +165,29 @@ scale = ScaleConfig.from_raw(raw["scale"])
 Colour = t.Tuple[int, int, int]
 
 
-@dataclasses.dataclass()
-class ColoursConfig:
+class ColoursConfig(Config):
 
     red: Colour
     blue: Colour
     green: Colour
+    gray: Colour
 
 
-@dataclasses.dataclass()
-class CameraConfig:
+class CrosshairConfig(Config):
+
+    radius: int
+    thickness: int
+
+
+class CameraConfig(Config):
     """CameraConfig Schema."""
 
     colours: ColoursConfig
+    crosshair: CrosshairConfig
     precision: int
 
 
-camera = CameraConfig(
-    ColoursConfig(
-        **{name: tuple(colour) for name, colour in raw["camera"]["colours"].items()}  # type: ignore
-    ),
-    precision=raw["camera"]["precision"],
-)
+camera = CameraConfig.from_raw(raw["camera"])
 
 
 class PathsConfig(Config):

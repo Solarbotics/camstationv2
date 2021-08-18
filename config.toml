@@ -34,6 +34,11 @@ precision = 1
 blue = [255, 0, 0]
 green = [0, 255, 0]
 red = [0, 0, 255]
+gray = [127, 127, 127]
+
+[camera.crosshair]
+radius = 10
+thickness = 1
 
 [process]
 data_name = "data"

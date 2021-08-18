@@ -37,6 +37,36 @@ def scale(image: Image, factor: float = 1) -> Image:
 # https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_gui/py_image_display/py_image_display.html
 
 
+def crosshair(
+    image: Image, radius: int, thickness: int, colour: t.Tuple[int, int, int]
+) -> Image:
+    """Draw a crosshair on the provided image.
+
+    Does not mutate the provided argument.
+
+    Note the actual line thickness is doubled.
+    """
+    image = image.copy()
+    # print(image.shape)
+    row_mid = (image.shape[0] // 2) - 1
+    column_mid = (image.shape[1] // 2) - 1
+    row_start = row_mid - (radius - 1)
+    column_start = column_mid - (radius - 1)
+    cv2.rectangle(
+        image,
+        (column_mid - (thickness - 1), row_start),
+        (column_mid + thickness, row_start + (radius * 2 - 1)),
+        colour,
+    )
+    cv2.rectangle(
+        image,
+        (column_start, row_mid - (thickness - 1)),
+        (column_start + (radius * 2 - 1), row_mid + thickness),
+        colour,
+    )
+    return image
+
+
 class ImageProcessor:
     """Abstract class for objects capable of transforming an image."""
 
@@ -100,7 +130,8 @@ class ImageSizer(ImageProcessor):
         # Ratio: 120.258 and 114.382 (not bad, not good)
         # pixels_per_centimeter = 1
         # pixels_per_centimeter = 85/8.255  # TODO approximate measure, should also look at arcuro?
-        PIXELS_PER_CENTIMETER = 82 / 8.255
+        # PIXELS_PER_CENTIMETER = 82 / 8.255
+        PIXELS_PER_CENTIMETER = 115 / 13
         return (rect[1][0] / PIXELS_PER_CENTIMETER, rect[1][1] / PIXELS_PER_CENTIMETER)
 
     def process_frame(
@@ -145,7 +176,7 @@ class ImageSizer(ImageProcessor):
         def cropped(image: Image) -> Image:
             """Crop step"""
             leftMargin = 0
-            rightMargin = 30  # 30
+            rightMargin = 0  # 30
             topMargin = 0
             bottomMargin = 0
             return image[
@@ -200,6 +231,7 @@ class ImageSizer(ImageProcessor):
         overlay[filtered > 0] = config.camera.colours.red
         # output[filtered > 0] = red
         output = cv2.addWeighted(output, 0.9, overlay, 0.1, gamma=0)
+
         # Parse contours
         MIN_SIZE = 10
         for contour in contours:
@@ -229,9 +261,18 @@ class ImageSizer(ImageProcessor):
 
                 sizes.append(self.rect_to_size(rect))
 
+        output = crosshair(
+            output,
+            radius=config.camera.crosshair.radius,
+            thickness=config.camera.crosshair.thickness,
+            colour=config.camera.colours.gray,
+        )
+
         # print(sizes)
 
         display = output
+        # display = source
+
         # back = numpy.full(source.shape, 0, dtype=numpy.uint8)
         # back[: output.shape[0], : output.shape[1]] = output
         # display = scale(numpy.concatenate((source, back), axis=1), factor=1)
