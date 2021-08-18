@@ -129,10 +129,13 @@ class PhotoConfig:
 
     Usually not custom instantiated."""
 
+    default_name: str
     names: t.Mapping[str, str]
 
 
-photo = PhotoConfig(dict(raw["photo"]["names"]))
+photo = PhotoConfig(
+    default_name=raw["photo"]["default_name"], names=dict(raw["photo"]["names"])
+)
 
 
 @dataclasses.dataclass()
@@ -190,6 +193,7 @@ class PathsConfig(Config):
 
     photos: str
     data: str
+    generic: str
 
 
 class ProcessCameraConfig(Config):

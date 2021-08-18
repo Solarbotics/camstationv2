@@ -123,7 +123,9 @@ def capture_image(camera, destination: str) -> None:
 
 
 def capture_image_set(
-    folder: str = "photos", timestamp: t.Optional[datetime.datetime] = None
+    folder: str = "photos",
+    use_timestamp: bool = True,
+    timestamp: t.Optional[datetime.datetime] = None,
 ) -> t.Iterable[str]:
     """Capture one photo from each camera.
 
@@ -135,13 +137,13 @@ def capture_image_set(
             # Serial number of the camera for keying
             serialnumber = config_value(camera, "serialnumber")
             # Transform into a set name (e.g. 'overhead', 'side', etc)
-            name = config.photo.names.get(serialnumber, "unknown")
+            name = config.photo.names.get(serialnumber, config.photo.default_name)
             # Construct filename as a string to give to gphoto
             save_path = files.data_name(
                 name=name,
                 folder=folder,
                 extension="jpg",
-                use_timestamp=True,
+                use_timestamp=use_timestamp,
                 timestamp=timestamp,
             )
             file_names.append(save_path)

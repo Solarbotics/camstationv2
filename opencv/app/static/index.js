@@ -90,14 +90,18 @@
     
     // Construct a query function to be bound to an event such as click.
     // Executing the returned function:
-    // Calls prep
+    // Calls prep, and uses the return of prep as the JSON body of the request
     // Sends an <action> request to /<name>,
     // Calls callback on the text of the response from /<name>
     let query = function (name, action, prep, callback) {
       let func = function (event) {
-        prep();
+        let data = prep();
         fetch("/" + name, {
-          method: action
+          method: action,
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
         }).then(callback)
       };
       return func;
@@ -132,7 +136,7 @@
       }
     }
 
-    function setup_actions(handlers) {
+    function setup_actions(gatherers, handlers) {
 
       // Setup 'actions'.
       // Each action is a div containing a button for input
@@ -154,6 +158,13 @@
           httpMethod,
           function () {
             button.classList.add("working");
+            let data;
+            if (gatherers.hasOwnProperty(name)) {
+              data = gatherers[name]();
+            } else {
+              data = {};
+            }
+            return data;
           },
           function (response) {
             button.classList.remove("working");
@@ -188,6 +199,15 @@
       return func;
     }; 
 
+    const action_gatherers = {
+      "activate": function () {
+        let data = {
+          "query": document.getElementById("ilc").textContent,
+        }
+        return data;
+      }
+    };
+
     const action_handlers = {
       "photos": function (response) {
         console.log("handling photos");
@@ -196,8 +216,9 @@
         })
       },
       "activate": activate_function(activateInfo),
-    }
-    setup_actions(action_handlers);
+    };
+
+    setup_actions(action_gatherers, action_handlers);
 
     let polling;
 
@@ -242,11 +263,15 @@
       // queryForm.elements["query"].value = "";
       queryForm.elements["query"].select();
       fetch(
-        config.lookup + "/lookup.html?query=" + queryForm.elements["query"].value,
+        config.lookup + "/lookup?query=" + queryForm.elements["query"].value,
         {method: "GET"}
       ).then(function (response) {
         let output = document.getElementById("queryResult");
-        response.text().then(text => output.innerHTML = text);
+        let ilc = document.getElementById("ilc");
+        response.json().then(function (data) {
+          ilc.textContent = data["data"][0]["ItemLookupCode"];
+          output.innerHTML = data["table"];
+        });
       });
       event.preventDefault();
       return false;

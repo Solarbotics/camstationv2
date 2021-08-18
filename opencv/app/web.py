@@ -161,11 +161,16 @@ def create_app() -> flask.Flask:
     @app.route("/activate", methods=["POST"])
     def activate() -> flask.Response:
         """Activate a round of the camera station."""
+        data = flask.request.json
+        if not data:
+            return flask.jsonify({"message": "Could not understand request."})
+        logger.info("ILC: %s", data["query"])
         return flask.jsonify(
             process.activate(
                 threshold=app.config.get("threshold", config.web.threshold),
                 base_depth=app.config.get("base_depth", 0),
                 tare=app.config.get("tare", 0),
+                ilc=data["query"],
             )
         )
 

@@ -95,11 +95,14 @@ def format_height(height: float) -> str:
 
 def take_photos(
     folder: t.Union[str, pathlib.Path],
+    use_timestamp: bool = True,
     timestamp: t.Optional[datetime.datetime] = None,
 ) -> t.List[str]:
     """Takes a set of photos, saving onto disk and returning base64 encodings."""
     try:
-        photo_paths = photo.capture_image_set(folder=str(folder), timestamp=timestamp)
+        photo_paths = photo.capture_image_set(
+            folder=str(folder), use_timestamp=use_timestamp, timestamp=timestamp
+        )
     except Exception as e:
         logger.error(e)
         return []
@@ -119,19 +122,42 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
 
     # Save gathered data
     # Construct root folder
+    ilc: t.Optional[str] = kwargs.get("ilc", None)
+    if ilc == "":
+        ilc = None
+    # TODO if ilc is none,
+    # put the data in a general `unknown` folder with a timestamped subfolder
+    # otherwise put it `ilc` folder
     now = datetime.datetime.now()
-    data_folder = pathlib.Path(config.process.paths.data).joinpath(
-        files.format_timestamp(now)
-    )
+
+    if ilc is not None:
+        data_folder = pathlib.Path(config.process.paths.data).joinpath(ilc)
+    else:
+        data_folder = (
+            pathlib.Path(config.process.paths.data)
+            .joinpath(config.process.paths.generic)
+            .joinpath(files.format_timestamp(now))
+        )
+
     file_name = files.data_name(
         name=config.process.data_name,
         folder=data_folder,
         extension="json",
-        use_timestamp=True,
-        timestamp=now,
+        use_timestamp=False,
     )
+
     with open(file_name, "w", encoding="utf-8") as f:
-        json.dump({"size": size, "weight": weight, "height": height}, f)
+        json.dump(
+            {
+                "size": size,
+                "weight": weight,
+                "height": height,
+                "time": files.format_timestamp(now),
+                "ilc": ilc,
+            },
+            f,
+            indent=4,
+        )
 
     # Turn on underside ringlights to improve light conditions
     lights.Lights().ring().level = config.lights.level
@@ -139,7 +165,7 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     time.sleep(config.process.camera.wait)
     # Take photos
     encoded_images = take_photos(
-        data_folder.joinpath(config.process.paths.photos), timestamp=now
+        data_folder.joinpath(config.process.paths.photos), use_timestamp=False
     )
     # Turn off lights
     lights.Lights().ring().off()
