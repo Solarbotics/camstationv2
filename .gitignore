@@ -1,5 +1,6 @@
 cvvenv/
 camvenv/
+old_camvenv/
 *.npy
 *.jpg
 *.json

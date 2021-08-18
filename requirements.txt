@@ -7,6 +7,7 @@ gphoto2
 pyserial
 gpiozero
 RPi.GPIO
-smbus2
-vl53l0x
-# imutils
+python-dotenv
+
+wheel
+git+https://github.com/pimoroni/VL53L0X-python.git

@@ -4,8 +4,6 @@ import collections
 import logging
 import typing as t
 
-# import smbus2
-# import VL53L1X
 import VL53L0X
 
 from . import config
