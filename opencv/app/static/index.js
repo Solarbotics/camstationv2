@@ -202,7 +202,7 @@
     const action_gatherers = {
       "activate": function () {
         let data = {
-          "query": document.getElementById("ilc").textContent,
+          "query": queryForm.elements["query"].value,
         }
         return data;
       }
@@ -260,16 +260,15 @@
 
     let queryForm = document.getElementById("query");
     queryForm.addEventListener("submit", function (event) {
-      // queryForm.elements["query"].value = "";
       queryForm.elements["query"].select();
       fetch(
-        config.lookup + "/lookup?query=" + queryForm.elements["query"].value,
+        config.lookup + "/lookup?query=" + queryForm.elements["query"].value + "&alias=true",
         {method: "GET"}
       ).then(function (response) {
         let output = document.getElementById("queryResult");
-        let ilc = document.getElementById("ilc");
         response.json().then(function (data) {
-          ilc.textContent = data["data"][0]["ItemLookupCode"];
+          queryForm.elements["query"].value = data["data"][0]["ItemLookupCode"];
+          queryForm.elements["query"].select();
           output.innerHTML = data["table"];
         });
       });

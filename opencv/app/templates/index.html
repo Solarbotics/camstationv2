@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
   <head>
     <title>Camera Station</title>
@@ -69,15 +70,9 @@
 
     <div class="row">
       <form id="query">
-        <input type="text" placeholder="sku" name="query">
+        <input type="text" placeholder="sku" name="query" id="ilc">
         <input type="submit" value="Query">
       </form>
-    </div>
-    <div class="row">
-      <label for="ilc">SKU:</label>
-      <span id="ilc"></span>
-    </div>
-    <div class="row" id="queryResult">
     </div>
 
     <div class="row">
@@ -103,7 +98,11 @@
       </div>
     </div>
 
-    
+    <div class="row">
+      <label for="queryResult">Query Results</label>
+      <div class="row data" id="queryResult">
+      </div>
+    </div>
 
   </body>
 </html>
