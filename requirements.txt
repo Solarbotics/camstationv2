@@ -8,5 +8,5 @@ pyserial
 gpiozero
 RPi.GPIO
 smbus2
-vl53l1x
+vl53l0x
 # imutils
