@@ -32,6 +32,7 @@ def data_name(
     use_timestamp: bool = True,
     timestamp: t.Optional[datetime.datetime] = None,
     timeformat: t.Optional[str] = None,
+    ensure_folder: bool = True,
 ) -> str:
     """Construct a data filepath based on given parameters.
 
@@ -69,9 +70,10 @@ def data_name(
     if extension is not None:
         label += f".{extension}"
 
-    # Ensure that the folder exists
     root = pathlib.Path(folder)
-    root.mkdir(parents=True, exist_ok=True)
+    # Ensure that the folder exists
+    if ensure_folder:
+        root.mkdir(parents=True, exist_ok=True)
 
     save_path = str(root.joinpath(pathlib.Path(label)))
 

@@ -193,6 +193,7 @@ def retrieve(ilc: str) -> t.Optional[t.Mapping[str, object]]:
         folder=data_folder,
         extension="json",
         use_timestamp=False,
+        ensure_folder=False,
     )
 
     try:
