@@ -191,7 +191,7 @@
           + "."
         );
       } else {
-        dataResult.textContent = "No data found."
+        dataResult.textContent = "No saved data found."
         fill_gallery([]);
       }
     }
@@ -275,10 +275,14 @@
       ).then(function (response) {
         let output = document.getElementById("queryResult");
         response.json().then(function (data) {
-          let ilc = data["data"][0]["ItemLookupCode"];
-          queryForm.elements["query"].value = ilc;
+          let ilc;
+          if (data["data"].length > 0) {
+            ilc = data["data"][0]["ItemLookupCode"];
+            output.innerHTML = data["table"];
+          } else {
+            ilc = queryForm.elements["query"].value;
+          }
           queryForm.elements["query"].select();
-          output.innerHTML = data["table"];
           fetch(
             "/saved?ilc=" + ilc,
             {method: "GET"}
