@@ -228,6 +228,12 @@
 
     setup_actions(action_gatherers, action_handlers);
 
+    function updateActivateTooltip(text) {
+      let activateButton = document.getElementById("activateButton");
+      activateButton.title = text;
+    }
+    updateActivateTooltip("ILC: None");
+
     let polling;
 
     // Setup polling
@@ -278,11 +284,13 @@
           let ilc;
           if (data["data"].length > 0) {
             ilc = data["data"][0]["ItemLookupCode"];
-            output.innerHTML = data["table"];
           } else {
             ilc = queryForm.elements["query"].value;
           }
+          queryForm.elements["query"].value = ilc;
           queryForm.elements["query"].select();
+          updateActivateTooltip("ILC: " + ilc);
+          output.innerHTML = data["table"];
           fetch(
             "/saved?ilc=" + ilc,
             {method: "GET"}
