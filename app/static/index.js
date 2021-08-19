@@ -7,7 +7,6 @@
 
     function submit_threshold() {
       let form = document.getElementById("configOptions")
-      // console.log(form);
       fetch(
         "/config", {
           method: "POST",
@@ -27,9 +26,7 @@
       form.elements["thresholdOutput"].value = form.elements["threshold"].value;
       submit_threshold();
     });
-    // console.log(configOptions);
     configOptions.addEventListener("submit", function (event) {
-      // console.log(event);
       event.preventDefault();
       submit_threshold();
       return false
@@ -181,20 +178,32 @@
     }
 
     // Collect elements
-    let activateInfo = document.getElementById("activateAction").children[1];
+    let dataResult = document.getElementById("dataResult");
+
+    let display_data = function (data) {
+      if (data["valid"]) {
+        fill_gallery(data["photos"])
+        dataResult.textContent = (
+          "Size: " + data["size"]
+          + ", weight: " + data["weight"]
+          + ", height: " + data["height"]
+          + ", time: " + data["time"]
+          + "."
+        );
+      } else {
+        dataResult.textContent = "No data found."
+        fill_gallery([]);
+      }
+    }
+
+    let activateInfo = dataResult;
 
     // Define handling function
     let activate_function = function (output) {
       // The actual function that uses the provided output
       let func = async function (response) {
         let data = await response.json()
-        fill_gallery(data["photos"])
-        output.textContent = (
-          "Size: " + data["size"]
-          + ", weight: " + data["weight"]
-          + ", height: " + data["height"]
-          + "."
-        );
+        display_data(data);
       }
       return func;
     }; 
@@ -210,7 +219,6 @@
 
     const action_handlers = {
       "photos": function (response) {
-        console.log("handling photos");
         response.json().then(function (data) {
           fill_gallery(data["photos"])
         })
@@ -267,9 +275,17 @@
       ).then(function (response) {
         let output = document.getElementById("queryResult");
         response.json().then(function (data) {
-          queryForm.elements["query"].value = data["data"][0]["ItemLookupCode"];
+          let ilc = data["data"][0]["ItemLookupCode"];
+          queryForm.elements["query"].value = ilc;
           queryForm.elements["query"].select();
           output.innerHTML = data["table"];
+          fetch(
+            "/saved?ilc=" + ilc,
+            {method: "GET"}
+          ).then(async function (response) {
+            let saved_data = await response.json();
+            display_data(saved_data);
+          })
         });
       });
       event.preventDefault();

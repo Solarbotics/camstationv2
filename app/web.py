@@ -174,4 +174,20 @@ def create_app() -> flask.Flask:
             )
         )
 
+    @app.route("/saved")
+    def get_saved_data() -> t.Tuple[flask.Response, int]:
+        """Return already collected data for an ILC."""
+        try:
+            ilc = flask.request.args["ilc"]
+        except KeyError:
+            return (
+                flask.jsonify({"message": "Required `ilc` parameter is missing."}),
+                404,
+            )
+        data = process.retrieve(ilc=ilc)
+        if data is not None:
+            return flask.jsonify({**data, "valid": True}), 200
+        else:
+            return flask.jsonify({"message": "No data.", "valid": False}), 200
+
     return app

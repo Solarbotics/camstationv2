@@ -3,6 +3,7 @@
 import datetime
 import json
 import logging
+import os
 import pathlib
 import time
 import typing as t
@@ -173,8 +174,39 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     # Return data
     return {
         "message": "success",
+        "valid": True,
         "size": format_bounds(size),
         "weight": format_weight(weight),
         "height": format_height(height),
         "photos": encoded_images,
+        "time": files.format_timestamp(now),
     }
+
+
+def retrieve(ilc: str) -> t.Optional[t.Mapping[str, object]]:
+    """Retrieve data that was previously saved with the specified ILC."""
+    data_folder = pathlib.Path(config.process.paths.data).joinpath(ilc)
+
+    # Retrieve textual data
+    data_file_name = files.data_name(
+        name=config.process.data_name,
+        folder=data_folder,
+        extension="json",
+        use_timestamp=False,
+    )
+
+    try:
+        with open(data_file_name, "r", encoding="utf-8") as data_file:
+            data = json.load(data_file)
+    except FileNotFoundError:
+        return None
+
+    # Retrieve images
+    images = [
+        photo.encode_image(str(path))
+        for path in data_folder.joinpath(config.process.paths.photos).glob("*.jpg")
+    ]
+
+    data["photos"] = images
+    data["message"] = "success"
+    return data
