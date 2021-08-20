@@ -9,7 +9,7 @@ import VL53L0X
 from . import config
 from . import reader
 
-logger = logging.Logger(__name__)
+logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 

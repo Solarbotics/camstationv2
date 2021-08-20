@@ -10,7 +10,7 @@ import time
 import threading
 import typing as t
 
-logger = logging.Logger(__name__)
+logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 T = t.TypeVar("T")
