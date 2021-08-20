@@ -174,6 +174,9 @@ class ThreadedReader(Reader[T]):
                 with condition:
                     self.value = value
                     condition.notify_all()
+        # Clear thread objects before stopping
+        # so other threads can tell that the thread stopped.
+        self.thread_objects = None
 
     def get_value(self, reader: Reader[T]) -> T:
         """Implementation dependent update behaviour that happens on every loop of the thread.
@@ -196,6 +199,7 @@ class ThreadedReader(Reader[T]):
             while self.value is None:
                 condition.wait()
             value = self.value
+            self.last_read = time.time()
         return value
 
     def stop(self) -> None:
