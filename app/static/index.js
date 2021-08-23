@@ -276,7 +276,7 @@
     queryForm.addEventListener("submit", function (event) {
       queryForm.elements["query"].select();
       fetch(
-        config.lookup + "/lookup?query=" + queryForm.elements["query"].value + "&alias=true",
+        config.lookup + "/check?query=" + queryForm.elements["query"].value,
         {method: "GET"}
       ).then(function (response) {
         let output = document.getElementById("queryResult");
