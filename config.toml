@@ -68,5 +68,7 @@ sample_window = 10
 
 precision = 1
 
+cm_per_unit = 0.1
+
 [readers]
 inactivity_timeout = 60

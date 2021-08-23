@@ -46,7 +46,7 @@ class Sensor(reader.ReaderContext[float], CalibratedSensor):
 
         Should return centimeters with up to one decimal place.
         """
-        distance = float(self.tof.get_distance()) / 10
+        distance = float(self.tof.get_distance()) * config.measure.cm_per_unit
         return distance
 
     def close(self) -> None:

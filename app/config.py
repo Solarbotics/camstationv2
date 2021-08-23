@@ -240,6 +240,8 @@ class MeasureConfig(Config):
 
     precision: int
 
+    cm_per_unit: float
+
 
 measure = MeasureConfig.from_raw(raw["measure"])
 
