@@ -62,9 +62,9 @@ level = 1
 [measure]
 bus = 1
 address = 41
-range = 3
+range = 2
 
-sample_window = 100
+sample_window = 10
 
 precision = 1
 
