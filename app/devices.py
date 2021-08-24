@@ -4,7 +4,7 @@ import logging
 
 import numpy
 import serial
-import VL53L0X
+import VL53L1X
 
 from . import camera
 from . import config
@@ -73,10 +73,21 @@ def _default_sensor() -> measure.Sensor:
 
     Controlled by config values.
     """
-    tof = VL53L0X.VL53L0X(
+    # https://www.st.com/resource/en/datasheet/vl53l0x.pdf
+    # https://www.st.com/resource/en/datasheet/vl53l1x.pdf
+    # https://www.st.com/resource/en/application_note/an5191-using-the-programmable-region-of-interest-roi-with-the-vl53l1x-stmicroelectronics.pdf
+    # https://www.st.com/resource/en/user_manual/um2356-vl53l1x-api-user-manual-stmicroelectronics.pdf
+    tof = VL53L1X.VL53L1X(
         i2c_bus=config.measure.bus, i2c_address=config.measure.address
     )
-    sensor = measure.Sensor(tof, level=config.measure.range)
+
+    tof.open()
+
+    tof.set_user_roi(VL53L1X.VL53L1xUserRoi(*config.measure.roi))
+    tof.set_timing(config.measure.budget, config.measure.intertime)
+    level = 0
+
+    sensor = measure.Sensor(tof, level=level)
     logger.info("Opened VL53LXX sensor.")
     return sensor
 

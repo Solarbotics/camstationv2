@@ -4,7 +4,13 @@ import collections
 import logging
 import typing as t
 
-import VL53L0X
+# import VL53L0X
+import VL53L1X
+
+# sensor = VL53L1X.VL53L1X()
+# sensor.set_user_roi()
+# osensor = VL53L0X.VL53L0X()
+# osensor.set_user_roi
 
 from . import config
 from . import reader
@@ -30,14 +36,13 @@ class CalibratedSensor(reader.Obtainer[float]):
 class Sensor(reader.ReaderContext[float], CalibratedSensor):
     """Construct a distance sensor."""
 
-    def __init__(self, tof: VL53L0X.VL53L0X, level: int = 1) -> None:
-        """Construct a new Sensor based on an unopened ToF VL53LXX."""
+    def __init__(self, tof: VL53L1X.VL53L1X, level: int = 1) -> None:
+        """Construct a new Sensor based on an opened (but not ranging) ToF VL53LXX."""
         self.tof = tof
         self._open(level)
 
     def _open(self, level: int = 1) -> "Sensor":
         """Open the sensor."""
-        self.tof.open()
         self.tof.start_ranging(level)
         return self
 
@@ -47,6 +52,7 @@ class Sensor(reader.ReaderContext[float], CalibratedSensor):
         Should return centimeters with up to one decimal place.
         """
         distance = float(self.tof.get_distance()) * config.measure.cm_per_unit
+        logger.info("Distance: %s", distance)
         return distance
 
     def close(self) -> None:
@@ -72,7 +78,12 @@ class ThreadedSensor(
     def get_value(self, reader: reader.Reader[float]) -> float:
         """Average the latest value over the rolling window."""
         self.history.append(reader.read())
-        return sum(self.history) / len(self.history)
+
+        def format(list: t.Iterable[float]) -> str:
+            return f'[{", ".join(f"{x:.1f}" for x in list)}]'
+
+        return sorted(self.history)[len(self.history) // 2]
+        # return sum(self.history) / len(self.history)
 
 
 # https://github.com/kplindegaard/smbus2

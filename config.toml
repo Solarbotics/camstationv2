@@ -62,7 +62,12 @@ level = 1
 [measure]
 bus = 1
 address = 41
-range = 2
+
+budget = 200_000
+intertime = 204
+
+# tlx, tly, brx, bry
+roi = [6, 6, 9, 9]
 
 sample_window = 10
 

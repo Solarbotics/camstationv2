@@ -233,7 +233,13 @@ class MeasureConfig(Config):
     bus: int
     address: int
 
-    range: int
+    # microseconds spent measuring
+    budget: int
+    # milliseconds between start of different measurements
+    # https://community.st.com/s/question/0D53W00000Qtq6v/vl53l1x-timing-budget-and-intermeasurement-time
+    intertime: int
+
+    roi: t.Tuple[int, int, int, int]
 
     # Number of historical samples to keep and average over
     sample_window: int
