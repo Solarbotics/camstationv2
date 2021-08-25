@@ -280,17 +280,21 @@
         {method: "GET"}
       ).then(function (response) {
         let output = document.getElementById("queryResult");
+        let ilc;
         response.json().then(function (data) {
-          let ilc;
           if (data["data"].length > 0) {
             ilc = data["data"][0]["ItemLookupCode"];
           } else {
             ilc = queryForm.elements["query"].value;
           }
+          output.innerHTML = data["table"];
+        }).catch(function (reason) {
+          ilc = queryForm.elements["query"].value;
+        }).finally(function () {
+          updateActivateTooltip("ILC: " + ilc);
           queryForm.elements["query"].value = ilc;
           queryForm.elements["query"].select();
-          updateActivateTooltip("ILC: " + ilc);
-          output.innerHTML = data["table"];
+          output.textContent = "Lookup failed."
           fetch(
             "/saved?ilc=" + ilc,
             {method: "GET"}
