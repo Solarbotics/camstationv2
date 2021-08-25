@@ -77,7 +77,7 @@ def create_app() -> flask.Flask:
     @app.route("/photos", methods=["POST"])
     def take_photos() -> flask.Response:
         """Take a photo from each remote camera."""
-        encoded = process.take_photos("photos")
+        encoded = process.take_photos("photos", format=config.files.stamp_format)
         return flask.jsonify({"message": "success", "photos": encoded})
 
     @app.route("/config", methods=["POST"])

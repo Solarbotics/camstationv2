@@ -115,6 +115,7 @@ class FilesConfig(Config):
     """FilesConfig Schema."""
 
     format: str
+    stamp_format: str
     timeformat: str
 
 

@@ -126,6 +126,7 @@ def capture_image_set(
     folder: str = "photos",
     use_timestamp: bool = True,
     timestamp: t.Optional[datetime.datetime] = None,
+    format: str = None,
 ) -> t.Iterable[str]:
     """Capture one photo from each camera.
 
@@ -142,6 +143,7 @@ def capture_image_set(
             save_path = files.data_name(
                 name=name,
                 folder=folder,
+                format=format,
                 extension="jpg",
                 use_timestamp=use_timestamp,
                 timestamp=timestamp,

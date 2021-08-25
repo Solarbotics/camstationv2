@@ -98,11 +98,15 @@ def take_photos(
     folder: t.Union[str, pathlib.Path],
     use_timestamp: bool = True,
     timestamp: t.Optional[datetime.datetime] = None,
+    format: str = None,
 ) -> t.List[str]:
     """Takes a set of photos, saving onto disk and returning base64 encodings."""
     try:
         photo_paths = photo.capture_image_set(
-            folder=str(folder), use_timestamp=use_timestamp, timestamp=timestamp
+            folder=str(folder),
+            use_timestamp=use_timestamp,
+            timestamp=timestamp,
+            format=format,
         )
     except Exception as e:
         logger.error(e)
