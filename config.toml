@@ -64,8 +64,10 @@ level = 1
 bus = 1
 address = 41
 
+# microseconds
 budget = 200_000
-intertime = 204
+# ms, should be more than 4ms greater than budget
+intertime = 205
 
 # tlx, tly, brx, bry
 roi = [6, 6, 9, 9]
