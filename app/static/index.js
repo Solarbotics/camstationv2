@@ -290,11 +290,11 @@
           output.innerHTML = data["table"];
         }).catch(function (reason) {
           ilc = queryForm.elements["query"].value;
+          output.textContent = "Lookup failed."
         }).finally(function () {
           updateActivateTooltip("ILC: " + ilc);
           queryForm.elements["query"].value = ilc;
           queryForm.elements["query"].select();
-          output.textContent = "Lookup failed."
           fetch(
             "/saved?ilc=" + ilc,
             {method: "GET"}
