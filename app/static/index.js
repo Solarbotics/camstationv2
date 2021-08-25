@@ -214,13 +214,17 @@
         return func;
     };
 
-    const action_gatherers = {
-        "activate": function () {
-            let data = {
-                "query": queryForm.elements["query"].value,
-            }
-            return data;
+    // Function that collects the current ILC
+    let get_query = function () {
+        let data = {
+            "query": document.getElementById("ilc").value,
         }
+        return data;
+    }
+
+    const action_gatherers = {
+        "activate": get_query,
+        "photos": get_query,
     };
 
     const action_handlers = {
@@ -302,7 +306,7 @@
                 output.textContent = "Lookup failed."
             }).finally(function () {
                 updateActivateTooltip("ILC: " + ilc);
-                queryForm.elements["query"].value = ilc;
+                document.getElementById("ilc").value = ilc;
                 queryForm.elements["query"].select();
                 fetch(
                     "/saved?ilc=" + ilc,
