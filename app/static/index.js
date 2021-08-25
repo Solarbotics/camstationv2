@@ -1,10 +1,12 @@
 (function () {
     "use strict";
 
+    // Async function to async sleep for specified milliseconds
     function sleep(ms) {
       return new Promise(resolve => setTimeout(resolve, ms));
     }
 
+    // Function that sends a post request based on the config form fields
     function submit_threshold() {
       let form = document.getElementById("configOptions")
       fetch(
@@ -20,6 +22,7 @@
       })
     }
 
+    // Add listeners to config form
     let configOptions = document.getElementById("configOptions")
     configOptions.addEventListener("input", function (event) {
       let form = document.getElementById("configOptions");
@@ -32,6 +35,8 @@
       return false
     });
 
+    // repeat(func, n, delay) that calls the first parameter n times;
+    // with a minimum of delay time between call starts
     function repeat(func, times, delay) {
       func(times);
       if (times > 0) {
@@ -39,6 +44,8 @@
       }
     }
 
+    // Snapshot button that will hit the /snap endpoint
+    // a number of times
     let snapshotButton = document.getElementById("snapshot");
     snapshotButton.addEventListener("click", function (event) {
       repeat(function (index) {
@@ -52,6 +59,9 @@
       }, 10, 15000);
     });
 
+    // We post a new lights level whenever it changes;
+    // however the slider is multiplied by the checkbox
+    // so if unchecked the level is always 0
     let last_lights_level = 0;
     let lightsForm = document.getElementById("lights");
     lightsForm.addEventListener("input", function (event) {
@@ -78,13 +88,6 @@
       
     });
 
-    // let photoButton = document.getElementById("photos");
-    // photoButton.addEventListener("click", function (event) {
-    //   fetch("/photos", {
-    //     method: "POST"
-    //   });
-    // })
-    
     // Construct a query function to be bound to an event such as click.
     // Executing the returned function:
     // Calls prep, and uses the return of prep as the JSON body of the request
@@ -115,6 +118,7 @@
       return func;
     }
 
+    // Curried function that writes text as well as a timestamp on the output
     let update_on = function (output) {
       let func = function (text) {
         text = text + " (" + String(Date.now()) + ")";
@@ -123,6 +127,8 @@
       return func;
     }
 
+    // Replace the gallery of photos with photos
+    // from the base64 encoded parameters
     let fill_gallery = function(photos) {
       let gallery = document.getElementById("photosGallery");
       gallery.replaceChildren();
@@ -133,13 +139,13 @@
       }
     }
 
+    // Setup 'actions'.
+    // Each action is a div containing a button for input
+    // and a span for output.
+    // Pressing the button submits a POST (or other if specified)
+    // request to the endpoint
+    // identified by the 'name' attribute of the row.
     function setup_actions(gatherers, handlers) {
-
-      // Setup 'actions'.
-      // Each action is a div containing a button for input
-      // and a span for output.
-      // Pressing the button submits a POST request to the endpoint
-      // identified by the 'name' attribute of the row.
       let actions = document.getElementsByClassName("action");
       const COLOR_TIME = 500;
       for (const action of actions) {
@@ -177,7 +183,7 @@
 
     }
 
-    // Collect elements
+    // Function that takes obtained data and displays it on the page
     let dataResult = document.getElementById("dataResult");
 
     let display_data = function (data) {
@@ -228,6 +234,7 @@
 
     setup_actions(action_gatherers, action_handlers);
 
+    // Function that updates the tooltip indicating the ILC being used.
     function updateActivateTooltip(text) {
       let activateButton = document.getElementById("activateButton");
       activateButton.title = text;
@@ -261,6 +268,7 @@
 
     }
 
+    // Buttons to start and stop polling
     let start = document.getElementById("start");
     start.addEventListener("click", function () {
       start_polling_data("/data", ["weight", "height", "bounds"]);
@@ -272,6 +280,7 @@
       polling = false;
     });
 
+    // Allow querying the AC Lookup tool
     let queryForm = document.getElementById("query");
     queryForm.addEventListener("submit", function (event) {
       queryForm.elements["query"].select();
@@ -308,6 +317,9 @@
       return false;
     })
 
+    // Any elements (i.e. buttons) marked with the 'clear-next' class
+    // get behaviour added to them that causes
+    // the next sibling to be cleared when the button is clicked
     function setup_clearButtons() {
       let clearButtons = document.getElementsByClassName("clear-next");
       for (const button of clearButtons) {
