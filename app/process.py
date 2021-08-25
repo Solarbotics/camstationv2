@@ -115,6 +115,17 @@ def take_photos(
         return [photo.encode_image(path) for path in photo_paths]
 
 
+def collect_photos(query: t.Optional[str] = None) -> t.List[str]:
+    """Take a set of photos, saving into the appropriate folder based on query."""
+    return take_photos(
+        folder=pathlib.Path(config.process.paths.data).joinpath(
+            files.query_folder(query, generic=config.process.paths.generic),
+            config.process.paths.photos,
+        ),
+        use_timestamp=False,
+    )
+
+
 def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     """Activate a round of the camera station."""
 
@@ -135,14 +146,9 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     # otherwise put it `ilc` folder
     now = datetime.datetime.now()
 
-    if ilc is not None:
-        data_folder = pathlib.Path(config.process.paths.data).joinpath(ilc)
-    else:
-        data_folder = (
-            pathlib.Path(config.process.paths.data)
-            .joinpath(config.process.paths.generic)
-            .joinpath(files.format_timestamp(now))
-        )
+    data_folder = pathlib.Path(config.process.paths.data).joinpath(
+        files.query_folder(ilc, timestamp=now, generic=config.process.paths.generic)
+    )
 
     file_name = files.data_name(
         name=config.process.data_name,

@@ -10,7 +10,6 @@ from . import calibrate
 from . import config
 from . import devices
 from . import lights
-from . import photo
 from . import process
 
 # Enable logging
@@ -77,8 +76,15 @@ def create_app() -> flask.Flask:
     @app.route("/photos", methods=["POST"])
     def take_photos() -> flask.Response:
         """Take a photo from each remote camera."""
-        encoded = process.take_photos("photos", format=config.files.stamp_format)
-        return flask.jsonify({"message": "success", "photos": encoded})
+        data = flask.request.json
+        if data is not None:
+            query = data["query"]
+            encoded = process.collect_photos(query=query)
+            return flask.jsonify({"message": "success", "photos": encoded})
+        else:
+            response = flask.jsonify({"message": "No JSON received."})
+            response.status_code = 415
+            return response
 
     @app.route("/config", methods=["POST"])
     def set_config() -> flask.Response:

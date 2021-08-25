@@ -78,3 +78,19 @@ def data_name(
     save_path = str(root.joinpath(pathlib.Path(label)))
 
     return save_path
+
+
+def query_folder(
+    query: t.Optional[str],
+    generic: str,
+    timestamp: t.Optional[datetime.datetime] = None,
+) -> pathlib.Path:
+    """Construct a query-based folder for files based on given parameters."""
+
+    # Query can be false if None, or empty ("")
+    if query:
+        data_folder = pathlib.Path(query)
+    else:
+        data_folder = pathlib.Path(generic).joinpath(format_timestamp(timestamp))
+
+    return data_folder
