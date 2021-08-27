@@ -73,19 +73,6 @@ def create_app() -> flask.Flask:
         calibrate.save_snapshot(7, 5)
         return "Snapped"
 
-    @app.route("/photos", methods=["POST"])
-    def take_photos() -> flask.Response:
-        """Take a photo from each remote camera."""
-        data = flask.request.json
-        if data is not None:
-            query = data["query"]
-            encoded = process.collect_photos(query=query)
-            return flask.jsonify({"message": "success", "photos": encoded})
-        else:
-            response = flask.jsonify({"message": "No JSON received."})
-            response.status_code = 415
-            return response
-
     @app.route("/config", methods=["POST"])
     def set_config() -> flask.Response:
         """Updates the config."""
@@ -153,6 +140,38 @@ def create_app() -> flask.Flask:
         )
         message = {"weight": weight, "height": height, "bounds": bounds}
         return flask.jsonify(message)
+
+    @app.route("/photos", methods=["POST"])
+    def take_photos() -> flask.Response:
+        """Take a photo from each remote camera."""
+        data = flask.request.json
+        if data is not None:
+            query = data["query"]
+            encoded = process.collect_photos(query=query)
+            return flask.jsonify({"message": "success", "photos": encoded})
+        else:
+            response = flask.jsonify({"message": "No JSON received."})
+            response.status_code = 415
+            return response
+
+    @app.route("/grab_data", methods=["POST"])
+    def grab_data() -> flask.Response:
+        """Grabe live data values and save into data based on ILC."""
+        data = flask.request.json
+        if data is not None:
+            query = data["query"]
+            data = process.collect_data(
+                query=query,
+                threshold=app.config.get("threshold", config.web.threshold),
+                base_depth=app.config.get("base_depth", 0),
+                tare=app.config.get("tare", 0),
+            )
+            data["message"] = "success"
+            return flask.jsonify(data)
+        else:
+            response = flask.jsonify({"message": "No JSON received."})
+            response.status_code = 415
+            return response
 
     @app.route("/setup", methods=["POST"])
     def setup() -> str:

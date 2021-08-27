@@ -126,58 +126,80 @@ def collect_photos(query: t.Optional[str] = None) -> t.List[str]:
     )
 
 
+def collect_data(
+    query: t.Optional[str] = None,
+    threshold: int = 0,
+    base_depth: t.Optional[float] = None,
+    tare: t.Optional[float] = None,
+    timestamp: t.Optional[datetime.datetime] = None,
+) -> t.Mapping[str, object]:
+    """Collect numerical data."""
+    # Read bounds from undercamera
+    size = read_bounds(threshold=threshold)
+    # Use overhead tech to get depth
+    height = read_height(base=base_depth)
+    # Read scale
+    weight = read_weight(tare=tare)
+
+    folder = pathlib.Path(config.process.paths.data).joinpath(
+        files.query_folder(
+            query, generic=config.process.paths.generic, timestamp=timestamp
+        )
+    )
+
+    file_name = files.data_name(
+        name=config.process.data_name,
+        folder=folder,
+        extension="json",
+        use_timestamp=False,
+    )
+
+    data = {
+        "size": size,
+        "weight": weight,
+        "height": height,
+        "time": files.format_timestamp(timestamp),
+        "ilc": query,
+    }
+
+    with open(file_name, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4)
+
+    return data
+
+
 def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     """Activate a round of the camera station."""
-
-    # Read bounds from undercamera
-    size = read_bounds(threshold=kwargs.get("threshold", 0))
-    # Use overhead tech to get depth
-    height = read_height(base=kwargs.get("base_depth", 0))
-    # Read scale
-    weight = read_weight(tare=kwargs.get("tare", 0))
 
     # Save gathered data
     # Construct root folder
     ilc: t.Optional[str] = kwargs.get("ilc", None)
-    if ilc == "":
-        ilc = None
-    # TODO if ilc is none,
-    # put the data in a general `unknown` folder with a timestamped subfolder
-    # otherwise put it `ilc` folder
+
+    # Common timestamp for all files
     now = datetime.datetime.now()
 
     data_folder = pathlib.Path(config.process.paths.data).joinpath(
         files.query_folder(ilc, timestamp=now, generic=config.process.paths.generic)
     )
 
-    file_name = files.data_name(
-        name=config.process.data_name,
-        folder=data_folder,
-        extension="json",
-        use_timestamp=False,
+    data = collect_data(
+        query=ilc,
+        threshold=kwargs.get("threshold", 0),
+        base_depth=kwargs.get("base_depth", None),
+        tare=kwargs.get("tare", None),
+        timestamp=now,
     )
-
-    with open(file_name, "w", encoding="utf-8") as f:
-        json.dump(
-            {
-                "size": size,
-                "weight": weight,
-                "height": height,
-                "time": files.format_timestamp(now),
-                "ilc": ilc,
-            },
-            f,
-            indent=4,
-        )
 
     # Turn on underside ringlights to improve light conditions
     lights.Lights().ring().level = config.lights.level
     # Wait a bit for lights to turn on properly
     time.sleep(config.process.camera.wait)
+
     # Take photos
     encoded_images = take_photos(
         data_folder.joinpath(config.process.paths.photos), use_timestamp=False
     )
+
     # Turn off lights
     lights.Lights().ring().off()
 
@@ -185,11 +207,8 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     return {
         "message": "success",
         "valid": True,
-        "size": format_bounds(size),
-        "weight": format_weight(weight),
-        "height": format_height(height),
         "photos": encoded_images,
-        "time": files.format_timestamp(now),
+        **data,
     }
 
 
@@ -220,4 +239,5 @@ def retrieve(ilc: str) -> t.Optional[t.Mapping[str, object]]:
 
     data["photos"] = images
     data["message"] = "success"
+    data["valid"] = True
     return data
