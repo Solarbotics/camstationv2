@@ -188,7 +188,6 @@
 
     let display_data = function (data) {
         if (data["valid"]) {
-            fill_gallery(data["photos"])
             dataResult.textContent = (
                 "Size: " + data["size"]
                 + ", weight: " + data["weight"]
@@ -198,6 +197,13 @@
             );
         } else {
             dataResult.textContent = "No saved data found."
+        }
+    }
+
+    let display_photos = function (data) {
+        if (data["valid"]) {
+            fill_gallery(data["photos"]);
+        } else {
             fill_gallery([]);
         }
     }
@@ -210,6 +216,7 @@
         let func = async function (response) {
             let data = await response.json()
             display_data(data);
+            display_photos(data);
         }
         return func;
     };
@@ -225,15 +232,26 @@
     const action_gatherers = {
         "activate": get_query,
         "photos": get_query,
+        "grab_data": get_query
     };
 
     const action_handlers = {
         "photos": function (response) {
             response.json().then(function (data) {
-                fill_gallery(data["photos"])
+                display_photos(data)
             })
         },
-        "activate": activate_function(activateInfo),
+        "grab_data": function (response) {
+            response.json().then(function (data) {
+                display_data(data);
+            })
+        },
+        "activate": function (response) {
+            response.json().then(function (data) {
+                display_data(data);
+                display_photos(data);
+            })
+        },
     };
 
     setup_actions(action_gatherers, action_handlers);
@@ -314,6 +332,7 @@
                 ).then(async function (response) {
                     let saved_data = await response.json();
                     display_data(saved_data);
+                    display_photos(saved_data);
                 })
             });
         });

@@ -148,9 +148,9 @@ def create_app() -> flask.Flask:
         if data is not None:
             query = data["query"]
             encoded = process.collect_photos(query=query)
-            return flask.jsonify({"message": "success", "photos": encoded})
+            return flask.jsonify({"message": "success", "valid": True, "photos": encoded})
         else:
-            response = flask.jsonify({"message": "No JSON received."})
+            response = flask.jsonify({"message": "No JSON received.", "valid": False})
             response.status_code = 415
             return response
 
@@ -167,9 +167,10 @@ def create_app() -> flask.Flask:
                 tare=app.config.get("tare", 0),
             )
             data["message"] = "success"
+            data["valid"] = True
             return flask.jsonify(data)
         else:
-            response = flask.jsonify({"message": "No JSON received."})
+            response = flask.jsonify({"message": "No JSON received.", "valid": False})
             response.status_code = 415
             return response
 

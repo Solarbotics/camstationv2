@@ -239,5 +239,4 @@ def retrieve(ilc: str) -> t.Optional[t.Mapping[str, object]]:
 
     data["photos"] = images
     data["message"] = "success"
-    data["valid"] = True
     return data
