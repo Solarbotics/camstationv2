@@ -229,10 +229,23 @@
         return data;
     }
 
+    let gather_info = function () {
+        let data = get_query();
+        let heightOverride = document.getElementById("heightOverride");
+        let heightOverrideValue;
+        if (heightOverride.children[1].checked) {
+            heightOverrideValue = heightOverride.children[0].value;
+        } else {
+            heightOverrideValue = null;
+        }
+        data["height_override"] = heightOverrideValue;
+        return data;
+    }
+
     const action_gatherers = {
-        "activate": get_query,
+        "activate": gather_info,
         "photos": get_query,
-        "grab_data": get_query
+        "grab_data": gather_info
     };
 
     const action_handlers = {

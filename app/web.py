@@ -31,6 +31,13 @@ for _handler in list(werkzeug_logger.handlers):
     werkzeug_logger.removeHandler(_handler)
 
 
+def no_json_error() -> flask.Response:
+    """Response to be returned when JSON data was expected but not received."""
+    response = flask.jsonify({"message": "No JSON received.", "valid": False})
+    response.status_code = 415
+    return response
+
+
 def create_app() -> flask.Flask:
     """Create and setup the Flask application."""
 
@@ -148,7 +155,9 @@ def create_app() -> flask.Flask:
         if data is not None:
             query = data["query"]
             encoded = process.collect_photos(query=query)
-            return flask.jsonify({"message": "success", "valid": True, "photos": encoded})
+            return flask.jsonify(
+                {"message": "success", "valid": True, "photos": encoded}
+            )
         else:
             response = flask.jsonify({"message": "No JSON received.", "valid": False})
             response.status_code = 415
@@ -159,12 +168,14 @@ def create_app() -> flask.Flask:
         """Grabe live data values and save into data based on ILC."""
         data = flask.request.json
         if data is not None:
+            logger.info(data)
             query = data["query"]
             data = process.collect_data(
                 query=query,
                 threshold=app.config.get("threshold", config.web.threshold),
                 base_depth=app.config.get("base_depth", 0),
                 tare=app.config.get("tare", 0),
+                override_height=data["height_override"],
             )
             data["message"] = "success"
             data["valid"] = True
@@ -197,6 +208,7 @@ def create_app() -> flask.Flask:
                 base_depth=app.config.get("base_depth", 0),
                 tare=app.config.get("tare", 0),
                 ilc=data["query"],
+                height_override=data["height_override"],
             )
         )
 

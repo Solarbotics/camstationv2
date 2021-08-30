@@ -18,7 +18,7 @@
     </div>
 
     <div class="row">
-      <button id="snapshot">Snapshot</button>
+      <button id="snapshot" disabled>Snapshot</button>
       <span id="snapshotResult"></span>
     </div>
 
@@ -40,6 +40,11 @@
     <div class="row" name="height">
       <label for="height">Height:</label>
       <span id="height" class="info" name="height"></span>
+      <label for="heightOveridden">Override</label>
+      <span id="heightOverride">
+        <input type="number" step="0.1">
+        <input id="heightOveridden" class="overrider" type="checkbox">
+      </span>
     </div>
 
     <div class="row">

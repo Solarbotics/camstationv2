@@ -132,12 +132,16 @@ def collect_data(
     base_depth: t.Optional[float] = None,
     tare: t.Optional[float] = None,
     timestamp: t.Optional[datetime.datetime] = None,
+    override_height: t.Optional[float] = None,
 ) -> t.Mapping[str, object]:
     """Collect numerical data."""
     # Read bounds from undercamera
     size = read_bounds(threshold=threshold)
-    # Use overhead tech to get depth
-    height = read_height(base=base_depth)
+    if override_height is not None:
+        height = override_height
+    else:
+        # Use overhead tech to get depth
+        height = read_height(base=base_depth)
     # Read scale
     weight = read_weight(tare=tare)
 
@@ -188,6 +192,7 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
         base_depth=kwargs.get("base_depth", None),
         tare=kwargs.get("tare", None),
         timestamp=now,
+        override_height=kwargs.get("height_override", None),
     )
 
     # Turn on underside ringlights to improve light conditions
