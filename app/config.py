@@ -196,6 +196,7 @@ class PathsConfig(Config):
     photos: str
     data: str
     generic: str
+    external: str
 
 
 class ProcessCameraConfig(Config):
