@@ -150,7 +150,6 @@
         const COLOR_TIME = 500;
         for (const action of actions) {
             let button = action.children[0];
-            let output = action.children[1];
             let httpMethod = action.getAttribute("action");
             if (httpMethod === null) {
                 httpMethod = "POST";
