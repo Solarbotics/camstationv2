@@ -13,6 +13,7 @@ from . import devices
 from . import files
 from . import lights
 from . import photo
+from . import transfer
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -245,3 +246,8 @@ def retrieve(ilc: str) -> t.Optional[t.Mapping[str, object]]:
     data["photos"] = images
     data["message"] = "success"
     return data
+
+
+def export_data() -> None:
+    """Export local data to an external location."""
+    transfer.export_data()

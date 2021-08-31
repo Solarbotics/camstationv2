@@ -228,4 +228,10 @@ def create_app() -> flask.Flask:
         else:
             return flask.jsonify({"message": "No data.", "valid": False}), 200
 
+    @app.route("/export", methods=["POST"])
+    def export_data() -> flask.Response:
+        """Export local data to an external location."""
+        process.export_data()
+        return flask.jsonify({"message": "Success.", "valid": True})
+
     return app

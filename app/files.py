@@ -2,6 +2,7 @@
 
 import datetime
 import pathlib
+import string
 import typing as t
 
 from . import config
@@ -78,6 +79,49 @@ def data_name(
     save_path = str(root.joinpath(pathlib.Path(label)))
 
     return save_path
+
+
+def next_name(path: pathlib.Path) -> pathlib.Path:
+    """Determine the next non-conflicting path name.
+
+    Creates a non-conflicting name by incrementing a trailing number,
+    directly before the first '.'.
+
+    <name>.<ext> -> <name>1.<ext> -> <name>2.<ext> ...
+
+    If the path does not already exist, it is returned unchanged.
+    """
+
+    # If the path doesn't exist, doing .parent.iterdir
+    # will appropriately raise an error, but in that
+    # case we can properly say existing is an empty set
+    try:
+        existing = set(path.parent.iterdir())
+    except FileNotFoundError:
+        existing = set()
+
+    # We edit path until it no longer exists
+    # If it doesn't exist in the first place we instantly return
+    while path in existing:
+        # Extract suffixes
+        name, *suffixes = path.name.split(".")
+        # Strip any existing numeral off
+        bare_name = name.rstrip(string.digits)
+        # Recover digits
+        # Empty string will raise a value error
+        try:
+            old_value = int(name[len(bare_name) :])
+        except ValueError:
+            old_value = 0
+        # Increment
+        next_mark = str(old_value + 1)
+        # need to do the '.' + '.'.join to get leading '.' when there is a extension
+        new_name = (
+            bare_name + next_mark + ("." if suffixes else "") + ".".join(suffixes)
+        )
+        path = path.with_name(new_name)
+
+    return path
 
 
 def query_folder(
