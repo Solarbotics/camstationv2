@@ -124,17 +124,17 @@ def next_name(path: pathlib.Path) -> pathlib.Path:
     return path
 
 
-def query_folder(
-    query: t.Optional[str],
-    generic: str,
-    timestamp: t.Optional[datetime.datetime] = None,
-) -> pathlib.Path:
-    """Construct a query-based folder for files based on given parameters."""
+def query_folder(query: t.Optional[str], generic: str, parent: str) -> pathlib.Path:
+    """Construct a query-based folder for files based on given parameters.
+
+    Makes a path with the query if given,
+    otherwise increments a generic folder name.
+    """
 
     # Query can be false if None, or empty ("")
     if query:
         data_folder = pathlib.Path(query)
     else:
-        data_folder = pathlib.Path(generic).joinpath(format_timestamp(timestamp))
+        data_folder = next_name(pathlib.Path(parent).joinpath(pathlib.Path(generic)))
 
     return data_folder

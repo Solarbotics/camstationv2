@@ -119,10 +119,11 @@ def take_photos(
 def collect_photos(query: t.Optional[str] = None) -> t.List[str]:
     """Take a set of photos, saving into the appropriate folder based on query."""
     return take_photos(
-        folder=pathlib.Path(config.process.paths.data).joinpath(
-            files.query_folder(query, generic=config.process.paths.generic),
-            config.process.paths.photos,
-        ),
+        folder=files.query_folder(
+            query,
+            generic=config.process.paths.generic,
+            parent=config.process.paths.data,
+        ).joinpath(config.process.paths.photos),
         use_timestamp=False,
     )
 
@@ -146,11 +147,13 @@ def collect_data(
     # Read scale
     weight = read_weight(tare=tare)
 
-    folder = pathlib.Path(config.process.paths.data).joinpath(
-        files.query_folder(
-            query, generic=config.process.paths.generic, timestamp=timestamp
-        )
+    folder = files.query_folder(
+        query,
+        generic=config.process.paths.generic,
+        parent=config.process.paths.data,
     )
+
+    logger.debug(folder)
 
     file_name = files.data_name(
         name=config.process.data_name,
@@ -183,8 +186,8 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     # Common timestamp for all files
     now = datetime.datetime.now()
 
-    data_folder = pathlib.Path(config.process.paths.data).joinpath(
-        files.query_folder(ilc, timestamp=now, generic=config.process.paths.generic)
+    data_folder = files.query_folder(
+        ilc, generic=config.process.paths.generic, parent=config.process.paths.data
     )
 
     data = collect_data(
