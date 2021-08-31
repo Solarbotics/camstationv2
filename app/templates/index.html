@@ -119,12 +119,12 @@
     <div class="row">
       <div>
         <div>External</div>
-        <span class="action" name="block_devices" action="GET"><button>Refresh</button></span>
-        <select id="exportDevice"><option value="None">None</option></select>
-        <span class="action" name="export"><button>Export</button></span>
+        <span id="refreshDevices" class="action" name="block_devices" action="GET"><button>Refresh</button></span>
         <select id="deviceSelect"><option value="None">None</option></select>
+        <span class="action" name="export"><button>Export</button></span>
         <span class="action" name="mount_device"><button>Mount</button></span>
         <span class="action" name="unmount_device"><button>Unmount</button></span>
+        <div class="data" id="mountResult"></div>
       </div>
     </div>
 

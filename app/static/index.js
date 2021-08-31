@@ -216,17 +216,21 @@
 
     let update_device_list = function (devices) {
         let deviceSelector = document.getElementById("deviceSelect");
-        let exportSelector = document.getElementById("exportDevice");
         deviceSelector.innerHTML = "";
-        exportSelector.innerHTML = "";
         for (const deviceName of devices) {
             let option = document.createElement("option");
             option.textContent = deviceName;
             option.value = deviceName;
-            let other = option.cloneNode(true)
             deviceSelector.appendChild(option);
-            exportSelector.appendChild(other);
         }
+    }
+
+    function writeMountResult(response) {
+        response.json().then(function (data) {
+            console.log("did mounting stuff");
+            console.log(data["message"])
+            write_on(document.getElementById("mountResult"))(data["message"]);
+        });
     }
 
     let activateInfo = dataResult;
@@ -283,7 +287,7 @@
         "grab_data": gather_info,
         "mount_device": get_mount_device,
         "unmount_device": get_mount_device,
-        "export": get_export_device,
+        "export": get_mount_device,
     };
 
     const action_handlers = {
@@ -307,7 +311,9 @@
             response.json().then(function (data) {
                 update_device_list(data["devices"]);
             });
-        }
+        },
+        "mount_device": writeMountResult,
+        "unmount_device": writeMountResult,
     };
 
     setup_actions(action_gatherers, action_handlers);
@@ -409,5 +415,7 @@
     }
     setup_clearButtons();
 
+    // Click refresh button
+    document.getElementById("refreshDevices").children[0].click();
 
 })();

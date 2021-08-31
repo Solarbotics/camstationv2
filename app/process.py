@@ -265,8 +265,9 @@ def _handle_device(device: str, command: str) -> t.Mapping[str, object]:
     try:
         message = subprocess.check_output([command, device]).decode("utf-8")
     except subprocess.CalledProcessError as e:
-        message = e.output.decode("utf-8") if e.output else ""
+        message = e.stderr.decode("utf-8") if e.stderr else ""
         valid = False
+        logger.error(e)
     else:
         valid = True
     return {"message": message, "valid": valid}
