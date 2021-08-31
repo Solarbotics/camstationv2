@@ -252,9 +252,12 @@ def retrieve(ilc: str) -> t.Optional[t.Mapping[str, object]]:
     return data
 
 
-def export_data() -> None:
+def export_data(device: str) -> None:
     """Export local data to an external location."""
-    transfer.export_data()
+    transfer.export_data(
+        data_folder=config.process.paths.data,
+        destination=str(pathlib.Path(config.process.paths.external).joinpath(device)),
+    )
 
 
 def _handle_device(device: str, command: str) -> t.Mapping[str, object]:

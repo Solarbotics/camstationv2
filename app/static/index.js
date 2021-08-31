@@ -216,12 +216,16 @@
 
     let update_device_list = function (devices) {
         let deviceSelector = document.getElementById("deviceSelect");
+        let exportSelector = document.getElementById("exportDevice");
         deviceSelector.innerHTML = "";
+        exportSelector.innerHTML = "";
         for (const deviceName of devices) {
             let option = document.createElement("option");
             option.textContent = deviceName;
             option.value = deviceName;
+            let other = option.cloneNode(true)
             deviceSelector.appendChild(option);
+            exportSelector.appendChild(other);
         }
     }
 
@@ -246,10 +250,17 @@
         return data;
     }
 
-    let get_device = function () {
+    let get_mount_device = function () {
         let data = {
             "device": document.getElementById("deviceSelect").value,
         }
+        return data;
+    }
+
+    let get_export_device = function () {
+        let data = {
+            "device": document.getElementById("exportDevice").value,
+        };
         return data;
     }
 
@@ -270,8 +281,9 @@
         "activate": gather_info,
         "photos": get_query,
         "grab_data": gather_info,
-        "mount_device": get_device,
-        "unmount_device": get_device,
+        "mount_device": get_mount_device,
+        "unmount_device": get_mount_device,
+        "export": get_export_device,
     };
 
     const action_handlers = {

@@ -231,8 +231,13 @@ def create_app() -> flask.Flask:
     @app.route("/export", methods=["POST"])
     def export_data() -> flask.Response:
         """Export local data to an external location."""
-        process.export_data()
-        return flask.jsonify({"message": "Success.", "valid": True})
+        data = flask.request.json
+        if data is None:
+            return no_json_error()
+        else:
+            device = data["device"]
+            process.export_data(device)
+            return flask.jsonify({"message": "Success.", "valid": True})
 
     @app.route("/block_devices")
     def _get_block_devices() -> flask.Response:

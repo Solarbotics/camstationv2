@@ -133,7 +133,7 @@ def query_folder(query: t.Optional[str], generic: str, parent: str) -> pathlib.P
 
     # Query can be false if None, or empty ("")
     if query:
-        data_folder = pathlib.Path(query)
+        data_folder = pathlib.Path(parent).joinpath(query)
     else:
         data_folder = next_name(pathlib.Path(parent).joinpath(pathlib.Path(generic)))
 

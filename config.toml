@@ -55,7 +55,7 @@ wait = 2
 photos = "photos"
 data = "data"
 generic = "unknown"
-external = "/media/sda1"
+external = "/media"
 
 [lights]
 pin = 12

@@ -10,18 +10,13 @@ from . import files
 
 
 def export_data(
-    data_folder: t.Optional[str] = None, destination: t.Optional[str] = None
+    data_folder: str, destination: str
 ) -> None:
     """Export camera station data to a specified destination.
 
     Deletes local copy.
     """
-    if data_folder is None:
-        data_folder = config.process.paths.data
     data_path = pathlib.Path(data_folder)
-
-    if destination is None:
-        destination = config.process.paths.external
     destination_path = pathlib.Path(destination)
 
     # Get name of data folder, and join it to destination
