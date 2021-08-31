@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import pathlib
+import subprocess
 import time
 import typing as t
 
@@ -254,3 +255,48 @@ def retrieve(ilc: str) -> t.Optional[t.Mapping[str, object]]:
 def export_data() -> None:
     """Export local data to an external location."""
     transfer.export_data()
+
+
+def _handle_device(device: str, command: str) -> t.Mapping[str, object]:
+    """(Attempt to) mount the given device."""
+    try:
+        message = subprocess.check_output([command, device]).decode("utf-8")
+    except subprocess.CalledProcessError as e:
+        message = e.output.decode("utf-8") if e.output else ""
+        valid = False
+    else:
+        valid = True
+    return {"message": message, "valid": valid}
+
+
+def mount_device(device: str) -> t.Mapping[str, object]:
+    """(Attempt to) mount the given device."""
+    return _handle_device(device, "pmount")
+
+
+def unmount_device(device: str) -> t.Mapping[str, object]:
+    """(Attempt to) unmount the given device."""
+    return _handle_device(device, "pumount")
+
+
+def get_devices() -> t.Sequence[str]:
+    """Return the seen block devices."""
+    try:
+        output = subprocess.check_output(["lsblk", "--pairs", "-o", "NAME"])
+    except subprocess.CalledProcessError as e:
+        logger.error(e)
+        devices = []
+    else:
+        # Example output to parse:
+        # $ lsblk --pairs -o name
+        # NAME="sda"
+        # NAME="sda1"
+        # NAME="mmcblk0"
+        # NAME="mmcblk0p1"
+        # NAME="mmcblk0p2"
+        # $
+        devices = [
+            line.split("=")[1].strip('"')
+            for line in output.decode("utf-8").strip().split()
+        ]
+    return devices

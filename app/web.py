@@ -234,4 +234,28 @@ def create_app() -> flask.Flask:
         process.export_data()
         return flask.jsonify({"message": "Success.", "valid": True})
 
+    @app.route("/block_devices")
+    def _get_block_devices() -> flask.Response:
+        """Retrieve seen block devices."""
+        return flask.jsonify({"devices": process.get_devices()})
+
+    def _handle_device(method: t.Callable[[str], object]) -> flask.Response:
+        """Perform a given action with a device."""
+        data = flask.request.json
+        if data is None:
+            return no_json_error()
+        else:
+            device: str = data["device"]
+            return flask.jsonify(method(device))
+
+    @app.route("/mount_device", methods=["POST"])
+    def _mount_device() -> flask.Response:
+        """Mount the specified device."""
+        return _handle_device(process.mount_device)
+
+    @app.route("/unmount_device", methods=["POST"])
+    def _unmount_device() -> flask.Response:
+        """Unmount the specified device."""
+        return _handle_device(process.unmount_device)
+
     return app

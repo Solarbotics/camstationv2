@@ -96,13 +96,20 @@
     let query = function (name, action, prep, callback) {
         let func = function (event) {
             let data = prep();
-            fetch("/" + name, {
-                method: action,
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(data),
-            }).then(callback)
+            // GET/HEAD can't have a body
+            if (action === "GET" || action === "HEAD") {
+                fetch("/" + name, {
+                    method: action,
+                }).then(callback)
+            } else {
+                fetch("/" + name, {
+                    method: action,
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(data),
+                }).then(callback)
+            }
         };
         return func;
     }
@@ -207,6 +214,17 @@
         }
     }
 
+    let update_device_list = function (devices) {
+        let deviceSelector = document.getElementById("deviceSelect");
+        deviceSelector.innerHTML = "";
+        for (const deviceName of devices) {
+            let option = document.createElement("option");
+            option.textContent = deviceName;
+            option.value = deviceName;
+            deviceSelector.appendChild(option);
+        }
+    }
+
     let activateInfo = dataResult;
 
     // Define handling function
@@ -228,6 +246,13 @@
         return data;
     }
 
+    let get_device = function () {
+        let data = {
+            "device": document.getElementById("deviceSelect").value,
+        }
+        return data;
+    }
+
     let gather_info = function () {
         let data = get_query();
         let heightOverride = document.getElementById("heightOverride");
@@ -244,7 +269,9 @@
     const action_gatherers = {
         "activate": gather_info,
         "photos": get_query,
-        "grab_data": gather_info
+        "grab_data": gather_info,
+        "mount_device": get_device,
+        "unmount_device": get_device,
     };
 
     const action_handlers = {
@@ -264,6 +291,11 @@
                 display_photos(data);
             })
         },
+        "block_devices": function (response) {
+            response.json().then(function (data) {
+                update_device_list(data["devices"]);
+            });
+        }
     };
 
     setup_actions(action_gatherers, action_handlers);

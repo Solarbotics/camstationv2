@@ -97,7 +97,6 @@
 
     <div class="row">
       <label for="dataResult">Data</label>
-      <span class="action" name="export"><button>Export</button></span>
       <button class="clear-next">Clear</button>
       <div id="dataResult">
       </div>
@@ -114,6 +113,18 @@
       <label for="queryResult">Query Results</label>
       <button class="clear-next">Clear</button>
       <div class="data" id="queryResult">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <div>External</div>
+        <span class="action" name="export"><button>Export</button></span>
+        <span class="action" name="block_devices" action="GET"><button>Refresh</button></span>
+        <label for="deviceSelect">Device</label>
+        <select id="deviceSelect"><option value="None">None</option></select>
+        <span class="action" name="mount_device"><button>Mount</button></span>
+        <span class="action" name="unmount_device"><button>Unmount</button></span>
       </div>
     </div>
 
