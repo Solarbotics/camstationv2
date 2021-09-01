@@ -289,8 +289,12 @@ def unmount_device(device: str) -> t.Mapping[str, object]:
 def get_devices() -> t.Sequence[str]:
     """Return the seen block devices."""
     try:
+        # s: invert dependencies, so partitions have device as children
+        # d: don't output dependencies, so only partitions are output
+        # n: don't output headers
+        # o: only output specified column, i.e. NAME
         output = subprocess.check_output(
-            ["lsblk", "--pairs", "-o", "NAME"], stderr=subprocess.STDOUT
+            ["lsblk", "-sdno", "NAME"], stderr=subprocess.STDOUT
         )
     except subprocess.CalledProcessError as e:
         logger.error(e)
@@ -298,14 +302,10 @@ def get_devices() -> t.Sequence[str]:
     else:
         # Example output to parse:
         # $ lsblk --pairs -o name
-        # NAME="sda"
-        # NAME="sda1"
-        # NAME="mmcblk0"
-        # NAME="mmcblk0p1"
-        # NAME="mmcblk0p2"
+        # sda1
+        # mmcblk0p1
+        # mmcblk0p2
         # $
-        devices = [
-            line.split("=")[1].strip('"')
-            for line in output.decode("utf-8").strip().split()
-        ]
+        # We make extra sure there is no extra whitespace
+        devices = [line.strip() for line in output.decode("utf-8").strip().split()]
     return devices

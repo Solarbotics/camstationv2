@@ -57,6 +57,9 @@ Groups required:
  - `gpio` for gpio access (for lights)
  - `i2c` for i2c access (for ToF sensor)
 
+System Dependencies:
+ - `pmount` (get from e.g. `apt-get`)
+
 Photo:
  - Prone to giving random errors.
    Restarting the camera(s) and running `gphoto2 --reset` 
