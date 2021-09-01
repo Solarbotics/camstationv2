@@ -22,11 +22,15 @@
         })
     }
 
+    let updateThresholdVisual = function () {
+        let form = document.getElementById("configOptions");
+        form.elements["thresholdOutput"].value = form.elements["threshold"].value;
+    }
+
     // Add listeners to config form
     let configOptions = document.getElementById("configOptions")
     configOptions.addEventListener("input", function (event) {
-        let form = document.getElementById("configOptions");
-        form.elements["thresholdOutput"].value = form.elements["threshold"].value;
+        updateThresholdVisual();
         submit_threshold();
     });
     configOptions.addEventListener("submit", function (event) {
@@ -417,6 +421,7 @@
     }
     setup_clearButtons();
 
+    updateThresholdVisual();
     // Click refresh button
     document.getElementById("refreshDevices").children[0].click();
 
