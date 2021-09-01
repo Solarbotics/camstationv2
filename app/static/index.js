@@ -416,4 +416,8 @@
     // Click refresh button
     document.getElementById("refreshDevices").children[0].click();
 
+    Mousetrap.bind("s", function (event) {
+        document.getElementById("ilc").select()
+    }, "keyup");
+
 })();
