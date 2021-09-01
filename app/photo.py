@@ -65,17 +65,39 @@ def get_cameras() -> t.Sequence[gp.camera.Camera]:
 
     # Prepare list for cameras
     cameras = []
+
+    # After being loaded with .load,
+    # the GPPortInfoList object is a sequence yielding GPPortInfo objects,
+    # which can be used to init a camera.
+    # GPPortInfo objects can be inspected
+    # with their .get_name() and .get_path() methods,
+    # a normal USB camera will return something like 'Universal Serial Bus' and 'usb:001,021'
+    # respectively, but the list contains additional entries of other ports.
     port_info_list = gp.PortInfoList()
     port_info_list.load()
 
-    for name, addr in gp.check_result(gp.gp_camera_autodetect()):
-        idx = port_info_list.lookup_path(addr)
-        # print("[info]", name, addr, idx, sep=" <|> ")
+    # gp_camera_autodetect returns
+    # (in the second parameter and thus bubbled by check_result)
+    # an iterator of (name, port_path) pairs;
+    # these port_paths are the same format as yielded by GPPortInfo.get_path()
+    # on the appropriate object.
+    # The port info list has a method .lookup_path,
+    # which returns the index of the entry whose .get_path() returns
+    # the path provided.
+    # Thus we can use .lookup_path to get the index,
+    # and use that index to get the actual PortInfo object,
+    # which we can then initialize a camera with,
+    # which works properly since autodetect only returns camera ports.
+    for name, port_path in gp.check_result(gp.gp_camera_autodetect()):
+        # Get index of appropriate PortInfo object
+        index = port_info_list.lookup_path(port_path)
+        # Create a camera using that PortInfo object
         camera = gp.Camera()
-        camera.set_port_info(port_info_list[idx])
-        # print(port_info_list[idx].get_name())
+        camera.set_port_info(port_info_list[index])
+        # Initialize / open the camera
         camera.init()
 
+        # Add the camera to be returned
         cameras.append(camera)
     return cameras
 
