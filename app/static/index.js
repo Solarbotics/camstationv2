@@ -268,6 +268,7 @@
 
     let gather_info = function () {
         let data = get_query();
+        // Get height override
         let heightOverride = document.getElementById("heightOverride");
         let heightOverrideValue;
         if (heightOverride.children[1].checked) {
@@ -276,6 +277,9 @@
             heightOverrideValue = null;
         }
         data["height_override"] = heightOverrideValue;
+        // Get light level
+        data["light_level"] = document.getElementById("lightsLevel").value;
+        console.log(data);
         return data;
     }
 

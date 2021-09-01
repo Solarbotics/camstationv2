@@ -201,14 +201,17 @@ def create_app() -> flask.Flask:
         data = flask.request.json
         if not data:
             return flask.jsonify({"message": "Could not understand request."})
-        logger.info("ILC: %s", data["query"])
+        logger.info("Data: %s", data)
         return flask.jsonify(
             process.activate(
                 threshold=app.config.get("threshold", config.web.threshold),
                 base_depth=app.config.get("base_depth", 0),
                 tare=app.config.get("tare", 0),
                 ilc=data["query"],
-                height_override=data["height_override"],
+                height_override=float(data["height_override"])
+                if data["height_override"] is not None
+                else None,
+                light_level=float(data["light_level"]) / 100,
             )
         )
 

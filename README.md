@@ -48,6 +48,10 @@ Activation:
  - Turn of ring lights
  - Save data into files and return data to website
 
+## Data
+
+Distances are always reported in cm, and weight in kg.
+
 ## Notes
 
 Groups required:

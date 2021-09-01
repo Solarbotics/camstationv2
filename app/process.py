@@ -201,7 +201,7 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
     )
 
     # Turn on underside ringlights to improve light conditions
-    lights.Lights().ring().level = config.lights.level
+    lights.Lights().ring().level = kwargs.get("light_level", config.lights.level)
     # Wait a bit for lights to turn on properly
     time.sleep(config.process.camera.wait)
 
