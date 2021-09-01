@@ -263,12 +263,15 @@ def export_data(device: str) -> None:
 def _handle_device(device: str, command: str) -> t.Mapping[str, object]:
     """(Attempt to) mount the given device."""
     try:
-        message = subprocess.check_output([command, device]).decode("utf-8")
+        message = subprocess.check_output(
+            [command, device], stderr=subprocess.STDOUT
+        ).decode("utf-8")
     except subprocess.CalledProcessError as e:
-        message = e.stderr.decode("utf-8") if e.stderr else ""
+        message = e.output.decode("utf-8") if e.output else ""
         valid = False
         logger.error(e)
     else:
+        message = "Success" + (": " if message else "") + message
         valid = True
     return {"message": message, "valid": valid}
 
@@ -286,7 +289,9 @@ def unmount_device(device: str) -> t.Mapping[str, object]:
 def get_devices() -> t.Sequence[str]:
     """Return the seen block devices."""
     try:
-        output = subprocess.check_output(["lsblk", "--pairs", "-o", "NAME"])
+        output = subprocess.check_output(
+            ["lsblk", "--pairs", "-o", "NAME"], stderr=subprocess.STDOUT
+        )
     except subprocess.CalledProcessError as e:
         logger.error(e)
         devices = []

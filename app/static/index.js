@@ -227,8 +227,6 @@
 
     function writeMountResult(response) {
         response.json().then(function (data) {
-            console.log("did mounting stuff");
-            console.log(data["message"])
             write_on(document.getElementById("mountResult"))(data["message"]);
         });
     }
