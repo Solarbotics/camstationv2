@@ -48,6 +48,9 @@ Activation:
  - Turn of ring lights
  - Save data into files and return data to website
 
+Keybinds:
+ - `s` selects query search box
+
 ## Data
 
 Distances are always reported in cm, and weight in kg.
