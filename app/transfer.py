@@ -1,12 +1,16 @@
 """Utilities for transferring data."""
 
-import os
+import logging
 import pathlib
 import shutil
+import subprocess
 import typing as t
 
 from . import config
 from . import files
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 def export_data(data_folder: str, destination: str) -> None:
@@ -18,12 +22,14 @@ def export_data(data_folder: str, destination: str) -> None:
     destination_path = pathlib.Path(destination)
 
     if data_path.exists():
-        # Get name of data folder, and join it to destination
-        # to get the proper name to name it as
-        new_name = files.next_name(destination_path.joinpath(data_path.name)).name
-
-        new_data_path = data_path.with_name(new_name)
-
-        os.rename(data_path, new_data_path)
-
-        shutil.move(str(new_data_path), dst=destination, copy_function=shutil.copy)
+        # Ensure destination exists
+        destination_path.mkdir(parents=True, exist_ok=True)
+        # Use rsync to copy over
+        try:
+            subprocess.run(
+                ["rsync", "-a", str(data_path), str(destination_path)], check=True
+            )
+        except subprocess.CalledProcessError as e:
+            logger.error(e)
+        else:
+            shutil.rmtree(data_path)
