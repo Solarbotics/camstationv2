@@ -291,7 +291,10 @@ class CamerasInterface:
                 )
             )
         # Collect the photo path from each
-        paths = [manager.get_result() for manager in self.cameras.values()]
+        paths = [
+            manager.get_result(grace_wait=config.readers.grace_wait)
+            for manager in self.cameras.values()
+        ]
         logger.info("Photos: %s", paths)
         return paths
 

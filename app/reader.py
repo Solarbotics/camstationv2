@@ -315,15 +315,19 @@ class Manager(Threader[T], t.Generic[T, V]):
                         timeout = self.last_request + self.timeout - time.time()
                     else:
                         timeout = None
-                    logger.debug("%s, waiting on cvariable", self)
+                    logger.debug("%s, waiting on cvariable in loop", self)
                     was_notified = condition.wait(timeout=timeout)
                 if self.action is not None:
                     action = self.action
                     self.action = None
                     logger.debug("%s, Running action", self)
-                    self.result = action(instance)
+                    try:
+                        self.result = action(instance)
+                    except Exception as e:
+                        raise e
+                    finally:
+                        condition.notify_all()
                     self.last_request = time.time()
-                    condition.notify_all()
             logger.debug("%s, released lock in loop", self)
 
     def request_action(self, action: t.Callable[[T], V]) -> None:
@@ -335,13 +339,14 @@ class Manager(Threader[T], t.Generic[T, V]):
         Default implementation simply returns the value read from the reader.
         """
         condition = self.activate()
-        logger.debug("%s, getting lock", self)
+        logger.debug("%s, getting lock in request", self)
         with condition:
-            logger.debug("%s, acquired lock", self)
+            logger.debug("%s, acquired lock in request", self)
+            self.result = None
             self.action = action
             condition.notify_all()
-            logger.debug("%s, notified", self)
-        logger.debug("%s, released lock", self)
+            logger.debug("%s, notified in request", self)
+        logger.debug("%s, released lock in request", self)
 
     def get_result(self, grace_wait: t.Optional[float] = None) -> V:
         """Obtain the value produced by an action that was previously requested.
@@ -355,14 +360,13 @@ class Manager(Threader[T], t.Generic[T, V]):
         condition = self.activate()
         logger.debug("%s, getting lock for result", self)
         with condition:
-            logger.debug("%s, got lock", self)
+            logger.debug("%s, got lock in result", self)
             while self.result is None:
                 logger.debug("%s, waiting for result", self)
                 # Timeout in case something happened to the thread
                 notified = condition.wait(timeout=grace_wait)
-                if not notified:
-                    if self.thread_objects is None:
-                        raise RuntimeError("Thread unexpectedly quit.")
+                if self.thread_objects is None:
+                    raise RuntimeError("Thread unexpectedly quit.")
             logger.debug("%s, got result", self)
             result = self.result
             self.result = None
