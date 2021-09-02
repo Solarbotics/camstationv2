@@ -29,7 +29,7 @@ class Context(t.Generic[T]):
         raise NotImplementedError()
 
 
-class SelfContext(Context[T]):
+class SelfContext(Context):
     """Simple minimum context implementation.
 
     Designed for objects that are opened on construction

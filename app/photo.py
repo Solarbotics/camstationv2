@@ -23,6 +23,7 @@ import gphoto2 as gp
 
 from . import config
 from . import files
+from . import reader
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -54,6 +55,16 @@ class IterableManager(t.Generic[T]):
         """Cleanup items in wrapped iterable."""
         for item in self.items:
             self.cleanup(item)
+
+
+@dataclasses.dataclass()
+class PhotoCamera(reader.SelfContext):
+    """Class wrapping a gphoto2-type photo camera."""
+
+    camera: gp.camera.Camera
+
+    def close(self) -> None:
+        self.camera.exit()
 
 
 def get_cameras() -> t.Sequence[gp.camera.Camera]:
