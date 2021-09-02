@@ -27,6 +27,7 @@ def format_timestamp(
 def data_name(
     name: str,
     *,
+    query: str,
     folder: t.Union[str, pathlib.Path] = ".",
     extension: t.Optional[str] = None,
     format: t.Optional[str] = None,
@@ -63,9 +64,9 @@ def data_name(
     # format_timestamp will pull a default timeformat if its None
     if use_timestamp:
         formatted_time = format_timestamp(timestamp, timeformat=timeformat)
-        label = format.format(name=name, time=formatted_time)
+        label = format.format(name=name, query=query, time=formatted_time)
     else:
-        label = format.format(name=name)
+        label = format.format(name=name, query=query)
 
     # Add extension if it exists
     if extension is not None:

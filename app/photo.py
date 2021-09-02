@@ -157,6 +157,7 @@ def capture_image(camera, destination: str) -> None:
 
 
 def capture_image_set(
+    query: str,
     folder: str = "photos",
     use_timestamp: bool = True,
     timestamp: t.Optional[datetime.datetime] = None,
@@ -176,6 +177,7 @@ def capture_image_set(
             # Construct filename as a string to give to gphoto
             save_path = files.data_name(
                 name=name,
+                query=query,
                 folder=folder,
                 format=format,
                 extension="jpg",
@@ -204,6 +206,7 @@ class PhotoCamera(reader.SelfContext):
 
 def capture_photo_image(
     camera: PhotoCamera,
+    query: str,
     folder: str = "photos",
     use_timestamp: bool = True,
     timestamp: t.Optional[datetime.datetime] = None,
@@ -220,6 +223,7 @@ def capture_photo_image(
     # Construct filename as a string to give to gphoto
     save_path = files.data_name(
         name=name,
+        query=query,
         folder=folder,
         format=format,
         extension="jpg",
@@ -257,6 +261,7 @@ class CamerasInterface:
 
     def capture_image_set(
         self,
+        query: str,
         folder: str = "photos",
         use_timestamp: bool = True,
         timestamp: t.Optional[datetime.datetime] = None,
@@ -284,6 +289,7 @@ class CamerasInterface:
             manager.request_action(
                 functools.partial(
                     capture_photo_image,
+                    query=query,
                     folder=folder,
                     use_timestamp=use_timestamp,
                     timestamp=timestamp,
@@ -343,7 +349,7 @@ def cmd(arguments: t.Optional[t.Sequence[str]] = None) -> None:
     args = parser.parse_args(arguments)
 
     if args.mode == "capture":
-        paths = capture_image_set()
+        paths = capture_image_set("unknown")
         print(f"Images captured: {paths}")
     elif args.mode == "detect":
         info = cameras_info()

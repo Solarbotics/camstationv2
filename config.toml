@@ -10,8 +10,8 @@ default_name = "unknown"
 "a63fbd67eb9641778bdb46d5ae35e573" = "oh"
 
 [files]
-format = "{name}"
-stamp_format = "{time}_{name}"
+format = "{query}_{name}"
+stamp_format = "{time}_{query}_{name}"
 timeformat = "%Y-%m-%d_%H:%M:%S"
 
 [web]

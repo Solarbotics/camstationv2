@@ -98,6 +98,7 @@ def format_height(height: float) -> str:
 
 def take_photos(
     folder: t.Union[str, pathlib.Path],
+    query: str,
     use_timestamp: bool = True,
     timestamp: t.Optional[datetime.datetime] = None,
     format: str = None,
@@ -109,6 +110,7 @@ def take_photos(
             use_timestamp=use_timestamp,
             timestamp=timestamp,
             format=format,
+            query=query,
         )
     except Exception as e:
         logger.error(e)
@@ -117,9 +119,10 @@ def take_photos(
         return [photo.encode_image(path) for path in photo_paths]
 
 
-def collect_photos(query: t.Optional[str] = None) -> t.List[str]:
+def collect_photos(query: str) -> t.List[str]:
     """Take a set of photos, saving into the appropriate folder based on query."""
     return take_photos(
+        query=query,
         folder=files.query_folder(
             query,
             generic=config.process.paths.generic,
@@ -158,6 +161,7 @@ def collect_data(
 
     file_name = files.data_name(
         name=config.process.data_name,
+        query=query,
         folder=folder,
         extension="json",
         use_timestamp=False,
@@ -182,7 +186,7 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
 
     # Save gathered data
     # Construct root folder
-    ilc: t.Optional[str] = kwargs.get("ilc", None)
+    ilc: str = kwargs.get("ilc", "unknown")
 
     # Common timestamp for all files
     now = datetime.datetime.now()
@@ -207,7 +211,9 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
 
     # Take photos
     encoded_images = take_photos(
-        data_folder.joinpath(config.process.paths.photos), use_timestamp=False
+        query=ilc,
+        folder=data_folder.joinpath(config.process.paths.photos),
+        use_timestamp=False,
     )
 
     # Turn off lights
@@ -229,6 +235,7 @@ def retrieve(ilc: str) -> t.Optional[t.Mapping[str, object]]:
     # Retrieve textual data
     data_file_name = files.data_name(
         name=config.process.data_name,
+        query=ilc,
         folder=data_folder,
         extension="json",
         use_timestamp=False,
