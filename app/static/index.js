@@ -370,10 +370,10 @@
         polling = false;
     });
 
-    function enable_collection_buttons() {
+    function enable_collection_buttons(state) {
         let buttons = document.getElementsByClassName("grabDataButton")
         for (const button of buttons) {
-            button.disabled = false;
+            button.disabled = !state;
         }
     }
 
@@ -390,17 +390,17 @@
             response.json().then(function (data) {
                 if (data["data"].length > 0) {
                     ilc = data["data"][0]["ItemLookupCode"];
+                    updateActivateTooltip("ILC: " + ilc);
+                    document.getElementById("ilc").value = ilc;
+                    enable_collection_buttons(true);
                 } else {
-                    ilc = queryForm.elements["query"].value;
+                    updateActivateTooltip("No ILC");
+                    enable_collection_buttons(false);
                 }
                 output.innerHTML = data["table"];
             }).catch(function (reason) {
-                ilc = queryForm.elements["query"].value;
                 output.textContent = "Lookup failed."
             }).finally(function () {
-                updateActivateTooltip("ILC: " + ilc);
-                document.getElementById("ilc").value = ilc;
-                enable_collection_buttons();
                 queryForm.elements["query"].select();
                 fetch(
                     "/saved?ilc=" + ilc,
