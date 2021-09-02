@@ -331,16 +331,21 @@
     }
     updateActivateTooltip("ILC: None");
 
-    let polling;
+    let polling = false;
 
     // Setup polling
     function start_polling_data(endpoint, names) {
+
+        if (polling) {
+            return;
+        }
+
+        polling = true;
 
         const GAP = 200;
         const method = "GET";
 
         document.getElementById("control").classList.add("working");
-        polling = true;
 
         async function update() {
             while (polling) {
@@ -361,7 +366,9 @@
     // Buttons to start and stop polling
     let start = document.getElementById("start");
     start.addEventListener("click", function () {
-        start_polling_data("/data", ["weight", "height", "bounds"]);
+        if (!polling) {
+            start_polling_data("/data", ["weight", "height", "bounds"]);
+        }
     });
 
     let stop = document.getElementById("stop");
