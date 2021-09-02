@@ -71,6 +71,8 @@ class ThreadedSensor(
 
         Initialize the rolling history window.
         """
+        super().post_init()
+
         self.history: t.Deque[float] = collections.deque(
             maxlen=config.measure.sample_window
         )

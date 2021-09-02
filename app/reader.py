@@ -14,9 +14,22 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 T = t.TypeVar("T")
+V = t.TypeVar("V")
 
 
-class SelfContext:
+class Context(t.Generic[T]):
+    """Context interface."""
+
+    def __enter__(self) -> T:
+        """Create context manager view."""
+        raise NotImplementedError()
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        """Exit the context."""
+        raise NotImplementedError()
+
+
+class SelfContext(Context[T]):
     """Simple minimum context implementation.
 
     Designed for objects that are opened on construction
@@ -80,23 +93,25 @@ class ThreadObjects(t.NamedTuple):
     stop_flag: threading.Event
 
 
-class ThreadedReader(Reader[T]):
-    """Compose and imitate a single Reader instance that runs in a different thread.
+class Threader(t.Generic[T]):
+    """Class that manages a seperate thread that can be used e.g. for IO.
 
     By default, lazily constructs the thread and instance upon first request,
     and automatically tears down after a period of inactivity.
+
+    Must be subclassed with an implemented .operate method.
     """
 
     def __init__(
         self,
-        factory: t.Callable[[], ReaderContext[T]],
+        factory: t.Callable[[], Context[T]],
         *,
         lazy: bool = True,
         timeout: t.Optional[float] = None
     ) -> None:
-        """Construct a new ThreadedReader.
+        """Construct a new Threader.
 
-        Constructs a Reader in a seperate thread using the provided factory.
+        Constructs an object in a seperate thread using the provided factory.
 
         If lazy is False, a thread is created upon initialization of this class,
         otherwise it is created upon the first read call.
@@ -114,13 +129,10 @@ class ThreadedReader(Reader[T]):
 
         self.thread_objects: t.Optional[ThreadObjects] = None
 
-        self.last_read: float = 0
-        self.value: t.Optional[T] = None
+        self.post_init()
 
         if not self.lazy:
             self.activate()
-
-        self.post_init()
 
     def post_init(self) -> None:
         """Run initialization logic after the default init.
@@ -130,7 +142,7 @@ class ThreadedReader(Reader[T]):
         """
 
     def activate(self) -> threading.Condition:
-        """Activate this ThreadedReader, starting a new thread if neccesary."""
+        """Activate this Threader, starting a new thread if neccesary."""
         if self.thread_objects is None:
             lock = threading.Lock()
             condition = threading.Condition(lock)
@@ -148,8 +160,71 @@ class ThreadedReader(Reader[T]):
         Should not be called manually, is instead called by
         constructing a thread on this function from self.activate.
 
-        Constructs a new Reader using the factory,
-        and then runs a loop until stopped.
+        Constructs a new instance using the factory,
+        and then calls the .body method on it within a context.
+
+        Returns once .body returns.
+        """
+        with self.factory() as instance:
+            self.body(instance, condition, stop)
+        # Clear thread objects before stopping
+        # so other threads can tell that the thread stopped.
+        self.thread_objects = None
+
+    def body(
+        self, instance: T, condition: threading.Condition, stop: threading.Event
+    ) -> None:
+        """Method called on the context of an instance constructed from the factory.
+
+        Allows subclasses to implement a thread loop
+        without worrying about setup or teardown.
+
+        Must be implemented.
+
+        An object is provided, and once the function returns the thread will be closed.
+
+        Similar to operate, should not be called manually.
+        """
+        raise NotImplementedError
+
+    def stop(self) -> None:
+        """Stops the Threader, stopping the contained thread.
+
+        Blocks until the thread stops.
+
+        If no thread was running, returns instantly"""
+        if self.thread_objects is not None:
+            condition = self.thread_objects.condition
+            with condition:
+                self.thread_objects.stop_flag.set()
+                condition.notify_all()
+            self.thread_objects.thread.join()
+            self.thread_objects = None
+
+
+class ThreadedReader(Threader[Reader[T]], Reader[T]):
+    """Compose and imitate a single Reader instance that runs in a different thread.
+
+    By default, lazily constructs the thread and instance upon first request,
+    and automatically tears down after a period of inactivity.
+    """
+
+    def post_init(self) -> None:
+        """Run initialization logic after the default init.
+
+        Provided to allow easy constant / default setting / etc
+        without having to duplicate the init signature.
+        """
+        self.last_read: float = 0
+        self.value: t.Optional[T] = None
+
+    def body(
+        self, instance: Reader[T], condition: threading.Condition, stop: threading.Event
+    ) -> None:
+        """Run seperate thread logic.
+        Should not be called manually, is instead automatically by operate.
+
+        Runs a loop until stopped.
 
         The loop will stop if the time since a read exceeds the timeout.
 
@@ -157,26 +232,22 @@ class ThreadedReader(Reader[T]):
         and then calls notify_all on the condition returned by self.activate.
 
         This condition variable is waited upon by .read if
-        no value has been written, .update should usually
-        write a value to self.value.
+        no value has been written.
         """
-        with self.factory() as reader:
-            self.last_read = time.time()
-            # If self.timeout is None, the left hand of `or`
-            # succeeds and the condition automatically passes without
-            # checking the right side
-            # If its not None, the right side must be true for the loop
-            # to continue to execute
-            while not stop.is_set() and (
-                self.timeout is None or time.time() - self.last_read <= self.timeout
-            ):
-                value = self.get_value(reader)
-                with condition:
-                    self.value = value
-                    condition.notify_all()
-        # Clear thread objects before stopping
-        # so other threads can tell that the thread stopped.
-        self.thread_objects = None
+        reader = instance
+        self.last_read = time.time()
+        # If self.timeout is None, the left hand of `or`
+        # succeeds and the condition automatically passes without
+        # checking the right side
+        # If its not None, the right side must be true for the loop
+        # to continue to execute
+        while not stop.is_set() and (
+            self.timeout is None or time.time() - self.last_read <= self.timeout
+        ):
+            value = self.get_value(reader)
+            with condition:
+                self.value = value
+                condition.notify_all()
 
     def get_value(self, reader: Reader[T]) -> T:
         """Implementation dependent update behaviour that happens on every loop of the thread.
@@ -202,13 +273,77 @@ class ThreadedReader(Reader[T]):
             self.last_read = time.time()
         return value
 
-    def stop(self) -> None:
-        """Stops the ThreadedReader, stopping the contained thread.
 
-        Blocks until the thread stops.
+class Manager(Threader[T], t.Generic[T, V]):
+    """Class that manages an instance of a context class."""
 
-        If no thread was running, returns instantly"""
-        if self.thread_objects is not None:
-            self.thread_objects.stop_flag.set()
-            self.thread_objects.thread.join()
-            self.thread_objects = None
+    def post_init(self) -> None:
+        """Run initialization logic after the default init.
+
+        Provided to allow easy constant / default setting / etc
+        without having to duplicate the init signature.
+        """
+        self.action: t.Optional[t.Callable[[T], V]] = None
+
+        self.last_request: float = 0
+        self.result: t.Optional[V] = None
+
+    def body(
+        self, instance: T, condition: threading.Condition, stop: threading.Event
+    ) -> None:
+        """Method called on the context of an instance constructed from the factory.
+
+        Allows subclasses to implement a thread loop
+        without worrying about setup or teardown.
+
+        An object is provided, and once the function returns the thread will be closed.
+
+        Similar to operate, should not be called manually.
+        """
+        self.last_request = time.time()
+
+        # Only reloop if the .wait broke for a reason
+        # other than timing out, and if a stop hasn't been requested
+        was_notified = True
+        while not stop.is_set() and was_notified:
+            with condition:
+                timeout: t.Optional[float]
+                if self.timeout is not None:
+                    timeout = self.last_request + self.timeout - time.time()
+                else:
+                    timeout = None
+                was_notified = condition.wait(timeout=timeout)
+                if self.action is not None:
+                    action = self.action
+                    self.result = action(instance)
+
+    def request_action(self, action: t.Callable[[T], V]) -> None:
+        """Implementation dependent update behaviour that happens on every loop of the thread.
+
+        Must return a value to be saved in self.value in order
+        to semantically fit with the default .operate.
+
+        Default implementation simply returns the value read from the reader.
+        """
+        condition = self.activate()
+        with condition:
+            self.action = action
+            self.last_request = time.time()
+            condition.notify_all()
+
+    def get_result(self) -> V:
+        """Obtain the value produced by an action that was previously requested.
+
+        Starts a new thread if neccesary,
+        and blocks until a value is available.
+
+        If called before an action is requested,
+        will block indefinitely.
+        """
+        condition = self.activate()
+        with condition:
+            while self.result is None:
+                condition.wait()
+            result = self.result
+            self.result = None
+        return result
