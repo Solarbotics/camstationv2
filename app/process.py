@@ -104,7 +104,7 @@ def take_photos(
 ) -> t.List[str]:
     """Takes a set of photos, saving onto disk and returning base64 encodings."""
     try:
-        photo_paths = photo.capture_image_set(
+        photo_paths = devices.get_cameras().capture_image_set(
             folder=str(folder),
             use_timestamp=use_timestamp,
             timestamp=timestamp,

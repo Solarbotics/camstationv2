@@ -9,6 +9,7 @@ import VL53L1X
 from . import camera
 from . import config
 from . import measure
+from . import photo
 from . import reader
 from . import scale
 
@@ -101,3 +102,11 @@ measure_sensor = measure.ThreadedSensor(
 def get_sensor() -> reader.Device[float]:
     """Return a sensor."""
     return measure_sensor
+
+
+camera_collector = photo.CamerasInterface(timeout=config.readers.inactivity_timeout)
+
+
+def get_cameras() -> photo.CamerasInterface:
+    """Return a CameraCollector."""
+    return camera_collector
