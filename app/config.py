@@ -268,6 +268,7 @@ class ReadersConfig(Config):
     """ReadersConfig Schema."""
 
     inactivity_timeout: float
+    grace_wait: float
 
 
 readers = ReadersConfig.from_raw(raw["readers"])

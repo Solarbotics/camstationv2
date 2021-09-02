@@ -306,16 +306,25 @@ class Manager(Threader[T], t.Generic[T, V]):
         # other than timing out, and if a stop hasn't been requested
         was_notified = True
         while not stop.is_set() and was_notified:
+            logger.debug("%s, getting lock in loop", self)
             with condition:
-                timeout: t.Optional[float]
-                if self.timeout is not None:
-                    timeout = self.last_request + self.timeout - time.time()
-                else:
-                    timeout = None
-                was_notified = condition.wait(timeout=timeout)
+                logger.debug("%s, got lock in loop", self)
+                if self.action is None:
+                    timeout: t.Optional[float]
+                    if self.timeout is not None:
+                        timeout = self.last_request + self.timeout - time.time()
+                    else:
+                        timeout = None
+                    logger.debug("%s, waiting on cvariable", self)
+                    was_notified = condition.wait(timeout=timeout)
                 if self.action is not None:
                     action = self.action
+                    self.action = None
+                    logger.debug("%s, Running action", self)
                     self.result = action(instance)
+                    self.last_request = time.time()
+                    condition.notify_all()
+            logger.debug("%s, released lock in loop", self)
 
     def request_action(self, action: t.Callable[[T], V]) -> None:
         """Implementation dependent update behaviour that happens on every loop of the thread.
@@ -326,12 +335,15 @@ class Manager(Threader[T], t.Generic[T, V]):
         Default implementation simply returns the value read from the reader.
         """
         condition = self.activate()
+        logger.debug("%s, getting lock", self)
         with condition:
+            logger.debug("%s, acquired lock", self)
             self.action = action
-            self.last_request = time.time()
             condition.notify_all()
+            logger.debug("%s, notified", self)
+        logger.debug("%s, released lock", self)
 
-    def get_result(self) -> V:
+    def get_result(self, grace_wait: t.Optional[float] = None) -> V:
         """Obtain the value produced by an action that was previously requested.
 
         Starts a new thread if neccesary,
@@ -341,9 +353,18 @@ class Manager(Threader[T], t.Generic[T, V]):
         will block indefinitely.
         """
         condition = self.activate()
+        logger.debug("%s, getting lock for result", self)
         with condition:
+            logger.debug("%s, got lock", self)
             while self.result is None:
-                condition.wait()
+                logger.debug("%s, waiting for result", self)
+                # Timeout in case something happened to the thread
+                notified = condition.wait(timeout=grace_wait)
+                if not notified:
+                    if self.thread_objects is None:
+                        raise RuntimeError("Thread unexpectedly quit.")
+            logger.debug("%s, got result", self)
             result = self.result
             self.result = None
+        logger.debug("%s, released lock in result", self)
         return result

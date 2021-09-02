@@ -264,7 +264,10 @@ class CamerasInterface:
     ) -> t.Iterable[str]:
         port_paths = set(get_camera_ports())
         # Teardown any old ports
-        for port, manager in self.cameras.items():
+        # we need to make a list out of the items so that we
+        # aren't maintaining a live view, so that we can
+        # modify the dictionary
+        for port, manager in list(self.cameras.items()):
             if port not in port_paths:
                 manager.stop()
                 del self.cameras[port]
@@ -288,7 +291,9 @@ class CamerasInterface:
                 )
             )
         # Collect the photo path from each
-        return [manager.get_result() for manager in self.cameras.values()]
+        paths = [manager.get_result() for manager in self.cameras.values()]
+        logger.info("Photos: %s", paths)
+        return paths
 
 
 def encode_image(path: str) -> str:
