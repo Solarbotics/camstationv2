@@ -370,6 +370,13 @@
         polling = false;
     });
 
+    function enable_collection_buttons() {
+        let buttons = document.getElementsByClassName("grabDataButton")
+        for (const button of buttons) {
+            button.disabled = false;
+        }
+    }
+
     // Allow querying the AC Lookup tool
     let queryForm = document.getElementById("query");
     queryForm.addEventListener("submit", function (event) {
@@ -393,6 +400,7 @@
             }).finally(function () {
                 updateActivateTooltip("ILC: " + ilc);
                 document.getElementById("ilc").value = ilc;
+                enable_collection_buttons();
                 queryForm.elements["query"].select();
                 fetch(
                     "/saved?ilc=" + ilc,
