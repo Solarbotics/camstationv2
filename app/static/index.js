@@ -194,7 +194,7 @@
                 },
                 function () {
                     button.classList.remove("working");
-                    alert("Cannot make request (possibly height override value is missing).");
+                    alert("Cannot make request (possibly an override value is missing).");
                 }
             ));
         }
@@ -286,20 +286,20 @@
 
     let gather_collection_info = function () {
         let data = gather_info();
-        // Get height override
-        let heightOverride = document.getElementById("heightOverride");
-        let heightOverrideValue;
-        if (heightOverride.children[1].checked) {
-            heightOverrideValue = heightOverride.children[0].value;
-            // Dont allow querying with an empty value
-            if (heightOverrideValue === "") {
-                return undefined;
+        // Get override values
+        for (const override of document.getElementsByClassName("override")) {
+            let name = override.getAttribute("name");
+            if (override.children[1].checked) {
+                let value = override.children[0].value;
+                if (value === "") {
+                    return undefined;
+                } else {
+                    data[name + "_override"] = value;
+                }
+            } else {
+                data[name + "_override"] = null;
             }
-        } else {
-            heightOverrideValue = null;
         }
-        data["height_override"] = heightOverrideValue;
-        // Get light level
         console.log(data);
         return data;
     }
@@ -415,7 +415,9 @@
     let queryForm = document.getElementById("query");
     queryForm.addEventListener("submit", function (event) {
         document.getElementById("setupButton").click();
-        document.getElementById("heightOverride").children[0].value = "";
+        for (const override of document.getElementsByClassName("override")) {
+            override.children[0].value = "";
+        }
         queryForm.elements["query"].select();
         fetch(
             config.lookup + "/check?query=" + queryForm.elements["query"].value,
