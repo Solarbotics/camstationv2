@@ -131,11 +131,14 @@ class PhotoConfig:
     Usually not custom instantiated."""
 
     default_name: str
+    flip: t.Sequence[str]
     names: t.Mapping[str, str]
 
 
 photo = PhotoConfig(
-    default_name=raw["photo"]["default_name"], names=dict(raw["photo"]["names"])
+    default_name=raw["photo"]["default_name"],
+    flip=list(raw["photo"]["flip"]),
+    names=dict(raw["photo"]["names"]),
 )
 
 

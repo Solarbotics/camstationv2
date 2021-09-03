@@ -233,6 +233,12 @@ def capture_photo_image(
 
     capture_image(camera.camera, save_path)
 
+    # Flip image if neccesary
+    if name in config.photo.flip:
+        loaded_photo = cv2.imread(save_path)
+        flipped = cv2.flip(loaded_photo, -1)
+        cv2.imwrite(save_path, flipped)
+
     return save_path
 
 

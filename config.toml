@@ -4,6 +4,7 @@ format = "[%(asctime)s] [%(levelname)s] %(name)s - %(message)s" # (%(threadName)
 
 [photo]
 default_name = "unknown"
+flip = ["oh"]
 
 [photo.names]
 "55b1bffb3a794523b949da0b1aca60fe"= "tq"
