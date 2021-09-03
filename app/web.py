@@ -154,7 +154,8 @@ def create_app() -> flask.Flask:
         data = flask.request.json
         if data is not None:
             query = data["query"]
-            encoded = process.collect_photos(query=query)
+            light_level = float(data["light_level"]) / 100
+            encoded = process.collect_photos(query=query, light_level=light_level)
             return flask.jsonify(
                 {"message": "success", "valid": True, "photos": encoded}
             )
@@ -175,7 +176,9 @@ def create_app() -> flask.Flask:
                 threshold=app.config.get("threshold", config.web.threshold),
                 base_depth=app.config.get("base_depth", 0),
                 tare=app.config.get("tare", 0),
-                override_height=data["height_override"],
+                override_height=float(data["height_override"])
+                if data["height_override"] is not None
+                else None,
             )
             data["message"] = "success"
             data["valid"] = True

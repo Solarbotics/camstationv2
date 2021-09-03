@@ -119,9 +119,13 @@ def take_photos(
         return [photo.encode_image(path) for path in photo_paths]
 
 
-def collect_photos(query: str) -> t.List[str]:
+def collect_photos(query: str, light_level: float = 1) -> t.List[str]:
     """Take a set of photos, saving into the appropriate folder based on query."""
-    return take_photos(
+    # Turn on underside ringlights to improve light conditions
+    lights.Lights().ring().level = light_level
+    # Wait a bit for lights to turn on properly
+    time.sleep(config.process.camera.wait)
+    photos = take_photos(
         query=query,
         folder=files.query_folder(
             query,
@@ -130,10 +134,13 @@ def collect_photos(query: str) -> t.List[str]:
         ).joinpath(config.process.paths.photos),
         use_timestamp=False,
     )
+    time.sleep(config.process.camera.wait)
+    lights.Lights().ring().off()
+    return photos
 
 
 def collect_data(
-    query: t.Optional[str] = None,
+    query: str,
     threshold: int = 0,
     base_depth: t.Optional[float] = None,
     tare: t.Optional[float] = None,
@@ -141,6 +148,10 @@ def collect_data(
     override_height: t.Optional[float] = None,
 ) -> t.Mapping[str, object]:
     """Collect numerical data."""
+    # Make sure lights are turned off
+    lights.Lights().ring().off()
+    time.sleep(config.process.camera.wait)
+
     # Read bounds from undercamera
     size = read_bounds(threshold=threshold)
     if override_height is not None:
@@ -216,6 +227,7 @@ def activate(*args: t.Any, **kwargs: t.Any) -> t.Mapping[str, object]:
         use_timestamp=False,
     )
 
+    time.sleep(config.process.camera.wait)
     # Turn off lights
     lights.Lights().ring().off()
 

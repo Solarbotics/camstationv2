@@ -280,6 +280,12 @@
 
     let gather_info = function () {
         let data = get_query();
+        data["light_level"] = document.getElementById("lightsLevel").value;
+        return data
+    }
+
+    let gather_collection_info = function () {
+        let data = gather_info();
         // Get height override
         let heightOverride = document.getElementById("heightOverride");
         let heightOverrideValue;
@@ -294,15 +300,14 @@
         }
         data["height_override"] = heightOverrideValue;
         // Get light level
-        data["light_level"] = document.getElementById("lightsLevel").value;
         console.log(data);
         return data;
     }
 
     const action_gatherers = {
-        "activate": gather_info,
-        "photos": get_query,
-        "grab_data": gather_info,
+        "activate": gather_collection_info,
+        "photos": gather_info,
+        "grab_data": gather_collection_info,
         "mount_device": get_mount_device,
         "unmount_device": get_mount_device,
         "export": get_mount_device,
