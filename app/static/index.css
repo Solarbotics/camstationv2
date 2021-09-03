@@ -55,6 +55,14 @@ img {
     justify-content: center;
 }
 
+.flex {
+    display: flex;
+}
+
+.block {
+    display: block;
+}
+
 .data {
     font-size: 70%;
 }
