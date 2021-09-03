@@ -22,7 +22,7 @@
       </div>
 
       <div class="box">
-        <p class="row">Controls</p>
+        <p class="row label">Controls</p>
 
         <div class="row">
           <form id="query">
@@ -36,6 +36,8 @@
             <button disabled class="grabDataButton" id="activateButton">Activate</button>
           </span>
         </div>
+
+        <p class="row label">Detailed</p>
         <div class="row">
           <span class="action" name="tare" action="POST">
             <button>Tare Weight</button>
@@ -47,13 +49,13 @@
             <button disabled class="grabDataButton">Collect Data</button>
           </span>
           <span class="action" name="photos" action="POST">
-            <button disabled class="grabDataButton">Photos</button>
+            <button disabled class="grabDataButton">Take Photos</button>
           </span>
         </div>
       </div>
 
       <div class="box">
-        <p class="row">Readings</p>
+        <p class="row label">Readings</p>
 
         <div class="row">
           <div id="control" class="inline">
@@ -83,7 +85,7 @@
       </div>
 
       <div class="box">
-        <p class="row">Configuration</p>
+        <p class="row label">Configuration</p>
 
         <div class="row">
           <form id="configOptions">
@@ -103,7 +105,7 @@
       </div>
 
       <div class="box">
-        <p class="row">External</p>
+        <p class="row label">External</p>
         <div class="row">
           <span id="refreshDevices" class="action" name="block_devices" action="GET"><button>Refresh</button></span>
           <select id="deviceSelect">
@@ -117,7 +119,7 @@
       </div>
 
       <div class="box">
-        <p class="row">Query Results</p>
+        <p class="row label">Query Results</p>
         <div class="row">
           <!-- <button class="clear-next">Clear</button> -->
           <div class="data" id="queryResult">
@@ -136,7 +138,7 @@
 
     <div>
       <div class="box">
-        <p class="row">Data</p>
+        <p class="row label">Data</p>
         <div class="row">
           <!-- <button class="clear-next">Clear</button> -->
           <div id="dataResult">
@@ -144,7 +146,7 @@
         </div>
       </div>
       <div class="box">
-        <p class="row">Photo Gallery</p>
+        <p class="row label">Photo Gallery</p>
         <div class="row center-contents">
           <!-- <button class="clear-next">Clear</button> -->
           <div id="photosGallery">
