@@ -139,28 +139,65 @@ def collect_photos(query: str, light_level: float = 1) -> t.List[str]:
     return photos
 
 
+def parse_bounds_override(value: t.Optional[str]) -> t.Optional[t.Tuple[float, float]]:
+    """Parse a string representation of bounds override."""
+    try:
+        if value is not None:
+            pieces = tuple(float(piece.strip()) for piece in value.split(","))
+            return (pieces[0], pieces[1])
+        else:
+            return None
+    except (ValueError, IndexError):
+        return None
+
+
+def parse_weight_override(value: t.Optional[str]) -> t.Optional[float]:
+    """Parse a string representation of weight override."""
+    try:
+        return float(value) if value is not None else None
+    except ValueError:
+        return None
+
+
+def parse_height_override(value: t.Optional[str]) -> t.Optional[float]:
+    """Parse a string representation of height override."""
+    try:
+        return float(value) if value is not None else None
+    except ValueError:
+        return None
+
+
 def collect_data(
     query: str,
     threshold: int = 0,
     base_depth: t.Optional[float] = None,
     tare: t.Optional[float] = None,
     timestamp: t.Optional[datetime.datetime] = None,
+    override_bounds: t.Optional[t.Tuple[float, float]] = None,
+    override_weight: t.Optional[float] = None,
     override_height: t.Optional[float] = None,
 ) -> t.Mapping[str, object]:
     """Collect numerical data."""
-    # Make sure lights are turned off
-    lights.Lights().ring().off()
-    time.sleep(config.process.camera.wait)
+    if override_bounds is not None:
+        size = override_bounds
+    else:
+        # Make sure lights are turned off
+        lights.Lights().ring().off()
+        time.sleep(config.process.camera.wait)
+        # Read bounds from undercamera
+        size = read_bounds(threshold=threshold)
 
-    # Read bounds from undercamera
-    size = read_bounds(threshold=threshold)
     if override_height is not None:
         height = override_height
     else:
         # Use overhead tech to get depth
         height = read_height(base=base_depth)
-    # Read scale
-    weight = read_weight(tare=tare)
+
+    if override_weight is not None:
+        weight = override_weight
+    else:
+        # Read scale
+        weight = read_weight(tare=tare)
 
     folder = files.query_folder(
         query,

@@ -176,9 +176,15 @@ def create_app() -> flask.Flask:
                 threshold=app.config.get("threshold", config.web.threshold),
                 base_depth=app.config.get("base_depth", 0),
                 tare=app.config.get("tare", 0),
-                override_height=float(data["height_override"])
-                if data["height_override"] is not None
-                else None,
+                override_bounds=process.parse_bounds_override(
+                    data.get("bounds_override")
+                ),
+                override_weight=process.parse_weight_override(
+                    data.get("weight_override")
+                ),
+                override_height=process.parse_height_override(
+                    data.get("height_override")
+                ),
             )
             data["message"] = "success"
             data["valid"] = True
@@ -211,9 +217,15 @@ def create_app() -> flask.Flask:
                 base_depth=app.config.get("base_depth", 0),
                 tare=app.config.get("tare", 0),
                 ilc=data["query"],
-                height_override=float(data["height_override"])
-                if data["height_override"] is not None
-                else None,
+                override_bounds=process.parse_bounds_override(
+                    data.get("bounds_override")
+                ),
+                override_weight=process.parse_weight_override(
+                    data.get("weight_override")
+                ),
+                override_height=process.parse_height_override(
+                    data.get("height_override")
+                ),
                 light_level=float(data["light_level"]) / 100,
             )
         )
