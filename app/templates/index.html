@@ -83,9 +83,7 @@
               <input id="heightOveridden" class="overrider" type="checkbox" checked>
             </span>
           </div>
-        </div>
-
-        
+        </div> 
 
         <div class="box">
           <p class="row">Configuration</p>
@@ -118,10 +116,19 @@
             <div class="data" id="mountResult"></div>
           </div>
         </div>
+
+        <div class="box">
+          <p class="row">Query Results</p>
+          <div class="row">
+            <!-- <button class="clear-next">Clear</button> -->
+            <div class="data" id="queryResult">
+            </div>
+          </div>
+        </div>
       </div>
 
       <div>
-        <div class="box fill-height center-contents center-column">
+        <div class="box center-contents center-column">
           <div class="row">
             <img src="/camera">
           </div>
@@ -129,17 +136,18 @@
       </div>
 
       <div>
-        <div class="box fill-height">
+        <div class="box">
+          <p class="row">Data</p>
           <div class="row">
-            <label for="dataResult">Data</label>
-            <button class="clear-next">Clear</button>
+            <!-- <button class="clear-next">Clear</button> -->
             <div id="dataResult">
             </div>
           </div>
-
+        </div>
+        <div class="box">
+          <p class="row">Photo Gallery</p>
           <div class="row">
-            <label for="photosGallery">Photo Gallery</label>
-            <button class="clear-next">Clear</button>
+            <!-- <button class="clear-next">Clear</button> -->
             <div id="photosGallery">
             </div>
           </div>
@@ -147,15 +155,6 @@
       </div>
 
     </div>
-
-    <div class="row">
-      <label for="queryResult">Query Results</label>
-      <button class="clear-next">Clear</button>
-      <div class="data" id="queryResult">
-      </div>
-    </div>
-
-    
 
   </body>
 </html>

@@ -43,10 +43,6 @@ img {
     border-bottom: solid gray;
 }
 
-.fill-height {
-    height: 100%;
-}
-
 .center-contents {
     justify-content: center;
     text-align: center;
