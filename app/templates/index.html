@@ -12,7 +12,6 @@
 
 <body>
 
-
   <div class="flex-wrapper">
 
     <div>
@@ -30,8 +29,13 @@
             <input type="text" placeholder="sku" name="query" id="ilc">
             <input type="submit" value="Query">
           </form>
+          <span class="action" name="setup" action="POST">
+            <button>Setup</button>
+          </span>
+          <span class="action" name="activate" action="POST">
+            <button disabled class="grabDataButton" id="activateButton">Activate</button>
+          </span>
         </div>
-
         <div class="row">
           <span class="action" name="tare" action="POST">
             <button>Tare Weight</button>
@@ -39,20 +43,11 @@
           <span class="action" name="calibrate_depth" action="POST">
             <button>Zero Depth</button>
           </span>
-          <span class="action" name="setup" action="POST">
-            <button>Setup</button>
-          </span>
-        </div>
-
-        <div class="row">
           <span class="action" name="grab_data" action="POST">
-            <button disabled class="grabDataButton">Collect</button>
+            <button disabled class="grabDataButton">Collect Data</button>
           </span>
           <span class="action" name="photos" action="POST">
             <button disabled class="grabDataButton">Photos</button>
-          </span>
-          <span class="action" name="activate" action="POST">
-            <button disabled class="grabDataButton" id="activateButton">Activate</button>
           </span>
         </div>
       </div>

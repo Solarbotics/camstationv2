@@ -8,6 +8,7 @@ html {
 
 form {
     margin: 0px;
+    display: inline;
 }
 
 .outline {
