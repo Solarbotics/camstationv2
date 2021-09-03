@@ -65,23 +65,49 @@
           </div>
         </div>
 
-        <div class="row" name="bounds">
-          <label for="bounds">Bounds:</label>
-          <span id="bounds" class="info" name="bounds"></span>
+        <div class="flex seperate-justify">
+
+          <div>
+            <div class="row" name="bounds">
+              <label for="bounds">Bounds:</label>
+              <span id="bounds" class="info" name="bounds"></span>
+            </div>
+            <div class="row" name="weight">
+              <label for="weight">Weight:</label>
+              <span id="weight" class="info" name="weight"></span>
+            </div>
+            <div class="row" name="height">
+              <label for="height">Height:</label>
+              <span id="height" class="info" name="height"></span>
+            </div>
+          </div>
+
+          <div>
+            <div class="row">
+              <label for="boundsOverriden">| Override</label>
+              <span id="boundsOverride">
+                <input type="text">
+                <input id="boundsOverriden" class="overrider" type="checkbox">
+              </span>
+            </div>
+            <div class="row">
+              <label for="weightOverriden">| Override</label>
+              <span id="weightOverride">
+                <input type="text">
+                <input id="weightOverriden" class="overrider" type="checkbox">
+              </span>
+            </div>
+            <div class="row">
+              <label for="heightOverriden">| Override</label>
+              <span id="heightOverride">
+                <input type="text">
+                <input id="heightOverriden" class="overrider" type="checkbox" checked>
+              </span>
+            </div>
+          </div>
+
         </div>
-        <div class="row" name="weight">
-          <label for="weight">Weight:</label>
-          <span id="weight" class="info" name="weight"></span>
-        </div>
-        <div class="row" name="height">
-          <label for="height">Height:</label>
-          <span id="height" class="info" name="height"></span>
-          <label for="heightOveridden">Override</label>
-          <span id="heightOverride">
-            <input type="number" step="0.1">
-            <input id="heightOveridden" class="overrider" type="checkbox" checked>
-          </span>
-        </div>
+
       </div>
 
       <div class="box">

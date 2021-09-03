@@ -59,6 +59,10 @@ img {
     display: flex;
 }
 
+.seperate-justify {
+    justify-content: space-between;
+}
+
 .block {
     display: block;
 }
