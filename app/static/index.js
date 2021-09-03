@@ -404,6 +404,8 @@
     // Allow querying the AC Lookup tool
     let queryForm = document.getElementById("query");
     queryForm.addEventListener("submit", function (event) {
+        document.getElementById("setupButton").click();
+        document.getElementById("heightOverride").children[0].value = "";
         queryForm.elements["query"].select();
         fetch(
             config.lookup + "/check?query=" + queryForm.elements["query"].value,
