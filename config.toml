@@ -31,6 +31,7 @@ precision = 3
 
 [camera]
 precision = 1
+thickness = 3
 
 [camera.colours]
 blue = [255, 0, 0]

@@ -189,6 +189,7 @@ class CameraConfig(Config):
     colours: ColoursConfig
     crosshair: CrosshairConfig
     precision: int
+    thickness: int
 
 
 camera = CameraConfig.from_raw(raw["camera"])

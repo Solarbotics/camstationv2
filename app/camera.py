@@ -244,7 +244,7 @@ class ImageSizer(ImageProcessor):
                 box = numpy.int0(cv2.boxPoints(rect))
 
                 highlight_color = config.camera.colours.blue
-                highlight_thickness = 1
+                highlight_thickness = config.camera.thickness
                 text_color = config.camera.colours.green
                 cv2.drawContours(output, [box], 0, highlight_color, highlight_thickness)
                 cv2.putText(
