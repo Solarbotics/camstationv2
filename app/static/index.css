@@ -20,6 +20,20 @@ form {
     margin: 5px;
 }
 
+.flex-wrapper {
+    width: 100%;
+    display: flex;
+    flex-wrap: nowrap
+}
+
+.flex-wrapper > div {
+    flex: 1 1;
+}
+
+img {
+    max-width: 100%;
+}
+
 .data {
     font-size: 80%;
 }

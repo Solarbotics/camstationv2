@@ -50,18 +50,18 @@
 
     // Snapshot button that will hit the /snap endpoint
     // a number of times
-    let snapshotButton = document.getElementById("snapshot");
-    snapshotButton.addEventListener("click", function (event) {
-        repeat(function (index) {
-            fetch("/snap", {
-                method: "POST"
-            }).then(function (response) {
-                response.text().then(text => document.getElementById("snapshotResult").textContent = text);
-                snapshotButton.classList.add("outline");
-                setTimeout(() => snapshotButton.classList.remove("outline"), 1000);
-            })
-        }, 10, 15000);
-    });
+    // let snapshotButton = document.getElementById("snapshot");
+    // snapshotButton.addEventListener("click", function (event) {
+    //     repeat(function (index) {
+    //         fetch("/snap", {
+    //             method: "POST"
+    //         }).then(function (response) {
+    //             response.text().then(text => document.getElementById("snapshotResult").textContent = text);
+    //             snapshotButton.classList.add("outline");
+    //             setTimeout(() => snapshotButton.classList.remove("outline"), 1000);
+    //         })
+    //     }, 10, 15000);
+    // });
 
     // We post a new lights level whenever it changes;
     // however the slider is multiplied by the checkbox

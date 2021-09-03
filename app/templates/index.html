@@ -10,104 +10,123 @@
   </head>
 
   <body>
-    <div class="row">
-      <h1>Camera Station</h1>
-    </div>
+    
 
-    <div class="row">
-      <img src="/camera">
-    </div>
+    <div class="flex-wrapper">
 
-    <div class="row">
-      <button id="snapshot" disabled>Snapshot</button>
-      <span id="snapshotResult"></span>
-    </div>
+      <div>
+        <div class="row">
+          <h1>Camera Station</h1>
+        </div>
 
-    <div class="row">
-      <div id="control" class="inline">
-        <button id="start">Start</button>
-        <button id="stop">Stop</button>
+        <div class="row">
+          <form id="query">
+            <input type="text" placeholder="sku" name="query" id="ilc">
+            <input type="submit" value="Query">
+          </form>
+        </div>
+
+        <div class="row">
+          <span class="action" name="tare" action="POST">
+            <button>Tare</button>
+          </span>
+          <span class="action" name="calibrate_depth" action="POST">
+            <button>Calibrate Depth</button>
+          </span>
+          <span class="action" name="setup" action="POST">
+            <button>Setup</button>
+          </span>
+        </div>
+
+        <div class="row">
+          <div id="control" class="inline">
+            <button id="stop">Stop</button>
+            <button id="start">Start</button>
+          </div>
+        </div>
+
+        <div class="row" name="bounds">
+          <label for="bounds">Bounds:</label>
+          <span id="bounds" class="info" name="bounds"></span>
+        </div>    
+        <div class="row" name="weight">
+          <label for="weight">Weight:</label>
+          <span id="weight" class="info" name="weight"></span>
+        </div>
+        <div class="row" name="height">
+          <label for="height">Height:</label>
+          <span id="height" class="info" name="height"></span>
+          <label for="heightOveridden">Override</label>
+          <span id="heightOverride">
+            <input type="number" step="0.1">
+            <input id="heightOveridden" class="overrider" type="checkbox" checked>
+          </span>
+        </div>
+
+        <div class="row">
+          <span class="action" name="grab_data" action="POST">
+            <button disabled class="grabDataButton">Collect</button>
+          </span>
+          <span class="action" name="photos" action="POST">
+            <button disabled class="grabDataButton">Photos</button>
+          </span>
+          <span class="action" name="activate" action="POST">
+            <button disabled class="grabDataButton" id="activateButton">Activate</button>
+          </span>
+        </div>
+
+        <div class="row">
+          <form id="configOptions">
+            <label for="thresholdConfig">Threshold</label>
+            <input type="range" min="0" max="255" name="threshold" id="thresholdConfig" value="80">
+            <output name="thresholdOutput"></output>
+            <!-- <input type="submit" value="Configure"> -->
+          </form>
+        </div>
+
+        <div class="row">
+          <form class="row" id="lights">
+            <label for="lightsEnabled">Lights</label>
+            <input type="checkbox" name="enabled" id="lightsEnabled">
+            <input type="range" min="0" max="100" value="100" name="value" id="lightsLevel">
+          </form>
+        </div>
+
+        <div class="row">
+          <div>
+            <div>External</div>
+            <span id="refreshDevices" class="action" name="block_devices" action="GET"><button>Refresh</button></span>
+            <select id="deviceSelect"><option value="None">None</option></select>
+            <span class="action" name="export"><button>Export</button></span>
+            <span class="action" name="mount_device"><button>Mount</button></span>
+            <span class="action" name="unmount_device"><button>Unmount</button></span>
+            <div class="data" id="mountResult"></div>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <div class="row" name="bounds">
-      <label for="bounds">Bounds:</label>
-      <span id="bounds" class="info" name="bounds"></span>
-    </div>    
-    <div class="row" name="weight">
-      <label for="weight">Weight:</label>
-      <span id="weight" class="info" name="weight"></span>
-    </div>
-    <div class="row" name="height">
-      <label for="height">Height:</label>
-      <span id="height" class="info" name="height"></span>
-      <label for="heightOveridden">Override</label>
-      <span id="heightOverride">
-        <input type="number" step="0.1">
-        <input id="heightOveridden" class="overrider" type="checkbox" checked>
-      </span>
-    </div>
-
-    <div class="row">
-      <span class="action" name="tare" action="POST">
-        <button>Tare</button>
-      </span>
-      <span class="action" name="calibrate_depth" action="POST">
-        <button>Calibrate Depth</button>
-      </span>
-      <span class="action" name="setup" action="POST">
-        <button>Setup</button>
-      </span>
-    </div>
-
-    <div class="row">
-      <span class="action" name="grab_data" action="POST">
-        <button disabled class="grabDataButton">Collect</button>
-      </span>
-      <span class="action" name="photos" action="POST">
-        <button disabled class="grabDataButton">Photos</button>
-      </span>
-      <span class="action" name="activate" action="POST">
-        <button disabled class="grabDataButton" id="activateButton">Activate</button>
-      </span>
-    </div>
-
-    <div class="row">
-      <form id="query">
-        <input type="text" placeholder="sku" name="query" id="ilc">
-        <input type="submit" value="Query">
-      </form>
-    </div>
-
-    <div class="row">
-      <form id="configOptions">
-        <label for="thresholdConfig">Threshold</label>
-        <input type="range" min="0" max="255" name="threshold" id="thresholdConfig" value="80">
-        <output name="thresholdOutput"></output>
-        <input type="submit" value="Configure">
-      </form>
-    </div>
-
-    <div class="row">
-      <form class="row" id="lights">
-        <label for="lightsEnabled">Lights</label>
-        <input type="checkbox" name="enabled" id="lightsEnabled">
-        <input type="range" min="0" max="100" value="100" name="value" id="lightsLevel">
-      </form>
-    </div>
-
-    <div class="row">
-      <label for="dataResult">Data</label>
-      <button class="clear-next">Clear</button>
-      <div id="dataResult">
+      <div>
+        <div class="row">
+          <img src="/camera">
+        </div>
       </div>
-    </div>
 
-    <div class="row">
-      <label for="photosGallery">Photo Gallery</label>
-      <button class="clear-next">Clear</button>
-      <div id="photosGallery">
+      <div>
+        <div class="row">
+          <label for="dataResult">Data</label>
+          <button class="clear-next">Clear</button>
+          <div id="dataResult">
+          </div>
+        </div>
+
+        <div class="row">
+          <label for="photosGallery">Photo Gallery</label>
+          <button class="clear-next">Clear</button>
+          <div id="photosGallery">
+          </div>
+        </div>
       </div>
+
     </div>
 
     <div class="row">
@@ -117,17 +136,7 @@
       </div>
     </div>
 
-    <div class="row">
-      <div>
-        <div>External</div>
-        <span id="refreshDevices" class="action" name="block_devices" action="GET"><button>Refresh</button></span>
-        <select id="deviceSelect"><option value="None">None</option></select>
-        <span class="action" name="export"><button>Export</button></span>
-        <span class="action" name="mount_device"><button>Mount</button></span>
-        <span class="action" name="unmount_device"><button>Unmount</button></span>
-        <div class="data" id="mountResult"></div>
-      </div>
-    </div>
+    
 
   </body>
 </html>
