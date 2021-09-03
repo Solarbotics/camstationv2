@@ -34,6 +34,30 @@ img {
     max-width: 100%;
 }
 
+.box {
+    border: solid black;
+    margin: 5px;
+}
+
+.box > p:first-child {
+    border-bottom: solid gray;
+}
+
+.fill-height {
+    height: 100%;
+}
+
+.center-contents {
+    justify-content: center;
+    text-align: center;
+}
+
+.center-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
 .data {
     font-size: 80%;
 }
