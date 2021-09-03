@@ -97,22 +97,26 @@
     // Calls prep, and uses the return of prep as the JSON body of the request
     // Sends an <action> request to /<name>,
     // Calls callback on the text of the response from /<name>
-    let query = function (name, action, prep, callback) {
+    let query = function (name, action, prep, callback, fail_callback) {
         let func = function (event) {
             let data = prep();
-            // GET/HEAD can't have a body
-            if (action === "GET" || action === "HEAD") {
-                fetch("/" + name, {
-                    method: action,
-                }).then(callback)
+            if (data !== undefined) {
+                // GET/HEAD can't have a body
+                if (action === "GET" || action === "HEAD") {
+                    fetch("/" + name, {
+                        method: action,
+                    }).then(callback)
+                } else {
+                    fetch("/" + name, {
+                        method: action,
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(data),
+                    }).then(callback)
+                }
             } else {
-                fetch("/" + name, {
-                    method: action,
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(data),
-                }).then(callback)
+                fail_callback();
             }
         };
         return func;
@@ -187,6 +191,10 @@
                         handlers[name](response);
                     }
                     setTimeout(() => button.classList.remove("finished"), COLOR_TIME);
+                },
+                function () {
+                    button.classList.remove("working");
+                    alert("Cannot make request (possibly height override value is missing).");
                 }
             ));
         }
@@ -277,6 +285,10 @@
         let heightOverrideValue;
         if (heightOverride.children[1].checked) {
             heightOverrideValue = heightOverride.children[0].value;
+            // Dont allow querying with an empty value
+            if (heightOverrideValue === "") {
+                return undefined;
+            }
         } else {
             heightOverrideValue = null;
         }
