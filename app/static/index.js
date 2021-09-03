@@ -350,6 +350,16 @@
 
     let polling = false;
 
+    // Colours the element RED if the value is negative
+    function positive_write(element, value) {
+        write_on(element)(value);
+        if (String(value).startsWith("-")) {
+            element.classList.add("errored");
+        } else {
+            element.classList.remove("errored");
+        }
+    }
+
     // Setup polling
     function start_polling_data(endpoint, names) {
 
@@ -371,7 +381,7 @@
                 let data = await response.json()
                 for (const name of names) {
                     let span = document.getElementById(name);
-                    write_on(span)(data[name])
+                    positive_write(span, data[name])
                 }
                 await sleep(Math.max(0, GAP - (Date.now() - start)))
             }
