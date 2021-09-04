@@ -1,0 +1,86 @@
+[logging]
+level = "INFO"
+format = "[%(asctime)s] [%(levelname)s] %(name)s - %(message)s" # (%(threadName)s)
+
+[photo]
+default_name = "unknown"
+flip = ["oh"]
+
+[photo.names]
+"55b1bffb3a794523b949da0b1aca60fe"= "tq"
+"a63fbd67eb9641778bdb46d5ae35e573" = "oh"
+
+[files]
+format = "{query}_{name}"
+stamp_format = "{time}_{query}_{name}"
+timeformat = "%Y-%m-%d_%H:%M:%S"
+
+[web]
+threshold = 80
+
+[scale]
+port = "/dev/ttyUSB0"
+baudrate = 9600
+timeout = 4
+# 3 seconds of a pause seems to be slightly overkill
+# but it keeps it reliable
+# 2.x somewhere is whats neccesary most of the time
+pause = 3
+
+precision = 3
+
+[camera]
+precision = 1
+thickness = 3
+
+[camera.colours]
+blue = [255, 0, 0]
+green = [0, 255, 0]
+red = [0, 0, 255]
+gray = [127, 127, 127]
+
+[camera.crosshair]
+radius = 10
+thickness = 1
+
+[process]
+data_name = "data"
+cameraMatrix = "cameraMatrix.txt"
+cameraScaleMatrix = "cameraScaleMatrix.txt"
+cameraDistortionMatrix = "cameraDistortionMatrix.txt"
+
+[process.camera]
+# Time to wait after turning lights on before capturing
+wait = 1
+
+[process.paths]
+photos = "photos"
+data = "data"
+generic = "unknown"
+external = "/media"
+
+[lights]
+pin = 12
+level = 1
+
+[measure]
+bus = 1
+address = 41
+
+# microseconds
+budget = 200_000
+# ms, should be more than 4ms greater than budget
+intertime = 205
+
+# tlx, tly, brx, bry
+roi = [6, 6, 9, 9]
+
+sample_window = 10
+
+precision = 1
+
+cm_per_unit = 0.1
+
+[readers]
+inactivity_timeout = 60
+grace_wait = 5

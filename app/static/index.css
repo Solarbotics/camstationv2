@@ -1,0 +1,89 @@
+/* Use nicer box-sizing */
+html {
+    box-sizing: border-box;
+}
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+
+form {
+    margin: 0px;
+    display: inline;
+}
+
+.outline {
+    border-style: solid;
+    border-color: red;
+    border-width: 4px;
+}
+
+.row {
+    margin: 5px;
+}
+
+.flex-wrapper {
+    width: 100%;
+    display: flex;
+    flex-wrap: nowrap
+}
+
+.flex-wrapper > div {
+    flex: 1 1;
+}
+
+img {
+    max-width: 100%;
+}
+
+.box {
+    border: solid black;
+    margin: 5px;
+}
+
+.box > .label {
+    border-bottom: solid gray;
+}
+
+.center-contents {
+    justify-content: center;
+    text-align: center;
+}
+
+.center-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.flex {
+    display: flex;
+}
+
+.seperate-justify {
+    justify-content: space-between;
+}
+
+.block {
+    display: block;
+}
+
+.data {
+    font-size: 70%;
+}
+
+.working {
+    background-color: orange;
+    /* border-color: orange; */
+}
+
+.finished {
+    background-color: green;
+}
+
+.errored {
+    background-color: red;
+}
+
+.inline {
+    display: inline-block;
+}

@@ -1,0 +1,13 @@
+opencv-python>=4.5
+numpy>=1.20
+flask
+picamera[array]
+toml
+gphoto2
+pyserial
+gpiozero
+RPi.GPIO
+python-dotenv
+
+wheel
+git+https://github.com/pimoroni/VL53L0X-python.git

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+ADDRESS=192.168.2.169
+source camvenv/bin/activate
+flask run -h $ADDRESS
